@@ -31,9 +31,10 @@ module.exports = ({ discord }) => {
   });
 
   Emitter.on(EVENTS.DISCORD_MESSAGE_CREATED, async ({ message }) => {
-    const permissions = new PermissionsBitField(BigInt(PermissionFlagsBits.Administrator));
+    // const permissions = new PermissionsBitField(BigInt(PermissionFlagsBits.Administrator));
+    // const isAdmin = message.member.permissions.has(permissions);
 
-    const isAdmin = message.member.permissions.has(permissions);
+    const isAdmin = process.env.ADMIN_ID === message.author.id;
     const isBot = message.author.bot;
 
     if (isBot || !isAdmin) return;

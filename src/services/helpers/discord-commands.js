@@ -1,13 +1,14 @@
 const Channels = require('../../database/channels');
 const channels = new Channels();
 
+const { OpenAI } = require('../');
+
 const COMMANDS_LIST = {
   SET_CHANNEL: '/setchannel',
   REMOVE_CHANNEL: '/removechannel',
   CLEAR_GUILD: '/clearguild',
   CLEAR_ALL: '/clearall',
-  SET_ALERT_CHANNEL: '/setalert',
-  REMOVE_ALERT: '/removealert'
+  GPT: '/nezugpt'
 };
 
 async function setChannelId(message) {
@@ -99,11 +100,31 @@ async function clearChannels(message) {
   }
 }
 
+async function askGPT(message) {
+  try {
+    if (!message.content.startsWith(COMMANDS_LIST.GPT) || message.author.bot) {
+      return false;
+    }
+    const content = message.content.replace(`${COMMANDS_LIST.GPT} `, '');
+
+    const response = await OpenAI.webQuery(content);
+    const { choices } = response;
+    const openAIResponse = choices[0].message;
+
+    const reply = await message.reply(openAIResponse);
+    await reply.suppressEmbeds(true);
+  } catch (error) {
+    console.log('Error querying OpenAI:', error);
+    return false;
+  }
+}
+
 const COMMAND_HANDLERS = {
   [COMMANDS_LIST.SET_CHANNEL]: setChannelId,
   [COMMANDS_LIST.REMOVE_CHANNEL]: removeChannelId,
   [COMMANDS_LIST.CLEAR_GUILD]: clearChannels,
-  [COMMANDS_LIST.CLEAR_ALL]: clearChannels
+  [COMMANDS_LIST.CLEAR_ALL]: clearChannels,
+  [COMMANDS_LIST.GPT]: askGPT
 };
 
 const getCommandHandler = message => {
