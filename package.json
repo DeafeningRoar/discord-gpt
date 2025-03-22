@@ -1,0 +1,25 @@
+{
+  "name": "discord-gpt",
+  "version": "0.0.1",
+  "description": "Discord ChatGPT bot",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "npm run migrate && node src/index.js",
+    "dev": "nodemon src/index.js",
+    "migrate:make": "knex migrate:make --knexfile knexFile.js",
+    "migrate": "knex migrate:latest --knexfile knexFile.js",
+    "migrate:down": "knex migrate:down --knexfile knexFile.js"
+  },
+  "author": "Felipe Saa Echavarría",
+  "license": "ISC",
+  "dependencies": {
+    "discord.js": "^14.18.0",
+    "dotenv": "^16.4.7",
+    "knex": "^3.1.0",
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
