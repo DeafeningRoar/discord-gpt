@@ -9,6 +9,7 @@ const EVENTS = {
   DISCORD_CONNECTION_ERROR: 'DiscordConnectionError',
   DISCORD_READY: 'DiscordReady',
   DISCORD_MESSAGE_CREATED: 'DiscordMessageCreated',
+  DISCORD_INTERACTION_CREATED: 'DiscordInteractionCreated',
   PROCESS_ERROR: 'ProcessError'
 };
 

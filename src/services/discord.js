@@ -10,7 +10,13 @@ class DiscordBot {
   }
 
   initializeSubscriptions() {
+    this.client.on('interactionCreate', interaction => {
+      if (interaction.user.bot) return;
+      emitter.emit(EVENTS.DISCORD_INTERACTION_CREATED, { interaction, client: this.client });
+    });
+
     this.client.on('messageCreate', message => {
+      if (message.author.bot) return;
       emitter.emit(EVENTS.DISCORD_MESSAGE_CREATED, { message, client: this.client });
     });
   }

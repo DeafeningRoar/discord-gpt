@@ -1,4 +1,4 @@
-const { PermissionFlagsBits, PermissionsBitField } = require('discord.js');
+const { PermissionFlagsBits, PermissionsBitField, Message, Interaction, hideLinkEmbed } = require('discord.js');
 
 const { Emitter } = require('../services');
 const { EVENTS } = require('../config/constants');
@@ -7,6 +7,37 @@ const Discord = require('../services/discord');
 const Channels = require('../database/channels');
 
 const channelsDB = new Channels();
+
+const getFormattedMessage = message => {
+  const [command, ...rest] = message.content.split(' ');
+
+  return {
+    command: command.replace('/', ''),
+    content: rest.join(' ')
+  };
+};
+
+const formatResponseMessage = message => {
+  const result = message.replaceAll(/\((\http.*)\)\)/gi, (substring, captureGroup) => {
+    console.log({ substring, captureGroup });
+    return `(${hideLinkEmbed(captureGroup)}))`;
+  });
+
+  return result;
+};
+
+const getUserTypes = (user, member) => {
+  const permissions = new PermissionsBitField(BigInt(PermissionFlagsBits.Administrator));
+  const isAdmin = member.permissions.has(permissions);
+  const isOwner = process.env.ADMIN_ID === user.id;
+  const isBot = user.bot;
+
+  return {
+    isOwner,
+    isAdmin,
+    isBot
+  };
+};
 
 /**
  * @param {Object} params
@@ -30,18 +61,64 @@ module.exports = ({ discord }) => {
     );
   });
 
-  Emitter.on(EVENTS.DISCORD_MESSAGE_CREATED, async ({ message }) => {
-    // const permissions = new PermissionsBitField(BigInt(PermissionFlagsBits.Administrator));
-    // const isAdmin = message.member.permissions.has(permissions);
+  Emitter.on(
+    EVENTS.DISCORD_MESSAGE_CREATED,
+    /**
+     * @param {object} param
+     * @param {Message} param.message
+     */
+    async ({ message }) => {
+      const { isOwner, isAdmin, isBot } = getUserTypes(message.author, message.member);
+      if (isBot) return;
 
-    const isAdmin = process.env.ADMIN_ID === message.author.id;
-    const isBot = message.author.bot;
+      const { command, content } = getFormattedMessage(message);
+      const commandHandler = getCommandHandler(command, { isOwner, isAdmin });
 
-    if (isBot || !isAdmin) return;
-    const commandHandler = getCommandHandler(message);
+      if (!commandHandler) return;
 
-    if (!commandHandler) return;
+      message.content = content;
+      await commandHandler(message, { isOwner, isAdmin });
+    }
+  );
 
-    await commandHandler(message);
-  });
+  Emitter.on(
+    EVENTS.DISCORD_INTERACTION_CREATED,
+    /**
+     * @param {object} param
+     * @param {Interaction} param.interaction
+     */
+    async ({ interaction }) => {
+      const { isOwner, isAdmin, isBot } = getUserTypes(interaction.user, interaction.member);
+
+      if (isBot) return;
+      const command = interaction.commandName;
+      const content = interaction.options.get('input').value;
+      const commandHandler = getCommandHandler(command, { isOwner, isAdmin });
+
+      if (!commandHandler) return;
+
+      let interval;
+      let resultMessage = `\`${content}\``;
+      interaction.content = content;
+
+      try {
+        await interaction.reply(resultMessage + '\n。');
+
+        let dots = 2;
+        interval = setInterval(async () => {
+          if (dots > 3) dots = 1;
+          await interaction.editReply(`${resultMessage}\n` + '。'.repeat(dots));
+          dots++;
+        }, 850);
+
+        const response = await commandHandler(interaction, { isOwner, isAdmin });
+        clearInterval(interval);
+
+        await interaction.editReply(`${resultMessage}\n\n${formatResponseMessage(response)}`);
+      } catch (err) {
+        clearInterval(interval);
+        throw err;
+      }
+    }
+  );
 };

@@ -4,19 +4,16 @@ const channels = new Channels();
 const { OpenAI } = require('../');
 
 const COMMANDS_LIST = {
-  SET_CHANNEL: '/setchannel',
-  REMOVE_CHANNEL: '/removechannel',
-  CLEAR_GUILD: '/clearguild',
-  CLEAR_ALL: '/clearall',
-  GPT: '/zerogpt'
+  SET_CHANNEL: 'setchannel',
+  REMOVE_CHANNEL: 'removechannel',
+  CLEAR_GUILD: 'clearguild',
+  CLEAR_ALL: 'clearall',
+  GPT: 'gpt',
+  GPT_WEB: 'gpt'
 };
 
 async function setChannelId(message) {
   try {
-    if (!message.content.startsWith(COMMANDS_LIST.SET_CHANNEL) || message.author.bot) {
-      return false;
-    }
-
     const [channel] = await channels.find([
       {
         key: 'channelId',
@@ -52,10 +49,6 @@ async function setChannelId(message) {
 
 async function removeChannelId(message) {
   try {
-    if (!message.content.startsWith(COMMANDS_LIST.REMOVE_CHANNEL) || message.author.bot) {
-      return false;
-    }
-
     await channels.delete([
       {
         key: 'channelId',
@@ -76,18 +69,10 @@ async function removeChannelId(message) {
   }
 }
 
-async function clearChannels(message) {
+async function clearChannels(message, clearGuild) {
   try {
-    if (
-      (message.content !== COMMANDS_LIST.CLEAR_GUILD && message.content !== COMMANDS_LIST.CLEAR_ALL) ||
-      message.author.bot ||
-      message.author.id !== process.env.ADMIN_ID
-    ) {
-      return false;
-    }
-
     let filters = [];
-    if (message.content === COMMANDS_LIST.CLEAR_GUILD) {
+    if (clearGuild) {
       filters.push({ key: 'guildId', comparisonOperator: '=', value: message.guildId });
     }
 
@@ -100,36 +85,67 @@ async function clearChannels(message) {
   }
 }
 
-async function askGPT(message) {
+async function clearGuild(message) {
+  return clearChannels(message, true);
+}
+
+/**
+ *
+ * @param {object} message
+ * @param {'web'|'text'} type
+ * @returns
+ */
+async function askGPT(message, type) {
   try {
-    if (!message.content.startsWith(COMMANDS_LIST.GPT) || message.author.bot) {
-      return false;
-    }
-    const content = message.content.replace(`${COMMANDS_LIST.GPT} `, '');
+    const OpenAIQueryTypes = {
+      web: OpenAI.webQuery,
+      text: OpenAI.textQuery
+    };
 
-    const response = await OpenAI.webQuery(content);
-    const { choices } = response;
-    const openAIResponse = choices[0].message;
+    const OpenAIQuery = OpenAIQueryTypes[type];
 
-    const reply = await message.reply(openAIResponse);
-    await reply.suppressEmbeds(true);
+    const response = await OpenAIQuery(message.content);
+    const { choices, output_text } = response;
+
+    const openAIResponse = choices ? choices[0].message.content : output_text;
+
+    return openAIResponse;
   } catch (error) {
     console.log('Error querying OpenAI:', error);
     return false;
   }
 }
 
+async function askGPTWeb(message) {
+  return askGPT(message, 'web');
+}
+
+async function askGPTText(message) {
+  return askGPT(message, 'text');
+}
+
 const COMMAND_HANDLERS = {
-  [COMMANDS_LIST.SET_CHANNEL]: setChannelId,
-  [COMMANDS_LIST.REMOVE_CHANNEL]: removeChannelId,
-  [COMMANDS_LIST.CLEAR_GUILD]: clearChannels,
-  [COMMANDS_LIST.CLEAR_ALL]: clearChannels,
-  [COMMANDS_LIST.GPT]: askGPT
+  ADMIN: {
+    [COMMANDS_LIST.SET_CHANNEL]: setChannelId,
+    [COMMANDS_LIST.REMOVE_CHANNEL]: removeChannelId,
+    [COMMANDS_LIST.CLEAR_ALL]: clearChannels,
+    [COMMANDS_LIST.CLEAR_GUILD]: clearGuild,
+    [COMMANDS_LIST.GPT_WEB]: askGPTWeb
+  },
+  USER: {
+    [COMMANDS_LIST.GPT]: askGPTText
+  }
 };
 
-const getCommandHandler = message => {
-  const [command] = message.content.split(' ');
-  const handler = COMMAND_HANDLERS[command];
+const getAvailableCommands = ({ isAdmin, isOwner }) => {
+  if (isAdmin || isOwner) return COMMAND_HANDLERS.ADMIN;
+
+  return COMMAND_HANDLERS.USER;
+};
+
+const getCommandHandler = (command, userType) => {
+  const commandsList = getAvailableCommands(userType);
+  const handler = commandsList[command];
 
   if (!handler) {
     return;

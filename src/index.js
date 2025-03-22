@@ -39,4 +39,8 @@ Emitter.on(EVENTS.PROCESS_ERROR, async () => {
   await start();
 });
 
+Emitter.on(EVENTS.ERROR, err => {
+  console.error('Caught critical error in events:', err.message);
+});
+
 start();
