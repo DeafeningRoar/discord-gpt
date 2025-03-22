@@ -13,7 +13,7 @@ const webQuery = async message => {
     messages: [
       {
         role: 'user',
-        content: message
+        content: `Keep the response as short and straightforward as possible. ${message}`
       }
     ]
   });

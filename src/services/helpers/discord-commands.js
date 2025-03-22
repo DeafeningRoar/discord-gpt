@@ -8,7 +8,7 @@ const COMMANDS_LIST = {
   REMOVE_CHANNEL: '/removechannel',
   CLEAR_GUILD: '/clearguild',
   CLEAR_ALL: '/clearall',
-  GPT: '/nezugpt'
+  GPT: '/zerogpt'
 };
 
 async function setChannelId(message) {
