@@ -4,9 +4,6 @@ const { Emitter } = require('../services');
 const { EVENTS } = require('../config/constants');
 const { getCommandHandler } = require('../services/helpers/discord-commands');
 const Discord = require('../services/discord');
-const Channels = require('../database/channels');
-
-const channelsDB = new Channels();
 
 const getFormattedMessage = message => {
   const [command, ...rest] = message.content.split(' ');
@@ -48,17 +45,6 @@ module.exports = ({ discord }) => {
     if (!discord.client?.isReady?.()) {
       throw new Error(`${EVENTS.DISCORD_READY} - Discord client not ready`);
     }
-
-    const dbChannels = await channelsDB.find([]);
-    if (!dbChannels.length) {
-      console.log('No channels registered');
-      return;
-    }
-
-    console.log(
-      'Registered channels:',
-      dbChannels.map(({ channelId, guildId }) => ({ guildId, channelId }))
-    );
   });
 
   Emitter.on(

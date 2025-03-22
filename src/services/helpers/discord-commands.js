@@ -1,93 +1,90 @@
-const Channels = require('../../database/channels');
-const channels = new Channels();
-
 const { OpenAI } = require('../');
 
 const COMMANDS_LIST = {
-  SET_CHANNEL: 'setchannel',
-  REMOVE_CHANNEL: 'removechannel',
-  CLEAR_GUILD: 'clearguild',
-  CLEAR_ALL: 'clearall',
+  // SET_CHANNEL: 'setchannel',
+  // REMOVE_CHANNEL: 'removechannel',
+  // CLEAR_GUILD: 'clearguild',
+  // CLEAR_ALL: 'clearall',
   GPT: 'gpt',
   GPT_WEB: 'gpt'
 };
 
-async function setChannelId(message) {
-  try {
-    const [channel] = await channels.find([
-      {
-        key: 'channelId',
-        comparisonOperator: '=',
-        value: message.channelId
-      },
-      {
-        key: 'guildId',
-        comparisonOperator: '=',
-        value: message.guildId
-      }
-    ]);
+// async function setChannelId(message) {
+//   try {
+//     const [channel] = await channels.find([
+//       {
+//         key: 'channelId',
+//         comparisonOperator: '=',
+//         value: message.channelId
+//       },
+//       {
+//         key: 'guildId',
+//         comparisonOperator: '=',
+//         value: message.guildId
+//       }
+//     ]);
 
-    if (channel) {
-      console.log(`Channel ${message.channelId} of guild ${message.guildId} already registered`);
+//     if (channel) {
+//       console.log(`Channel ${message.channelId} of guild ${message.guildId} already registered`);
 
-      await message.reply(`Channel is already registered`);
-      return false;
-    }
+//       await message.reply(`Channel is already registered`);
+//       return false;
+//     }
 
-    await channels.insert({
-      channelId: message.channelId,
-      guildId: message.guildId
-    });
+//     await channels.insert({
+//       channelId: message.channelId,
+//       guildId: message.guildId
+//     });
 
-    await message.reply('Using current channel');
-    return { isInsert: true };
-  } catch (error) {
-    console.log('Set channel error', error);
-    return false;
-  }
-}
+//     await message.reply('Using current channel');
+//     return { isInsert: true };
+//   } catch (error) {
+//     console.log('Set channel error', error);
+//     return false;
+//   }
+// }
 
-async function removeChannelId(message) {
-  try {
-    await channels.delete([
-      {
-        key: 'channelId',
-        comparisonOperator: '=',
-        value: message.channelId
-      },
-      {
-        key: 'guildId',
-        comparisonOperator: '=',
-        value: message.guildId
-      }
-    ]);
-    await message.reply('Removed current channel');
-    return true;
-  } catch (error) {
-    console.log('Remove channel error', error);
-    return false;
-  }
-}
+// async function removeChannelId(message) {
+//   try {
+//     await channels.delete([
+//       {
+//         key: 'channelId',
+//         comparisonOperator: '=',
+//         value: message.channelId
+//       },
+//       {
+//         key: 'guildId',
+//         comparisonOperator: '=',
+//         value: message.guildId
+//       }
+//     ]);
+//     await message.reply('Removed current channel');
+//     return true;
+//   } catch (error) {
+//     console.log('Remove channel error', error);
+//     return false;
+//   }
+// }
 
-async function clearChannels(message, clearGuild) {
-  try {
-    let filters = [];
-    if (clearGuild) {
-      filters.push({ key: 'guildId', comparisonOperator: '=', value: message.guildId });
-    }
+// async function clearChannels(message, clearGuild) {
+//   try {
+//     let filters = [];
+//     if (clearGuild) {
+//       filters.push({ key: 'guildId', comparisonOperator: '=', value: message.guildId });
+//     }
 
-    await channels.delete(filters);
-    await message.reply('Removed channels');
-    return true;
-  } catch (error) {
-    console.log('Clear channels error', error);
-    return false;
-  }
-}
+//     await channels.delete(filters);
+//     await message.reply('Removed channels');
+//     return true;
+//   } catch (error) {
+//     console.log('Clear channels error', error);
+//     return false;
+//   }
+// }
 
-async function clearGuild(message) {
-  return clearChannels(message, true);
-}
+// async function clearGuild(message) {
+//   return clearChannels(message, true);
+// }
 
 /**
  *
@@ -125,12 +122,15 @@ async function askGPTText(message) {
 }
 
 const COMMAND_HANDLERS = {
-  ADMIN: {
-    [COMMANDS_LIST.SET_CHANNEL]: setChannelId,
-    [COMMANDS_LIST.REMOVE_CHANNEL]: removeChannelId,
-    [COMMANDS_LIST.CLEAR_ALL]: clearChannels,
-    [COMMANDS_LIST.CLEAR_GUILD]: clearGuild,
+  OWNER: {
     [COMMANDS_LIST.GPT_WEB]: askGPTWeb
+  },
+  ADMIN: {
+    // [COMMANDS_LIST.SET_CHANNEL]: setChannelId,
+    // [COMMANDS_LIST.REMOVE_CHANNEL]: removeChannelId,
+    // [COMMANDS_LIST.CLEAR_ALL]: clearChannels,
+    // [COMMANDS_LIST.CLEAR_GUILD]: clearGuild,
+    [COMMANDS_LIST.GPT]: askGPTText
   },
   USER: {
     [COMMANDS_LIST.GPT]: askGPTText
@@ -138,8 +138,8 @@ const COMMAND_HANDLERS = {
 };
 
 const getAvailableCommands = ({ isAdmin, isOwner }) => {
-  if (isAdmin || isOwner) return COMMAND_HANDLERS.ADMIN;
-
+  if (isOwner) return COMMAND_HANDLERS.OWNER;
+  if (isAdmin) return COMMAND_HANDLERS.ADMIN;
   return COMMAND_HANDLERS.USER;
 };
 

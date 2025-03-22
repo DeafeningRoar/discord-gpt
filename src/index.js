@@ -3,9 +3,6 @@ const { Discord, Emitter } = require('./services');
 const { FIVE_MINUTES_MS, EVENTS } = require('./config/constants');
 const { sleep } = require('./utils');
 const { discordHandlers } = require('./handlers');
-const Channels = require('./database/channels');
-
-const channelsDB = new Channels();
 
 async function start() {
   try {
@@ -15,7 +12,6 @@ async function start() {
 
     /******* Error Event Listeners *******/
 
-    await channelsDB.connectionCheck();
     await discord.initialize();
   } catch (error) {
     console.error('Process error', error);
