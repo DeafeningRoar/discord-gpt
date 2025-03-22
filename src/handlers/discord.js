@@ -16,7 +16,6 @@ const getFormattedMessage = message => {
 
 const formatResponseMessage = message => {
   const result = message.replaceAll(/\((\http.*)\)\)/gi, (substring, captureGroup) => {
-    console.log({ substring, captureGroup });
     return `(${hideLinkEmbed(captureGroup)}))`;
   });
 
@@ -56,11 +55,17 @@ module.exports = ({ discord }) => {
     async ({ message }) => {
       const { isOwner, isAdmin, isBot } = getUserTypes(message.author, message.member);
       if (isBot) return;
-
       const { command, content } = getFormattedMessage(message);
       const commandHandler = getCommandHandler(command, { isOwner, isAdmin });
 
       if (!commandHandler) return;
+      console.log('Processing message by user: ', {
+        name: message.author.displayName,
+        isAdmin,
+        isOwner,
+        command,
+        content
+      });
 
       message.content = content;
       await commandHandler(message, { isOwner, isAdmin });
@@ -82,6 +87,13 @@ module.exports = ({ discord }) => {
       const commandHandler = getCommandHandler(command, { isOwner, isAdmin });
 
       if (!commandHandler) return;
+      console.log('Processing interaction by user: ', {
+        name: interaction.user.displayName,
+        isAdmin,
+        isOwner,
+        command,
+        content
+      });
 
       let interval;
       let resultMessage = `\`${content}\``;
