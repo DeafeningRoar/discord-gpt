@@ -4,23 +4,7 @@ const { Emitter } = require('../services');
 const { EVENTS } = require('../config/constants');
 const { getCommandHandler } = require('../services/helpers/discord-commands');
 const Discord = require('../services/discord');
-
-const getFormattedMessage = message => {
-  const [command, ...rest] = message.content.split(' ');
-
-  return {
-    command: command.replace('/', ''),
-    content: rest.join(' ')
-  };
-};
-
-const formatResponseMessage = message => {
-  const result = message.replaceAll(/\((\http.*)\)\)/gi, (substring, captureGroup) => {
-    return `(${hideLinkEmbed(captureGroup)}))`;
-  });
-
-  return result;
-};
+const { formatResponseMessage, getFormattedMessage } = require('./helpers');
 
 const getUserTypes = (user, member) => {
   const permissions = new PermissionsBitField(BigInt(PermissionFlagsBits.Administrator));
