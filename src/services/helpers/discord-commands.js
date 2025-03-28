@@ -6,7 +6,7 @@ const COMMANDS_LIST = {
   // CLEAR_GUILD: 'clearguild',
   // CLEAR_ALL: 'clearall',
   GPT: 'gpt',
-  GPT_WEB: 'gpt'
+  GPT_WEB: 'gptweb'
 };
 
 // async function setChannelId(message) {
@@ -138,8 +138,21 @@ const COMMAND_HANDLERS = {
 };
 
 const getAvailableCommands = ({ isAdmin, isOwner }) => {
-  if (isOwner) return COMMAND_HANDLERS.OWNER;
-  if (isAdmin) return COMMAND_HANDLERS.ADMIN;
+  if (isOwner) {
+    return {
+      ...COMMAND_HANDLERS.USER,
+      ...COMMAND_HANDLERS.ADMIN,
+      ...COMMAND_HANDLERS.OWNER
+    };
+  }
+
+  if (isAdmin) {
+    return {
+      ...COMMAND_HANDLERS.USER,
+      ...COMMAND_HANDLERS.ADMIN
+    };
+  }
+
   return COMMAND_HANDLERS.USER;
 };
 

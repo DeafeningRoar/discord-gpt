@@ -12,7 +12,7 @@ const webQuery = async message => {
     messages: [
       {
         role: 'user',
-        content: `Keep the response as short and straightforward as possible. ${message}`
+        content: message
       }
     ]
   });
@@ -24,8 +24,7 @@ const textQuery = async message => {
   console.log('Processing message with', TEXT_MODEL);
   const response = await openai.responses.create({
     model: TEXT_MODEL,
-    input: message,
-    instructions: 'Keep the response as short and straightforward as possible.'
+    input: message
   });
 
   return response;
