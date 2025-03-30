@@ -101,7 +101,7 @@ async function askGPT(message, type) {
 
     const OpenAIQuery = OpenAIQueryTypes[type];
 
-    const response = await OpenAIQuery(message.content);
+    const response = await OpenAIQuery(message.content, message.img);
     const { choices, output_text } = response;
 
     const openAIResponse = choices ? choices[0].message.content : output_text;

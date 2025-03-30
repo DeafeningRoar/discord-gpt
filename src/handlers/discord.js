@@ -56,13 +56,15 @@ module.exports = ({ discord }) => {
       if (isBot) return;
       const command = interaction.commandName;
       const content = interaction.options.get('input').value;
+      const image = interaction.options.get('image')?.attachment?.url;
       const commandHandler = getCommandHandler(command, { isOwner, isAdmin });
 
       if (!commandHandler) return;
-      const user = interaction.member.nickname;
+      const user = interaction.member.nickname ?? interaction.user.displayName;
       console.log(new Date().toISOString(), '- Processing Interaction by User:', {
         user,
         queryLength: content.length,
+        hasImage: !!image,
         isAdmin,
         isOwner,
         command,
@@ -72,6 +74,7 @@ module.exports = ({ discord }) => {
       let interval;
       try {
         interaction.content = content;
+        interaction.img = image;
 
         interval = await handleResponseLoading(interaction, user, content);
 

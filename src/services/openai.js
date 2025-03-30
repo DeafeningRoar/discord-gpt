@@ -20,11 +20,16 @@ const webQuery = async message => {
   return response;
 };
 
-const textQuery = async message => {
+const textQuery = async (message, img) => {
   console.log(new Date().toISOString(), '- Processing message with', TEXT_MODEL);
   const response = await openai.responses.create({
     model: TEXT_MODEL,
-    input: message
+    input: [
+      {
+        role: 'user',
+        content: [{ type: 'input_text', text: message }, ...(img ? [{ type: 'input_image', image_url: img }] : [])]
+      }
+    ]
   });
 
   return response;
