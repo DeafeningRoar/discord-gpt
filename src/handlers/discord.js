@@ -63,6 +63,7 @@ module.exports = ({ discord }) => {
       const user = interaction.member.nickname;
       console.log(currentTime, '- Processing Interaction by User:', {
         user,
+        queryLength: content.length,
         isAdmin,
         isOwner,
         command,
