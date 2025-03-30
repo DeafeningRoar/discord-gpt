@@ -1,23 +1,11 @@
-const { PermissionFlagsBits, PermissionsBitField, Message, Interaction, hideLinkEmbed } = require('discord.js');
+const { Message, Interaction } = require('discord.js');
 
 const { Emitter } = require('../services');
 const { EVENTS } = require('../config/constants');
 const { getCommandHandler } = require('../services/helpers/discord-commands');
 const Discord = require('../services/discord');
-const { formatResponseMessage, getFormattedMessage } = require('./helpers');
-
-const getUserTypes = (user, member) => {
-  const permissions = new PermissionsBitField(BigInt(PermissionFlagsBits.Administrator));
-  const isAdmin = member.permissions.has(permissions);
-  const isOwner = process.env.ADMIN_ID === user.id;
-  const isBot = user.bot;
-
-  return {
-    isOwner,
-    isAdmin,
-    isBot
-  };
-};
+const { getFormattedMessage, getUserTypes, hideLinkEmbeds } = require('./helpers');
+const { handleResponseLoading, handleInteractionReply } = require('./helpers/interaction');
 
 /**
  * @param {Object} params
@@ -63,6 +51,7 @@ module.exports = ({ discord }) => {
      * @param {Interaction} param.interaction
      */
     async ({ interaction }) => {
+      const currentTime = new Date().toISOString();
       const { isOwner, isAdmin, isBot } = getUserTypes(interaction.user, interaction.member);
 
       if (isBot) return;
@@ -71,7 +60,7 @@ module.exports = ({ discord }) => {
       const commandHandler = getCommandHandler(command, { isOwner, isAdmin });
 
       if (!commandHandler) return;
-      console.log('Processing interaction by user: ', {
+      console.log(currentTime, '- Processing Interaction by User:', {
         name: interaction.user.displayName,
         isAdmin,
         isOwner,
@@ -80,23 +69,23 @@ module.exports = ({ discord }) => {
       });
 
       let interval;
-      let resultMessage = `\`${content}\``;
-      interaction.content = content;
-
       try {
-        await interaction.reply(resultMessage + '\n。');
+        interaction.content = content;
 
-        let dots = 2;
-        interval = setInterval(async () => {
-          if (dots > 3) dots = 1;
-          await interaction.editReply(`${resultMessage}\n` + '。'.repeat(dots));
-          dots++;
-        }, 850);
+        interval = await handleResponseLoading(interaction, content);
 
         const response = await commandHandler(interaction, { isOwner, isAdmin });
+
         clearInterval(interval);
 
-        await interaction.editReply(`${resultMessage}\n\n${formatResponseMessage(response)}`);
+        const responseMessage = hideLinkEmbeds(response);
+
+        console.log(currentTime, '- OpenAI Interaction Response:', {
+          user: interaction.user.displayName,
+          responseLength: responseMessage.length
+        });
+
+        await handleInteractionReply(interaction, content, responseMessage);
       } catch (err) {
         clearInterval(interval);
         throw err;
