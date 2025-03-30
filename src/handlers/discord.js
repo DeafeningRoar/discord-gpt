@@ -51,7 +51,6 @@ module.exports = ({ discord }) => {
      * @param {Interaction} param.interaction
      */
     async ({ interaction }) => {
-      const currentTime = new Date().toISOString();
       const { isOwner, isAdmin, isBot } = getUserTypes(interaction.user, interaction.member);
 
       if (isBot) return;
@@ -61,7 +60,7 @@ module.exports = ({ discord }) => {
 
       if (!commandHandler) return;
       const user = interaction.member.nickname;
-      console.log(currentTime, '- Processing Interaction by User:', {
+      console.log(new Date().toISOString(), '- Processing Interaction by User:', {
         user,
         queryLength: content.length,
         isAdmin,
@@ -82,7 +81,7 @@ module.exports = ({ discord }) => {
 
         const responseMessage = hideLinkEmbeds(response);
 
-        console.log(currentTime, '- OpenAI Interaction Response:', {
+        console.log(new Date().toISOString(), '- OpenAI Interaction Response:', {
           user,
           responseLength: responseMessage.length
         });
