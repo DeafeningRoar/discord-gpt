@@ -35,7 +35,8 @@ const handleInteractionReply = async (interaction, query, response) => {
     content: `\`${query}\``,
     embeds: [
       {
-        title: `:thread: 1 / ${formattedResponse.length}`,
+        type: 'rich',
+        title: formattedResponse.length > 1 ? `:thread: 1 / ${formattedResponse.length}` : undefined,
         description: formattedResponse[0]
       }
     ]
@@ -47,6 +48,7 @@ const handleInteractionReply = async (interaction, query, response) => {
       interactionReply = await interactionReply.reply({
         embeds: [
           {
+            type: 'rich',
             title: `:thread: ${i + 1} / ${formattedResponse.length}`,
             description: formattedResponse[i]
           }
