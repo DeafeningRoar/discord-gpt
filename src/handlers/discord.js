@@ -60,8 +60,9 @@ module.exports = ({ discord }) => {
       const commandHandler = getCommandHandler(command, { isOwner, isAdmin });
 
       if (!commandHandler) return;
+      const user = interaction.member.nickname;
       console.log(currentTime, '- Processing Interaction by User:', {
-        name: interaction.user.displayName,
+        user,
         isAdmin,
         isOwner,
         command,
@@ -72,7 +73,7 @@ module.exports = ({ discord }) => {
       try {
         interaction.content = content;
 
-        interval = await handleResponseLoading(interaction, content);
+        interval = await handleResponseLoading(interaction, user, content);
 
         const response = await commandHandler(interaction, { isOwner, isAdmin });
 
@@ -81,11 +82,11 @@ module.exports = ({ discord }) => {
         const responseMessage = hideLinkEmbeds(response);
 
         console.log(currentTime, '- OpenAI Interaction Response:', {
-          user: interaction.user.displayName,
+          user,
           responseLength: responseMessage.length
         });
 
-        await handleInteractionReply(interaction, content, responseMessage);
+        await handleInteractionReply(interaction, user, content, responseMessage);
       } catch (err) {
         clearInterval(interval);
         throw err;

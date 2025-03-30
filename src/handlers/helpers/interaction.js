@@ -1,9 +1,9 @@
 const { sleep } = require('../../utils');
 const { DISCORD_MAX_LENGTH, splitText } = require('./');
 
-const handleResponseLoading = async (interaction, query) => {
+const handleResponseLoading = async (interaction, user, query) => {
   const WAIT_TIME = 850;
-  const resultMessage = `\`${query}\``;
+  const resultMessage = `**${user}**: ${query}`;
 
   await interaction.reply(resultMessage + '\n。');
 
@@ -28,11 +28,11 @@ const formatResponse = response => {
   return responseMessages;
 };
 
-const handleInteractionReply = async (interaction, query, response) => {
+const handleInteractionReply = async (interaction, user, query, response) => {
   const formattedResponse = formatResponse(response);
 
   let interactionReply = await interaction.editReply({
-    content: `\`${query}\``,
+    content: `**${user}**: ${query}`,
     embeds: [
       {
         type: 'rich',
