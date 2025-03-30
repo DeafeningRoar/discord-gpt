@@ -36,7 +36,13 @@ Emitter.on(EVENTS.PROCESS_ERROR, async () => {
 });
 
 Emitter.on(EVENTS.ERROR, err => {
-  console.error('Caught critical error in events:', err);
+  const errorData = {
+    data: err?.response?.data || 'none',
+    message: err.message,
+    stack: err.stack
+  };
+
+  console.error(new Date().toISOString(), '- Caught critical error in events:', JSON.stringify(errorData, null, 2));
 });
 
 start();
