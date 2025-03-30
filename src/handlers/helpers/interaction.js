@@ -1,5 +1,6 @@
 const { sleep } = require('../../utils');
-const { DISCORD_MAX_LENGTH, splitText } = require('./');
+const { DISCORD_MAX_LENGTH } = require('./');
+const { splitText } = require('./splitText');
 
 const handleResponseLoading = async (interaction, user, query) => {
   const WAIT_TIME = 850;

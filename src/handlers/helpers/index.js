@@ -33,22 +33,11 @@ const getUserTypes = (user, member) => {
   };
 };
 
-const splitText = (text, chunkSize) => {
-  const chunks = Math.ceil(text.length / chunkSize);
-  const result = [];
-  for (let i = 0; i < chunks; i++) {
-    result.push(text.slice(i * chunkSize, (i + 1) * chunkSize));
-  }
-
-  return result;
-};
-
-const DISCORD_MAX_LENGTH = 4096;
+const DISCORD_MAX_LENGTH = 4000;
 
 module.exports = {
   DISCORD_MAX_LENGTH,
   getUserTypes,
   getFormattedMessage,
-  hideLinkEmbeds,
-  splitText
+  hideLinkEmbeds
 };
