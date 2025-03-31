@@ -22,7 +22,7 @@ const hideLinkEmbeds = message => {
 
 const getUserTypes = (user, member) => {
   const permissions = new PermissionsBitField(BigInt(PermissionFlagsBits.Administrator));
-  const isAdmin = member.permissions.has(permissions);
+  const isAdmin = member ? member.permissions.has(permissions) : false;
   const isOwner = process.env.ADMIN_ID === user.id;
   const isBot = user.bot;
 

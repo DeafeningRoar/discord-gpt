@@ -60,14 +60,16 @@ module.exports = ({ discord }) => {
       const commandHandler = getCommandHandler(command, { isOwner, isAdmin });
 
       if (!commandHandler) return;
-      const user = interaction.member.nickname ?? interaction.user.displayName;
+      const user = interaction.member?.nickname ?? interaction.user.displayName;
       console.log(new Date().toISOString(), '- Processing Interaction by User:', {
         user,
-        queryLength: content.length,
-        hasImage: !!image,
+        guildName: interaction?.guild?.name || null,
+        isDirectMessage: !interaction.guildId,
         isAdmin,
         isOwner,
         command,
+        queryLength: content.length,
+        hasImage: !!image,
         content
       });
 
