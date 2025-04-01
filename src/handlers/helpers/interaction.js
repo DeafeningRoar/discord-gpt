@@ -2,16 +2,29 @@ const { sleep } = require('../../utils');
 const { DISCORD_MAX_LENGTH } = require('./');
 const { splitText } = require('./splitText');
 
-const handleResponseLoading = async (interaction, user, query) => {
+const handleResponseLoading = async (interaction, user, query, img) => {
   const WAIT_TIME = 850;
   const resultMessage = `**${user}**: ${query}`;
+  const files = img
+    ? [
+        {
+          attachment: img,
+          name: 'user-image.png'
+        }
+      ]
+    : undefined;
 
-  await interaction.reply(resultMessage + '\n。');
+  await interaction.reply({
+    content: resultMessage + '\n。',
+    files
+  });
 
   let dots = 2;
   const interval = setInterval(async () => {
     if (dots > 3) dots = 1;
-    await interaction.editReply(`${resultMessage}\n` + '。'.repeat(dots));
+    await interaction.editReply({
+      content: `${resultMessage}\n` + '。'.repeat(dots)
+    });
     dots++;
   }, WAIT_TIME);
 

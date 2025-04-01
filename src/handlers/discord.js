@@ -78,7 +78,7 @@ module.exports = ({ discord }) => {
         interaction.content = content;
         interaction.img = image;
 
-        interval = await handleResponseLoading(interaction, user, content);
+        interval = await handleResponseLoading(interaction, user, content, image);
 
         const response = await commandHandler(interaction, { isOwner, isAdmin });
 
