@@ -45,7 +45,8 @@ const COMMAND_HANDLERS = {
     [COMMANDS_LIST.GPT_WEB]: askGPTWeb
   },
   ADMIN: {
-    [COMMANDS_LIST.GPT]: askGPTText
+    [COMMANDS_LIST.GPT]: askGPTText,
+    [COMMANDS_LIST.GPT_WEB]: askGPTWeb
   },
   USER: {
     [COMMANDS_LIST.GPT]: askGPTText
