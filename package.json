@@ -5,22 +5,16 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "migrate:make": "knex migrate:make --knexfile knexFile.js",
-    "migrate": "knex migrate:latest --knexfile knexFile.js",
-    "migrate:down": "knex migrate:down --knexfile knexFile.js"
+    "dev": "nodemon src/index.js"
   },
   "author": "Felipe Saa Echavarría",
   "license": "ISC",
   "dependencies": {
     "discord.js": "^14.18.0",
     "dotenv": "^16.4.7",
-    "knex": "^3.1.0",
-    "openai": "^4.89.0",
-    "uuid": "^11.1.0"
+    "openai": "^4.89.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9",
-    "sqlite3": "^5.1.7"
+    "nodemon": "^3.1.9"
   }
 }
