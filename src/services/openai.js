@@ -40,7 +40,10 @@ const webQuery = async message => {
   console.log(new Date().toISOString(), '- Processing message with', MODELS.PerplexityAI.SONAR);
   const response = await perplexityai.chat.completions.create({
     model: MODELS.PerplexityAI.SONAR,
-    messages: [{ role: 'user', content: message }]
+    messages: [
+      { role: 'system', content: 'Be precise, concise and organized' },
+      { role: 'user', content: message }
+    ]
   });
 
   return formatPerplexityResponse(response);

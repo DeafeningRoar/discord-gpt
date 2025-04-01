@@ -59,7 +59,11 @@ module.exports = ({ discord }) => {
       const image = interaction.options.get('image')?.attachment?.url;
       const commandHandler = getCommandHandler(command, { isOwner, isAdmin });
 
-      if (!commandHandler) return;
+      if (!commandHandler) {
+        await interaction.reply('Interaction not allowed');
+        return;
+      }
+
       const user = interaction.member?.nickname ?? interaction.user.displayName;
       console.log(new Date().toISOString(), '- Processing Interaction by User:', {
         user,
