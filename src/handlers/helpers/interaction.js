@@ -53,15 +53,7 @@ const handleInteractionReply = async (interaction, user, query, response) => {
         title: formattedResponse.length > 1 ? `:thread: 1 / ${formattedResponse.length}` : undefined,
         description: formattedResponse[0]
       }
-    ],
-    files: interaction.img
-      ? [
-          {
-            attachment: interaction.img,
-            name: 'user-image.png'
-          }
-        ]
-      : undefined
+    ]
   });
 
   if (formattedResponse.length > 1) {
