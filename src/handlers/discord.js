@@ -4,7 +4,7 @@ const { Emitter } = require('../services');
 const { EVENTS } = require('../config/constants');
 const { getCommandHandler } = require('../services/helpers/discord-commands');
 const Discord = require('../services/discord');
-const { getFormattedMessage, getUserTypes, hideLinkEmbeds } = require('./helpers');
+const { getFormattedMessage, getUserTypes } = require('./helpers');
 const { handleResponseLoading, handleInteractionReply } = require('./helpers/interaction');
 
 /**
@@ -84,14 +84,12 @@ module.exports = ({ discord }) => {
 
         clearInterval(interval);
 
-        const responseMessage = hideLinkEmbeds(response);
-
         console.log(new Date().toISOString(), '- OpenAI Interaction Response:', {
           user,
-          responseLength: responseMessage.length
+          responseLength: response.length
         });
 
-        await handleInteractionReply(interaction, user, content, responseMessage);
+        await handleInteractionReply(interaction, user, content, response);
       } catch (err) {
         clearInterval(interval);
         throw err;
