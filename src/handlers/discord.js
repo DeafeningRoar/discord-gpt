@@ -1,9 +1,8 @@
 const { Message, Interaction } = require('discord.js');
 
-const { Emitter } = require('../services');
+const { Emitter, Discord, Cache } = require('../services');
 const { EVENTS } = require('../config/constants');
 const { getCommandHandler } = require('../services/helpers/discord-commands');
-const Discord = require('../services/discord');
 const { getFormattedMessage, getUserTypes } = require('./helpers');
 const { handleResponseLoading, handleInteractionReply } = require('./helpers/interaction');
 
@@ -65,6 +64,7 @@ module.exports = ({ discord }) => {
       }
 
       const user = interaction.member?.nickname ?? interaction.user.displayName;
+      const guildId = interaction.guildId || interaction.user?.id;
       console.log(new Date().toISOString(), '- Processing Interaction by User:', {
         user,
         guildName: interaction?.guild?.name || null,
@@ -84,9 +84,15 @@ module.exports = ({ discord }) => {
 
         interval = await handleResponseLoading(interaction, user, content, image);
 
-        const response = await commandHandler(interaction, { isOwner, isAdmin });
+        const previousResponseId = guildId ? Cache.getCache(guildId) : null;
+
+        const { id, response } = await commandHandler(interaction, { previousResponseId, user });
 
         clearInterval(interval);
+
+        if (guildId) {
+          Cache.setCache(guildId, id, 300);
+        }
 
         console.log(new Date().toISOString(), '- OpenAI Interaction Response:', {
           user,

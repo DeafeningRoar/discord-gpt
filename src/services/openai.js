@@ -38,6 +38,7 @@ const formatPerplexityResponse = response => {
 
 const webQuery = async message => {
   console.log(new Date().toISOString(), '- Processing message with', MODELS.PerplexityAI.SONAR);
+
   const response = await perplexityai.chat.completions.create({
     model: MODELS.PerplexityAI.SONAR,
     messages: [
@@ -49,11 +50,19 @@ const webQuery = async message => {
   return formatPerplexityResponse(response);
 };
 
-const textQuery = async (message, img) => {
+const textQuery = async (message, img, { user, previousResponseId }) => {
   console.log(new Date().toISOString(), '- Processing message with', MODELS.OpenAI.TEXT_MODEL);
+
   const response = await openai.responses.create({
     model: MODELS.OpenAI.TEXT_MODEL,
+    previous_response_id: previousResponseId,
     input: [
+      {
+        role: 'system',
+        content:
+          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation.'
+      },
+      { role: 'system', content: `Message sent by user: ${user}` },
       {
         role: 'user',
         content: [{ type: 'input_text', text: message }, ...(img ? [{ type: 'input_image', image_url: img }] : [])]

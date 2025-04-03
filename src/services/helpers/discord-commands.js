@@ -11,7 +11,7 @@ const COMMANDS_LIST = {
  * @param {'web'|'text'} type
  * @returns
  */
-async function askGPT(message, type) {
+async function askGPT(message, type, { user, previousResponseId }) {
   try {
     const OpenAIQueryTypes = {
       web: OpenAI.webQuery,
@@ -20,24 +20,24 @@ async function askGPT(message, type) {
 
     const OpenAIQuery = OpenAIQueryTypes[type];
 
-    const response = await OpenAIQuery(message.content, message.img);
-    const { choices, output_text } = response;
+    const response = await OpenAIQuery(message.content, message.img, { user, previousResponseId });
+    const { id, choices, output_text } = response;
 
     const openAIResponse = choices ? choices[0].message.content : output_text;
 
-    return openAIResponse;
+    return { id, response: openAIResponse };
   } catch (error) {
     console.log('Error querying OpenAI:', error);
     return false;
   }
 }
 
-async function askGPTWeb(message) {
-  return askGPT(message, 'web');
+async function askGPTWeb(message, config) {
+  return askGPT(message, 'web', config);
 }
 
-async function askGPTText(message) {
-  return askGPT(message, 'text');
+async function askGPTText(message, config) {
+  return askGPT(message, 'text', config);
 }
 
 const COMMAND_HANDLERS = {
