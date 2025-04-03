@@ -43,6 +43,12 @@ const webQuery = async message => {
     model: MODELS.PerplexityAI.SONAR,
     messages: [
       { role: 'system', content: 'Be precise, concise and organized' },
+      {
+        role: 'system',
+        content:
+          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate.'
+      },
+      { role: 'system', content: `Message sent by user: ${user}` },
       { role: 'user', content: message }
     ]
   });
