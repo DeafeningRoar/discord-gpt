@@ -6,15 +6,13 @@ if (process.env.NODE_ENV !== 'production') {
 import { Discord, Emitter, logger } from './services';
 import { FIVE_MINUTES_MS, EVENTS } from './config/constants';
 import { sleep } from './utils';
-import { discordHandlers } from './handlers';
+import handlers from './handlers';
 
 async function start(): Promise<void> {
   try {
     const discord = new Discord();
 
-    discordHandlers({ discord });
-
-    /******* Error Event Listeners *******/
+    handlers({ discord });
 
     await discord.initialize();
   } catch (error) {

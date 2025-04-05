@@ -1,3 +1,9 @@
-import discordHandlers from './discord';
+import type { Discord } from '../services';
 
-export { discordHandlers };
+import discord from './discord';
+import openai from './openai';
+
+export default ({ discord: discordInstance }: { discord: Discord }) => {
+  discord({ discord: discordInstance });
+  openai();
+};

@@ -45,7 +45,7 @@ const formatPerplexityResponse = (response: PerplexityResponse) => {
   return response;
 };
 
-const webQuery = async (message: string, { user }: { user: string | undefined }) => {
+const webQuery = async (message: string, { user }: { user: string }) => {
   logger.log('Processing message with', MODELS.PerplexityAI.SONAR);
 
   const response = (await perplexityai.chat.completions.create({
@@ -67,7 +67,7 @@ const webQuery = async (message: string, { user }: { user: string | undefined })
 
 const textQuery = async (
   message: string,
-  { img, user, previousResponseId }: { img?: string; user: string; previousResponseId?: string }
+  { img, user, previousResponseId }: { user: string; img?: string; previousResponseId?: string }
 ) => {
   logger.log('Processing message with', MODELS.OpenAI.TEXT_MODEL);
 
