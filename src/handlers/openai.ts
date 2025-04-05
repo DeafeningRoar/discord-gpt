@@ -19,7 +19,6 @@ const handler = () => {
   Emitter.on(
     OPENAI_EVENTS.OPENAI_TEXT_QUERY,
     async ({ interaction, content, user, guildId, image }: TextQueryParams) => {
-      console.log(interaction);
       let interval;
 
       try {
