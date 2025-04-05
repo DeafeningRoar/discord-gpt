@@ -13,8 +13,4 @@ const EVENTS = {
   PROCESS_ERROR: 'ProcessError'
 };
 
-module.exports = {
-  FIVE_MINUTES_MS,
-  DISCORD_ACTIONS,
-  EVENTS
-};
+export { FIVE_MINUTES_MS, DISCORD_ACTIONS, EVENTS };

@@ -2,10 +2,11 @@
   "name": "discord-gpt",
   "version": "0.0.1",
   "description": "Discord ChatGPT bot",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "build": "tsc",
+    "start": "npm run build && node dist/index.js",
+    "dev": "nodemon -w src --exec npm run start -e ts"
   },
   "author": "Felipe Saa Echavarría",
   "license": "ISC",
@@ -16,6 +17,7 @@
     "openai": "^4.89.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "typescript": "^5.8.3"
   }
 }
