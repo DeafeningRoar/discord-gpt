@@ -1,8 +1,12 @@
-const { sleep } = require('../../utils');
-const { DISCORD_MAX_LENGTH } = require('./');
-const { splitText } = require('./splitText');
+import type { DiscordInteraction } from '../../types';
 
-const handleResponseLoading = async (interaction, user, query, img) => {
+import { EmbedType } from 'discord.js';
+
+import { sleep } from '../../utils';
+import { splitText } from './split-text';
+import { DISCORD_MAX_LENGTH } from './discord';
+
+const handleResponseLoading = async (interaction: DiscordInteraction, user: string, query: string, img?: string) => {
   const WAIT_TIME = 850;
   const resultMessage = `**${user}**: ${query}`;
   const files = img
@@ -31,7 +35,7 @@ const handleResponseLoading = async (interaction, user, query, img) => {
   return interval;
 };
 
-const formatResponse = response => {
+const formatResponse = (response: string): string[] => {
   let responseMessages = [];
   if (response.length > DISCORD_MAX_LENGTH) {
     responseMessages = splitText(response, DISCORD_MAX_LENGTH);
@@ -42,14 +46,19 @@ const formatResponse = response => {
   return responseMessages;
 };
 
-const handleInteractionReply = async (interaction, user, query, response) => {
+const handleInteractionReply = async (
+  interaction: DiscordInteraction,
+  user: string,
+  query: string,
+  response: string
+) => {
   const formattedResponse = formatResponse(response);
 
   let interactionReply = await interaction.editReply({
     content: `**${user}**: ${query}`,
     embeds: [
       {
-        type: 'rich',
+        type: EmbedType.Rich,
         title: formattedResponse.length > 1 ? `:thread: 1 / ${formattedResponse.length}` : undefined,
         description: formattedResponse[0]
       }
@@ -62,7 +71,7 @@ const handleInteractionReply = async (interaction, user, query, response) => {
       interactionReply = await interactionReply.reply({
         embeds: [
           {
-            type: 'rich',
+            type: EmbedType.Rich,
             title: `:thread: ${i + 1} / ${formattedResponse.length}`,
             description: formattedResponse[i]
           }
@@ -72,8 +81,4 @@ const handleInteractionReply = async (interaction, user, query, response) => {
   }
 };
 
-module.exports = {
-  handleResponseLoading,
-  formatResponse,
-  handleInteractionReply
-};
+export { handleResponseLoading, formatResponse, handleInteractionReply };

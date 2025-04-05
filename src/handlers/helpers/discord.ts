@@ -1,6 +1,9 @@
-const { hideLinkEmbed, PermissionsBitField, PermissionFlagsBits } = require('discord.js');
+import type { User, GuildMember, APIInteractionGuildMember } from 'discord.js';
+import type { DiscordInteraction } from '../../types';
 
-const getFormattedMessage = message => {
+import { hideLinkEmbed, PermissionsBitField, PermissionFlagsBits } from 'discord.js';
+
+const getFormattedMessage = (message: DiscordInteraction) => {
   const [command, ...rest] = message.content.split(' ');
 
   return {
@@ -9,7 +12,7 @@ const getFormattedMessage = message => {
   };
 };
 
-const hideLinkEmbeds = message => {
+const hideLinkEmbeds = (message: string) => {
   const result = message.replaceAll(/(http.*)/gi, substring => {
     const embedSafe = hideLinkEmbed(substring.replaceAll(')', '').replaceAll(' ', ''));
     const parenthesisCount = substring.match(/\)/gi)?.length || 0;
@@ -20,9 +23,9 @@ const hideLinkEmbeds = message => {
   return result;
 };
 
-const getUserTypes = (user, member) => {
+const getUserTypes = (user: User, member: GuildMember | APIInteractionGuildMember | null) => {
   const permissions = new PermissionsBitField(BigInt(PermissionFlagsBits.Administrator));
-  const isAdmin = member ? member.permissions.has(permissions) : false;
+  const isAdmin = member ? (member as GuildMember).permissions.has(permissions) : false;
   const isOwner = process.env.ADMIN_ID === user.id;
   const isBot = user.bot;
 
@@ -35,9 +38,4 @@ const getUserTypes = (user, member) => {
 
 const DISCORD_MAX_LENGTH = 4000;
 
-module.exports = {
-  DISCORD_MAX_LENGTH,
-  getUserTypes,
-  getFormattedMessage,
-  hideLinkEmbeds
-};
+export { DISCORD_MAX_LENGTH, getUserTypes, getFormattedMessage, hideLinkEmbeds };

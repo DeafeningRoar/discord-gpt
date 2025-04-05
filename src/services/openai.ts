@@ -1,4 +1,8 @@
+import type { ChatCompletion } from 'openai/resources/chat';
+import type { ResponseInputMessageContentList, Response } from 'openai/resources/responses/responses';
+
 import OpenAI from 'openai';
+import logger from './logger';
 
 const openai = new OpenAI();
 const perplexityai = new OpenAI({
@@ -16,11 +20,16 @@ const MODELS = {
   }
 };
 
-const formatPerplexityResponse = response => {
-  try {
-    const { citations } = response;
+type PerplexityResponse = ChatCompletion & {
+  citations: string[];
+};
 
-    response.choices[0].message.content = response.choices[0].message.content.replaceAll(
+const formatPerplexityResponse = (response: PerplexityResponse) => {
+  try {
+    if (!response?.choices?.[0]?.message.content) return response;
+
+    const { citations } = response;
+    response.choices[0].message.content = response.choices[0].message.content?.replaceAll(
       /\[(\d+)\]/gm,
       (substring, captureGroup) => {
         const citation = citations[Number(captureGroup) - 1];
@@ -28,18 +37,18 @@ const formatPerplexityResponse = response => {
       }
     );
   } catch (error) {
-    console.log(new Date().toISOString(), 'Error formatting Perplexity response', {
-      message: error.message
+    logger.error('Error formatting Perplexity response', {
+      message: (error as Error).message
     });
   }
 
   return response;
 };
 
-const webQuery = async message => {
-  console.log(new Date().toISOString(), '- Processing message with', MODELS.PerplexityAI.SONAR);
+const webQuery = async (message: string, { user }: { user: string }) => {
+  logger.log('Processing message with', MODELS.PerplexityAI.SONAR);
 
-  const response = await perplexityai.chat.completions.create({
+  const response = (await perplexityai.chat.completions.create({
     model: MODELS.PerplexityAI.SONAR,
     messages: [
       { role: 'system', content: 'Be precise, concise and organized' },
@@ -51,13 +60,22 @@ const webQuery = async message => {
       { role: 'system', content: `Message sent by user: ${user}` },
       { role: 'user', content: message }
     ]
-  });
+  })) as PerplexityResponse;
 
   return formatPerplexityResponse(response);
 };
 
-const textQuery = async (message, img, { user, previousResponseId }) => {
-  console.log(new Date().toISOString(), '- Processing message with', MODELS.OpenAI.TEXT_MODEL);
+const textQuery = async (
+  message: string,
+  { img, user, previousResponseId }: { user: string; img?: string; previousResponseId?: string }
+) => {
+  logger.log('Processing message with', MODELS.OpenAI.TEXT_MODEL);
+
+  const userContent: ResponseInputMessageContentList = [{ type: 'input_text', text: message }];
+
+  if (img) {
+    userContent.push({ type: 'input_image', image_url: img } as ResponseInputMessageContentList[0]);
+  }
 
   const response = await openai.responses.create({
     model: MODELS.OpenAI.TEXT_MODEL,
@@ -71,7 +89,7 @@ const textQuery = async (message, img, { user, previousResponseId }) => {
       { role: 'system', content: `Message sent by user: ${user}` },
       {
         role: 'user',
-        content: [{ type: 'input_text', text: message }, ...(img ? [{ type: 'input_image', image_url: img }] : [])]
+        content: userContent
       }
     ]
   });
@@ -79,4 +97,8 @@ const textQuery = async (message, img, { user, previousResponseId }) => {
   return response;
 };
 
-export { webQuery, textQuery };
+export type { PerplexityResponse, Response };
+export default {
+  webQuery,
+  textQuery
+};

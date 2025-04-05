@@ -13,8 +13,9 @@ const EVENTS = {
   PROCESS_ERROR: 'ProcessError'
 };
 
-module.exports = {
-  FIVE_MINUTES_MS,
-  DISCORD_ACTIONS,
-  EVENTS
+const OPENAI_EVENTS = {
+  OPENAI_TEXT_QUERY: 'OpenAITextQuery',
+  OPENAI_WEB_QUERY: 'OpenAIWebQuery'
 };
+
+export { FIVE_MINUTES_MS, DISCORD_ACTIONS, EVENTS, OPENAI_EVENTS };

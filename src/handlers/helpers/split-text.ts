@@ -1,4 +1,4 @@
-const splitText = (text, chunkSize, result = []) => {
+const splitText = (text: string, chunkSize: number, result: string[] = []) => {
   const sliced = text.slice(0, chunkSize);
 
   if (!text.slice(chunkSize).length) {
@@ -43,6 +43,4 @@ const splitText = (text, chunkSize, result = []) => {
   return splitText(sliced, chunkSize, result);
 };
 
-module.exports = {
-  splitText
-};
+export { splitText };
