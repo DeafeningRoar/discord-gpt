@@ -5,8 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node dist/index.js",
-    "dev": "nodemon -w src --exec npm run start -e ts"
+    "start": "node dist/index.js",
+    "dev": "nodemon -w src --exec \"npm run build && npm start\" -e ts"
   },
   "author": "Felipe Saa Echavarría",
   "license": "ISC",
