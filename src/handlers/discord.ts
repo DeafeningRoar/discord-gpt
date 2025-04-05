@@ -5,7 +5,7 @@ import type { DiscordInteraction } from '../types';
 import { Emitter, Cache, logger } from '../services';
 import { EVENTS } from '../config/constants';
 import { getCommandHandler } from '../services/helpers/discord-commands';
-import { getFormattedMessage, getUserTypes } from './helpers/discord';
+import { getUserTypes } from './helpers/discord';
 import { handleResponseLoading, handleInteractionReply } from './helpers/openai-interaction';
 
 const handler = ({ discord }: { discord: Discord }) => {
@@ -50,7 +50,7 @@ const handler = ({ discord }: { discord: Discord }) => {
 
     const user = (interaction.member as GuildMember)?.nickname ?? interaction.user.displayName;
     const guildId = interaction.guildId || interaction.user?.id;
-    logger.log(new Date().toISOString(), '- Processing Interaction by User:', {
+    logger.log('Processing Interaction by User:', {
       user,
       guildName: interaction?.guild?.name || null,
       isDirectMessage: !interaction.guildId,
@@ -82,7 +82,7 @@ const handler = ({ discord }: { discord: Discord }) => {
         Cache.setCache(guildId, id, 300);
       }
 
-      logger.log(new Date().toISOString(), '- OpenAI Interaction Response:', {
+      logger.log('OpenAI Interaction Response:', {
         user,
         responseLength: response.length
       });

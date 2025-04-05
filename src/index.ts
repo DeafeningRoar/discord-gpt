@@ -44,7 +44,7 @@ Emitter.on(EVENTS.ERROR, err => {
     stack: err.stack
   };
 
-  logger.error(new Date().toISOString(), '- Caught critical error in events:', JSON.stringify(errorData, null, 2));
+  logger.error('Caught critical error in events:', JSON.stringify(errorData, null, 2));
 });
 
 start();
