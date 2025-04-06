@@ -22,7 +22,7 @@ async function start(): Promise<void> {
   }
 }
 
-Emitter.on(EVENTS.DISCORD_CONNECTION_ERROR, async discordInstance => {
+Emitter.on(EVENTS.DISCORD_CONNECTION_ERROR, async (discordInstance) => {
   logger.log(`Reinitializing Discord in ${FIVE_MINUTES_MS / 5}ms`);
   await sleep(FIVE_MINUTES_MS / 5);
   logger.log('Reinitializing Discord connection');
@@ -35,11 +35,11 @@ Emitter.on(EVENTS.PROCESS_ERROR, async () => {
   await start();
 });
 
-Emitter.on(EVENTS.ERROR, err => {
+Emitter.on(EVENTS.ERROR, (err) => {
   const errorData = {
     data: err?.response?.data || 'none',
     message: err.message,
-    stack: err.stack
+    stack: err.stack,
   };
 
   logger.error('Caught critical error in events:', JSON.stringify(errorData, null, 2));

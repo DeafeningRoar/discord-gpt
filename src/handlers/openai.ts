@@ -5,7 +5,7 @@ import { OPENAI_EVENTS } from '../config/constants';
 import { OpenAI } from './helpers/discord-commands';
 import { handleResponseLoading, handleInteractionReply } from './helpers/openai-interaction';
 
-type TextQueryParams = {
+interface TextQueryParams {
   interaction: DiscordInteraction;
   content: string;
   user: string;
@@ -36,7 +36,7 @@ const handler = () => {
 
         logger.log('OpenAI Text Interaction Response:', {
           user,
-          responseLength: response.length
+          responseLength: response.length,
         });
 
         await handleInteractionReply(interaction, user, content, response);
@@ -45,7 +45,7 @@ const handler = () => {
 
         throw err;
       }
-    }
+    },
   );
 
   Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async ({ interaction, user, content }: WebQueryParams) => {
@@ -60,7 +60,7 @@ const handler = () => {
 
       logger.log('OpenAI Web Interaction Response:', {
         user,
-        responseLength: response.length
+        responseLength: response.length,
       });
 
       await handleInteractionReply(interaction, user, content, response);

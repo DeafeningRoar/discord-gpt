@@ -7,7 +7,7 @@ const logger = {
   },
   error: (...args: unknown[]) => {
     console.error(new Date().toISOString(), '-', ...args);
-  }
+  },
 };
 
 export default logger;

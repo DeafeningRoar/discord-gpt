@@ -52,7 +52,7 @@ const handler = ({ discord }: { discord: Discord }) => {
       command,
       queryLength: content.length,
       hasImage: !!image,
-      content
+      content,
     });
 
     const eventType = getDiscordEventType(command, { isOwner, isAdmin });

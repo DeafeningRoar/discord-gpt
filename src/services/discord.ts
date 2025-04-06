@@ -14,12 +14,12 @@ class Discord {
   subscribe(): void {
     if (!this.client) return;
 
-    this.client.on('interactionCreate', interaction => {
+    this.client.on('interactionCreate', (interaction) => {
       if (interaction.user.bot) return;
       emitter.emit(EVENTS.DISCORD_INTERACTION_CREATED, { interaction, client: this.client });
     });
 
-    this.client.on('messageCreate', message => {
+    this.client.on('messageCreate', (message) => {
       if (message.author.bot) return;
       emitter.emit(EVENTS.DISCORD_MESSAGE_CREATED, { message, client: this.client });
     });
@@ -30,7 +30,7 @@ class Discord {
   async login(): Promise<void> {
     logger.log('Logging in to Discord');
     this.client = new Client({
-      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
+      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
     });
 
     await this.client.login(process.env.DISCORD_TOKEN);

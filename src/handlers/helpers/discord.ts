@@ -8,12 +8,12 @@ const getFormattedMessage = (message: DiscordInteraction) => {
 
   return {
     command: command.replace('/', ''),
-    content: rest.join(' ')
+    content: rest.join(' '),
   };
 };
 
 const hideLinkEmbeds = (message: string) => {
-  const result = message.replaceAll(/(http.*)/gi, substring => {
+  const result = message.replaceAll(/(http.*)/gi, (substring) => {
     const embedSafe = hideLinkEmbed(substring.replaceAll(')', '').replaceAll(' ', ''));
     const parenthesisCount = substring.match(/\)/gi)?.length || 0;
 
@@ -32,7 +32,7 @@ const getUserTypes = (user: User, member: GuildMember | APIInteractionGuildMembe
   return {
     isOwner,
     isAdmin,
-    isBot
+    isBot,
   };
 };
 

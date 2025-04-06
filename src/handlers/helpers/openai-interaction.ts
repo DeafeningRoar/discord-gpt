@@ -13,21 +13,21 @@ const handleResponseLoading = async (interaction: DiscordInteraction, user: stri
     ? [
         {
           attachment: img,
-          name: 'user-image.png'
-        }
+          name: 'user-image.png',
+        },
       ]
     : undefined;
 
   await interaction.reply({
     content: resultMessage + '\n。',
-    files
+    files,
   });
 
   let dots = 2;
   const interval = setInterval(async () => {
     if (dots > 3) dots = 1;
     await interaction.editReply({
-      content: `${resultMessage}\n` + '。'.repeat(dots)
+      content: `${resultMessage}\n` + '。'.repeat(dots),
     });
     dots++;
   }, WAIT_TIME);
@@ -50,7 +50,7 @@ const handleInteractionReply = async (
   interaction: DiscordInteraction,
   user: string,
   query: string,
-  response: string
+  response: string,
 ) => {
   const formattedResponse = formatResponse(response);
 
@@ -60,9 +60,9 @@ const handleInteractionReply = async (
       {
         type: EmbedType.Rich,
         title: formattedResponse.length > 1 ? `:thread: 1 / ${formattedResponse.length}` : undefined,
-        description: formattedResponse[0]
-      }
-    ]
+        description: formattedResponse[0],
+      },
+    ],
   });
 
   if (formattedResponse.length > 1) {
@@ -73,9 +73,9 @@ const handleInteractionReply = async (
           {
             type: EmbedType.Rich,
             title: `:thread: ${i + 1} / ${formattedResponse.length}`,
-            description: formattedResponse[i]
-          }
-        ]
+            description: formattedResponse[i],
+          },
+        ],
       });
     }
   }

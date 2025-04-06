@@ -1,14 +1,14 @@
 {
   "name": "discord-gpt",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Discord ChatGPT bot",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "nodemon -w src --exec \"npm run build && npm start\" -e ts",
-    "lint": "eslint src/ --ext .ts",
-    "lint:fix": "eslint src/ --ext .ts --fix"
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix"
   },
   "author": "Felipe Saa Echavarría",
   "license": "ISC",
@@ -20,9 +20,17 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",
+    "@stylistic/eslint-plugin": "^4.2.0",
     "eslint": "^9.24.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.0",
     "nodemon": "^3.1.9",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.29.0"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "eslint"
+    ]
   }
 }

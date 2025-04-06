@@ -6,18 +6,18 @@ import { OPENAI_EVENTS } from '../../config/constants';
 
 const COMMANDS_LIST = {
   GPT: 'gpt',
-  GPT_WEB: 'gptweb'
+  GPT_WEB: 'gptweb',
 };
 
 async function askGPT(
   message: DiscordInteraction,
   type: 'web' | 'text',
-  { user, previousResponseId }: { user: string; previousResponseId?: string }
+  { user, previousResponseId }: { user: string; previousResponseId?: string },
 ): Promise<{ id: string; response: string }> {
   try {
     const OpenAIQueryTypes = {
       web: OpenAIService.webQuery,
-      text: OpenAIService.textQuery
+      text: OpenAIService.textQuery,
     };
 
     const OpenAIQuery = OpenAIQueryTypes[type];
@@ -49,15 +49,15 @@ async function askGPTText(message: DiscordInteraction, config: { user: string; p
 
 const EVENT_TYPES = {
   OWNER: {
-    [COMMANDS_LIST.GPT_WEB]: OPENAI_EVENTS.OPENAI_WEB_QUERY
+    [COMMANDS_LIST.GPT_WEB]: OPENAI_EVENTS.OPENAI_WEB_QUERY,
   },
   ADMIN: {
     [COMMANDS_LIST.GPT]: OPENAI_EVENTS.OPENAI_TEXT_QUERY,
-    [COMMANDS_LIST.GPT_WEB]: OPENAI_EVENTS.OPENAI_WEB_QUERY
+    [COMMANDS_LIST.GPT_WEB]: OPENAI_EVENTS.OPENAI_WEB_QUERY,
   },
   USER: {
-    [COMMANDS_LIST.GPT]: OPENAI_EVENTS.OPENAI_TEXT_QUERY
-  }
+    [COMMANDS_LIST.GPT]: OPENAI_EVENTS.OPENAI_TEXT_QUERY,
+  },
 };
 
 const getAvailableEvents = ({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolean }) => {
@@ -65,14 +65,14 @@ const getAvailableEvents = ({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: b
     return {
       ...EVENT_TYPES.USER,
       ...EVENT_TYPES.ADMIN,
-      ...EVENT_TYPES.OWNER
+      ...EVENT_TYPES.OWNER,
     };
   }
 
   if (isAdmin) {
     return {
       ...EVENT_TYPES.USER,
-      ...EVENT_TYPES.ADMIN
+      ...EVENT_TYPES.ADMIN,
     };
   }
 
@@ -92,7 +92,7 @@ const getDiscordEventType = (command: string, userType: { isAdmin: boolean; isOw
 
 const OpenAI = {
   askGPTText,
-  askGPTWeb
+  askGPTWeb,
 };
 
 export { getDiscordEventType, OpenAI };

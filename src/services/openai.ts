@@ -7,17 +7,17 @@ import logger from './logger';
 const openai = new OpenAI();
 const perplexityai = new OpenAI({
   baseURL: 'https://api.perplexity.ai',
-  apiKey: process.env.PERPLEXITY_API_KEY
+  apiKey: process.env.PERPLEXITY_API_KEY,
 });
 
 const MODELS = {
   OpenAI: {
     SEARCH_PREVIEW_MODEL: 'gpt-4o-mini-search-preview',
-    TEXT_MODEL: 'gpt-4o-mini'
+    TEXT_MODEL: 'gpt-4o-mini',
   },
   PerplexityAI: {
-    SONAR: 'sonar'
-  }
+    SONAR: 'sonar',
+  },
 };
 
 type PerplexityResponse = ChatCompletion & {
@@ -34,11 +34,11 @@ const formatPerplexityResponse = (response: PerplexityResponse) => {
       (substring, captureGroup) => {
         const citation = citations[Number(captureGroup) - 1];
         return `[${substring}](${citation})`;
-      }
+      },
     );
   } catch (error) {
     logger.error('Error formatting Perplexity response', {
-      message: (error as Error).message
+      message: (error as Error).message,
     });
   }
 
@@ -55,11 +55,11 @@ const webQuery = async (message: string, { user }: { user: string }) => {
       {
         role: 'system',
         content:
-          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate.'
+          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate.',
       },
       { role: 'system', content: `Message sent by user: ${user}` },
-      { role: 'user', content: message }
-    ]
+      { role: 'user', content: message },
+    ],
   })) as PerplexityResponse;
 
   return formatPerplexityResponse(response);
@@ -67,7 +67,7 @@ const webQuery = async (message: string, { user }: { user: string }) => {
 
 const textQuery = async (
   message: string,
-  { img, user, previousResponseId }: { user: string; img?: string; previousResponseId?: string }
+  { img, user, previousResponseId }: { user: string; img?: string; previousResponseId?: string },
 ) => {
   logger.log('Processing message with', MODELS.OpenAI.TEXT_MODEL);
 
@@ -84,14 +84,14 @@ const textQuery = async (
       {
         role: 'system',
         content:
-          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation.'
+          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation.',
       },
       { role: 'system', content: `Message sent by user: ${user}` },
       {
         role: 'user',
-        content: userContent
-      }
-    ]
+        content: userContent,
+      },
+    ],
   });
 
   return response;
@@ -100,5 +100,5 @@ const textQuery = async (
 export type { PerplexityResponse, Response };
 export default {
   webQuery,
-  textQuery
+  textQuery,
 };
