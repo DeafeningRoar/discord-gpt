@@ -1,27 +1,17 @@
-import { ROLE_AVAILABLE_COMMANDS } from '../../../config/role-commands';
+import { getCommandsByRole, COMMANDS_LIST } from '../../../config/role-commands';
 
 const getAvailableEvents = ({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolean }) => {
-  if (isOwner) {
-    return {
-      ...ROLE_AVAILABLE_COMMANDS.USER,
-      ...ROLE_AVAILABLE_COMMANDS.ADMIN,
-      ...ROLE_AVAILABLE_COMMANDS.OWNER,
-    };
-  }
+  const availableCommands = getCommandsByRole();
 
-  if (isAdmin) {
-    return {
-      ...ROLE_AVAILABLE_COMMANDS.USER,
-      ...ROLE_AVAILABLE_COMMANDS.ADMIN,
-    };
-  }
+  if (isOwner) return availableCommands.owner;
+  if (isAdmin) return availableCommands.admin;
 
-  return ROLE_AVAILABLE_COMMANDS.USER;
+  return availableCommands.user;
 };
 
 const getDiscordEventType = (command: string, userType: { isAdmin: boolean; isOwner: boolean }) => {
   const eventsList = getAvailableEvents(userType);
-  const event = eventsList[command];
+  const event = eventsList[command as COMMANDS_LIST];
 
   if (!event) {
     return;
