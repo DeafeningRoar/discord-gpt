@@ -1,8 +1,21 @@
-import type { DiscordInteraction } from '../../types';
-import type { PerplexityResponse, Response } from '../../services/openai';
+import type { DiscordInteraction, PerplexityResponse } from '../../types';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat';
+import type { Response } from '../../services/openai';
 
 import { OpenAI as OpenAIService, logger } from '../../services';
 import { OPENAI_EVENTS } from '../../config/constants';
+
+interface IAskGPTConfig {
+  user: string;
+  previousResponseId?: string;
+  chatHistory?: ChatCompletionMessageParam[];
+}
+
+interface IAskGPTResponse {
+  id: string;
+  response: string;
+  citations?: string[];
+}
 
 const COMMANDS_LIST = {
   GPT: 'gpt',
@@ -12,8 +25,8 @@ const COMMANDS_LIST = {
 async function askGPT(
   message: DiscordInteraction,
   type: 'web' | 'text',
-  { user, previousResponseId }: { user: string; previousResponseId?: string },
-): Promise<{ id: string; response: string }> {
+  { user, previousResponseId, chatHistory }: IAskGPTConfig,
+): Promise<IAskGPTResponse> {
   try {
     const OpenAIQueryTypes = {
       web: OpenAIService.webQuery,
@@ -22,16 +35,19 @@ async function askGPT(
 
     const OpenAIQuery = OpenAIQueryTypes[type];
 
-    const response = await OpenAIQuery(message.content, { img: message.img, user, previousResponseId });
+    const response = await OpenAIQuery(message.content, { img: message.img, user, previousResponseId, chatHistory });
 
     let openAIResponse: string;
+    let citations: string[] | undefined;
     if (type === 'text') {
       openAIResponse = (response as Response).output_text;
     } else {
-      openAIResponse = (response as PerplexityResponse).choices[0].message.content as string;
+      const { choices, citations: ct } = response as PerplexityResponse;
+      openAIResponse = choices[0].message.content as string;
+      citations = ct;
     }
 
-    return { id: response.id, response: openAIResponse };
+    return { id: response.id, response: openAIResponse, citations };
   } catch (error) {
     logger.log('Error querying OpenAI:', error);
 
@@ -39,11 +55,11 @@ async function askGPT(
   }
 }
 
-async function askGPTWeb(message: DiscordInteraction, config: { user: string }) {
+async function askGPTWeb(message: DiscordInteraction, config: Pick<IAskGPTConfig, 'user' | 'chatHistory'>) {
   return askGPT(message, 'web', config);
 }
 
-async function askGPTText(message: DiscordInteraction, config: { user: string; previousResponseId?: string }) {
+async function askGPTText(message: DiscordInteraction, config: Pick<IAskGPTConfig, 'user' | 'previousResponseId'>) {
   return askGPT(message, 'text', config);
 }
 

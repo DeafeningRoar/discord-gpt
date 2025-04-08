@@ -1,5 +1,5 @@
-import type { ChatCompletion } from 'openai/resources/chat';
 import type { ResponseInputMessageContentList, Response } from 'openai/resources/responses/responses';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
 import OpenAI from 'openai';
 import logger from './logger';
@@ -20,46 +20,28 @@ const MODELS = {
   },
 };
 
-type PerplexityResponse = ChatCompletion & {
-  citations: string[];
-};
-
-const formatPerplexityResponse = (response: PerplexityResponse) => {
-  try {
-    if (!response?.choices?.[0]?.message.content) return response;
-
-    const { citations } = response;
-    response.choices[0].message.content = response.choices[0].message.content?.replaceAll(
-      /\[(\d+)\]/gm,
-      (substring, captureGroup) => {
-        const citation = citations[Number(captureGroup) - 1];
-        return `[${substring}](${citation})`;
-      },
-    );
-  } catch (error) {
-    logger.error('Error formatting Perplexity response', {
-      message: (error as Error).message,
-    });
-  }
-
-  return response;
-};
-
-const webQuery = async (message: string, { user }: { user: string }) => {
+const webQuery = async (
+  message: string,
+  { user, chatHistory }: { user: string; chatHistory?: ChatCompletionMessageParam[] },
+) => {
   logger.log('Processing message with', MODELS.PerplexityAI.SONAR);
 
-  const response = (await perplexityai.chat.completions.create({
+  const response = await perplexityai.chat.completions.create({
     model: MODELS.PerplexityAI.SONAR,
+    web_search_options: {
+      search_context_size: 'low',
+    },
     messages: [
       {
         role: 'system',
-        content: `Be precise, concise and organized. You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Message sent by user: ${user}`,
+        content: `Be precise, concise and organized. You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation. Message sent by user: ${user}`,
       },
+      ...(chatHistory || []),
       { role: 'user', content: message },
     ],
-  })) as PerplexityResponse;
+  });
 
-  return formatPerplexityResponse(response);
+  return response;
 };
 
 const textQuery = async (
@@ -92,7 +74,7 @@ const textQuery = async (
   return response;
 };
 
-export type { PerplexityResponse, Response };
+export type { Response };
 export default {
   webQuery,
   textQuery,

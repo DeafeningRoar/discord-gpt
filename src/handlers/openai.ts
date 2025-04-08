@@ -1,9 +1,11 @@
 import type { DiscordInteraction } from '../types';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
 import { Emitter, Cache, logger } from '../services';
 import { OPENAI_EVENTS } from '../config/constants';
 import { OpenAI } from './helpers/discord-commands';
 import { handleResponseLoading, handleInteractionReply } from './helpers/openai-interaction';
+import { embedCitations } from './helpers/response-formatters';
 
 interface TextQueryParams {
   interaction: DiscordInteraction;
@@ -11,9 +13,9 @@ interface TextQueryParams {
   user: string;
   guildId: string;
   image?: string;
-};
+}
 
-type WebQueryParams = Omit<TextQueryParams, 'image' | 'guildId'>;
+type WebQueryParams = Omit<TextQueryParams, 'image'>;
 
 const handler = () => {
   Emitter.on(
@@ -48,22 +50,33 @@ const handler = () => {
     },
   );
 
-  Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async ({ interaction, user, content }: WebQueryParams) => {
+  Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async ({ interaction, content, user, guildId }: WebQueryParams) => {
     let interval;
 
     try {
       interval = await handleResponseLoading(interaction, user, content);
 
-      const { response } = await OpenAI.askGPTWeb(interaction, { user });
+      const cached = Cache.getCache<string>(`web-${guildId}`);
+      const chatHistory: ChatCompletionMessageParam[] = cached ? JSON.parse(cached) : [];
+
+      console.log('Chat history:', chatHistory);
+      const { response, citations } = await OpenAI.askGPTWeb(interaction, { user, chatHistory });
 
       clearInterval(interval);
+
+      if (guildId) {
+        chatHistory.push({ role: 'user', content }, { role: 'assistant', content: response });
+        Cache.setCache(`web-${guildId}`, JSON.stringify(chatHistory), 300);
+      }
 
       logger.log('OpenAI Web Interaction Response:', {
         user,
         responseLength: response.length,
       });
 
-      await handleInteractionReply(interaction, user, content, response);
+      const formattedResponse = embedCitations(response, citations);
+
+      await handleInteractionReply(interaction, user, content, formattedResponse);
     } catch (err) {
       clearInterval(interval);
 
