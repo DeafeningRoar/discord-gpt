@@ -51,13 +51,10 @@ const webQuery = async (message: string, { user }: { user: string }) => {
   const response = (await perplexityai.chat.completions.create({
     model: MODELS.PerplexityAI.SONAR,
     messages: [
-      { role: 'system', content: 'Be precise, concise and organized' },
       {
         role: 'system',
-        content:
-          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate.',
+        content: `Be precise, concise and organized. You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Message sent by user: ${user}`,
       },
-      { role: 'system', content: `Message sent by user: ${user}` },
       { role: 'user', content: message },
     ],
   })) as PerplexityResponse;
@@ -83,10 +80,8 @@ const textQuery = async (
     input: [
       {
         role: 'system',
-        content:
-          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation.',
+        content: `You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation. Message sent by user: ${user}`,
       },
-      { role: 'system', content: `Message sent by user: ${user}` },
       {
         role: 'user',
         content: userContent,
