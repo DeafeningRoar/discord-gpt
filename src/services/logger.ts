@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const logger = {
   log: (...args: unknown[]) => {
     console.log(new Date().toISOString(), '-', ...args);

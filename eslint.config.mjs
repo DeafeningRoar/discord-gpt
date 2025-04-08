@@ -10,4 +10,9 @@ export default tseslint.config(
     semi: true,
     braceStyle: '1tbs',
   }),
+  {
+    rules: {
+      'no-console': 'error',
+    },
+  },
 );

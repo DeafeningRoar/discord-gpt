@@ -59,7 +59,6 @@ const handler = () => {
       const cached = Cache.getCache<string>(`web-${guildId}`);
       const chatHistory: ChatCompletionMessageParam[] = cached ? JSON.parse(cached) : [];
 
-      console.log('Chat history:', chatHistory);
       const { response, citations } = await OpenAI.askGPTWeb(interaction, { user, chatHistory });
 
       clearInterval(interval);
