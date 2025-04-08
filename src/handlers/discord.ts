@@ -4,7 +4,7 @@ import type { DiscordInteraction } from '../types';
 
 import { Emitter, logger } from '../services';
 import { EVENTS } from '../config/constants';
-import { getDiscordEventType } from './helpers/discord-commands';
+import { DiscordCommands } from './helpers/commands';
 import { getUserTypes } from './helpers/discord';
 
 const handler = ({ discord }: { discord: Discord }) => {
@@ -55,7 +55,7 @@ const handler = ({ discord }: { discord: Discord }) => {
       content,
     });
 
-    const eventType = getDiscordEventType(command, { isOwner, isAdmin });
+    const eventType = DiscordCommands.getDiscordEventType(command, { isOwner, isAdmin });
 
     if (!eventType) {
       await interaction.reply('Interaction not allowed');

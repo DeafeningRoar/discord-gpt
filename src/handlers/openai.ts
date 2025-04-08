@@ -3,7 +3,7 @@ import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
 import { Emitter, Cache, logger } from '../services';
 import { OPENAI_EVENTS } from '../config/constants';
-import { OpenAI } from './helpers/discord-commands';
+import { OpenAICommands } from './helpers/commands';
 import { handleResponseLoading, handleInteractionReply } from './helpers/openai-interaction';
 import { embedCitations } from './helpers/response-formatters';
 
@@ -28,7 +28,7 @@ const handler = () => {
 
         const previousResponseId = guildId ? Cache.getCache<string>(guildId) : undefined;
 
-        const { id, response } = await OpenAI.askGPTText(interaction, { user, previousResponseId });
+        const { id, response } = await OpenAICommands.askGPTText(interaction, { user, previousResponseId });
 
         clearInterval(interval);
 
@@ -59,7 +59,7 @@ const handler = () => {
       const cached = Cache.getCache<string>(`web-${guildId}`);
       const chatHistory: ChatCompletionMessageParam[] = cached ? JSON.parse(cached) : [];
 
-      const { response, citations } = await OpenAI.askGPTWeb(interaction, { user, chatHistory });
+      const { response, citations } = await OpenAICommands.askGPTWeb(interaction, { user, chatHistory });
 
       clearInterval(interval);
 
