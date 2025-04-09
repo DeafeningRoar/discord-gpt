@@ -1,8 +1,17 @@
-import type { ResponseInputMessageContentList, Response } from 'openai/resources/responses/responses';
+import type { ResponseInputMessageContentList, Response, ResponseInput } from 'openai/resources/responses/responses';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
 import OpenAI from 'openai';
 import logger from './logger';
+
+interface TextQueryConfig {
+  user: string;
+  img?: string;
+  previousResponseId?: string;
+  chatHistory?: ChatCompletionMessageParam[];
+}
+
+type WebQueryConfig = Pick<TextQueryConfig, 'user' | 'chatHistory'>;
 
 const openai = new OpenAI();
 const perplexityai = new OpenAI({
@@ -20,11 +29,8 @@ const MODELS = {
   },
 };
 
-const webQuery = async (
-  message: string,
-  { user, chatHistory }: { user: string; chatHistory?: ChatCompletionMessageParam[] },
-) => {
-  logger.log('Processing message with', MODELS.PerplexityAI.SONAR);
+const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) => {
+  logger.log('Processing message with model:', MODELS.PerplexityAI.SONAR);
 
   const response = await perplexityai.chat.completions.create({
     model: MODELS.PerplexityAI.SONAR,
@@ -44,11 +50,8 @@ const webQuery = async (
   return response;
 };
 
-const textQuery = async (
-  message: string,
-  { img, user, previousResponseId }: { user: string; img?: string; previousResponseId?: string },
-) => {
-  logger.log('Processing message with', MODELS.OpenAI.TEXT_MODEL);
+const textQuery = async (message: string, { img, user, chatHistory }: TextQueryConfig) => {
+  logger.log('Processing message with model:', MODELS.OpenAI.TEXT_MODEL);
 
   const userContent: ResponseInputMessageContentList = [{ type: 'input_text', text: message }];
 
@@ -58,12 +61,13 @@ const textQuery = async (
 
   const response = await openai.responses.create({
     model: MODELS.OpenAI.TEXT_MODEL,
-    previous_response_id: previousResponseId,
+    // previous_response_id: previousResponseId,
     input: [
       {
         role: 'system',
         content: `You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation. Message sent by user: ${user}`,
       },
+      ...((chatHistory || []) as unknown as ResponseInput),
       {
         role: 'user',
         content: userContent,
