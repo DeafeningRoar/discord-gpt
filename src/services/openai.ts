@@ -47,6 +47,11 @@ const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) 
     ],
   });
 
+  logger.log('Metadata from model response', {
+    model: MODELS.PerplexityAI.SONAR,
+    usage: response.usage,
+  });
+
   return response;
 };
 
@@ -73,6 +78,11 @@ const textQuery = async (message: string, { img, user, chatHistory }: TextQueryC
         content: userContent,
       },
     ],
+  });
+
+  logger.log('Metadata from model response', {
+    model: MODELS.OpenAI.TEXT_MODEL,
+    usage: response.usage,
   });
 
   return response;
