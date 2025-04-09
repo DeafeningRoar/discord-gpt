@@ -9,6 +9,7 @@ export default tseslint.config(
   stylistic.configs.customize({
     semi: true,
     braceStyle: '1tbs',
+    quoteProps: 'as-needed',
   }),
   {
     rules: {

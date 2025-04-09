@@ -1,10 +1,18 @@
 import type { DiscordInteraction } from '../../types';
+import type { ResponseInput, ResponseInputText } from 'openai/resources/responses/responses';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
 import { EmbedType } from 'discord.js';
 
 import { sleep } from '../../utils';
 import { splitText } from './split-text';
 import { DISCORD_MAX_LENGTH } from './discord';
+import { Cache } from '../../services';
+
+type ChatHistoryItem = Pick<ChatCompletionMessageParam, 'role'> & {
+  content: ResponseInputText[] | string;
+  timestamp: number;
+};
 
 const handleResponseLoading = async (interaction: DiscordInteraction, user: string, query: string, img?: string) => {
   const WAIT_TIME = 850;
@@ -81,4 +89,66 @@ const handleInteractionReply = async (
   }
 };
 
-export { handleResponseLoading, formatResponse, handleInteractionReply };
+const cacheTTL = 300; // 5 minutes
+
+const setHistoryCache = ({
+  guildCacheKey,
+  content,
+}: {
+  guildCacheKey?: string;
+  content?: ChatCompletionMessageParam[] | ResponseInput;
+}): boolean => {
+  if (!guildCacheKey) return false;
+  const timestamp = new Date().getTime();
+  const cached = JSON.parse(Cache.getCache<string>(guildCacheKey) || '[]') as ChatHistoryItem[];
+
+  const history = [...(cached || []), ...((content || []) as ChatHistoryItem[])]
+    .map(item => ({
+      ...item,
+      timestamp: item.timestamp || timestamp,
+    }))
+    .sort((a, b) => {
+      if (a.timestamp === b.timestamp) {
+        if (a.role === 'assistant' && b.role === 'user') return 1;
+        if (a.role === 'user' && b.role === 'assistant') return -1;
+        return 0;
+      }
+      return (a.timestamp || 0) - (b.timestamp || 0);
+    });
+
+  return Cache.setCache(guildCacheKey, JSON.stringify(history), cacheTTL);
+};
+
+type CacheFormatter = (history: ChatHistoryItem[]) => ChatCompletionMessageParam[];
+
+const getHistoryCache = ({
+  guildCacheKey,
+  formatter = v => v as ChatCompletionMessageParam[],
+}: {
+  guildCacheKey?: string;
+  formatter?: CacheFormatter;
+}): ChatCompletionMessageParam[] => {
+  const cached = guildCacheKey ? Cache.getCache<string>(guildCacheKey) : undefined;
+
+  if (!cached) return [];
+
+  const parsedHistory = JSON.parse(cached) as ChatHistoryItem[];
+  const history = parsedHistory.map(item => ({ role: item.role, content: item.content })) as ChatHistoryItem[];
+
+  return formatter(history);
+};
+
+const formatPerplexityHistory = (history: ChatHistoryItem[]) =>
+  history.map(item => ({
+    role: item.role,
+    content: Array.isArray(item.content) ? item.content[0].text : item.content,
+  })) as ChatCompletionMessageParam[];
+
+export {
+  handleResponseLoading,
+  formatResponse,
+  handleInteractionReply,
+  getHistoryCache,
+  setHistoryCache,
+  formatPerplexityHistory,
+};

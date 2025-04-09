@@ -53,7 +53,7 @@ async function askGPTWeb(message: DiscordInteraction, config: Pick<IAskGPTConfig
   return askGPT(message, 'web', config);
 }
 
-async function askGPTText(message: DiscordInteraction, config: Pick<IAskGPTConfig, 'user' | 'previousResponseId'>) {
+async function askGPTText(message: DiscordInteraction, config: IAskGPTConfig) {
   return askGPT(message, 'text', config);
 }
 
