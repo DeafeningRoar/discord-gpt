@@ -1,6 +1,6 @@
 import type { GuildMember } from 'discord.js';
 import type { Discord } from '../services';
-import type { DiscordInteraction } from '../types';
+import type { DiscordInteraction } from '../../@types';
 
 import { Emitter, logger } from '../services';
 import { EVENTS } from '../config/constants';

@@ -1,4 +1,4 @@
-import type { DiscordInteraction, PerplexityResponse } from '../../../types';
+import type { DiscordInteraction, PerplexityResponse } from '../../../../@types';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 import type { Response } from '../../../services/openai';
 

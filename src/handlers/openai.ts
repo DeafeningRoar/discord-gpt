@@ -1,4 +1,4 @@
-import type { DiscordInteraction } from '../types';
+import type { DiscordInteraction } from '../../@types';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 import type { ResponseInputContent } from 'openai/resources/responses/responses';
 

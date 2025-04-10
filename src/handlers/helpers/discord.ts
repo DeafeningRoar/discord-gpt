@@ -1,5 +1,5 @@
 import type { User, GuildMember, APIInteractionGuildMember } from 'discord.js';
-import type { DiscordInteraction } from '../../types';
+import type { DiscordInteraction } from '../../../@types';
 
 import { hideLinkEmbed, PermissionsBitField, PermissionFlagsBits } from 'discord.js';
 
