@@ -19,21 +19,16 @@ const perplexityai = new OpenAI({
   apiKey: process.env.PERPLEXITY_API_KEY,
 });
 
-const MODELS = {
-  OpenAI: {
-    SEARCH_PREVIEW_MODEL: 'gpt-4o-mini-search-preview',
-    TEXT_MODEL: 'gpt-4o-mini',
-  },
-  PerplexityAI: {
-    SONAR: 'sonar',
-  },
+const { OPENAI_TEXT_MODEL, PERPLEXITY_MODEL } = process.env as {
+  OPENAI_TEXT_MODEL: string;
+  PERPLEXITY_MODEL: string;
 };
 
 const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) => {
-  logger.log('Processing message with model:', MODELS.PerplexityAI.SONAR);
+  logger.log('Processing message with model:', PERPLEXITY_MODEL);
 
   const response = await perplexityai.chat.completions.create({
-    model: MODELS.PerplexityAI.SONAR,
+    model: PERPLEXITY_MODEL,
     web_search_options: {
       search_context_size: 'low',
     },
@@ -48,7 +43,7 @@ const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) 
   });
 
   logger.log('Metadata from model response', {
-    model: MODELS.PerplexityAI.SONAR,
+    model: PERPLEXITY_MODEL,
     usage: response.usage,
   });
 
@@ -56,7 +51,7 @@ const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) 
 };
 
 const textQuery = async (message: string, { img, user, chatHistory }: TextQueryConfig) => {
-  logger.log('Processing message with model:', MODELS.OpenAI.TEXT_MODEL);
+  logger.log('Processing message with model:', OPENAI_TEXT_MODEL);
 
   const userContent: ResponseInputMessageContentList = [{ type: 'input_text', text: message }];
 
@@ -65,7 +60,7 @@ const textQuery = async (message: string, { img, user, chatHistory }: TextQueryC
   }
 
   const response = await openai.responses.create({
-    model: MODELS.OpenAI.TEXT_MODEL,
+    model: OPENAI_TEXT_MODEL,
     // previous_response_id: previousResponseId,
     input: [
       {
@@ -81,7 +76,7 @@ const textQuery = async (message: string, { img, user, chatHistory }: TextQueryC
   });
 
   logger.log('Metadata from model response', {
-    model: MODELS.OpenAI.TEXT_MODEL,
+    model: OPENAI_TEXT_MODEL,
     usage: response.usage,
   });
 
