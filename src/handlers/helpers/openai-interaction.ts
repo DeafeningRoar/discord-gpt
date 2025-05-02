@@ -89,7 +89,7 @@ const handleInteractionReply = async (
   }
 };
 
-const cacheTTL = 300; // 5 minutes
+const cacheTTL = Number(process.env.OPENAI_CACHE_TTL || 300); // 5 minutes
 
 const setHistoryCache = ({
   guildCacheKey,
