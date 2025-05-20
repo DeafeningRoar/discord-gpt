@@ -14,17 +14,31 @@ type ChatHistoryItem = Pick<ChatCompletionMessageParam, 'role'> & {
   timestamp: number;
 };
 
-const handleResponseLoading = async (interaction: DiscordInteraction, user: string, query: string, img?: string) => {
+const handleResponseLoading = async (
+  interaction: DiscordInteraction,
+  user: string,
+  query: string,
+  { image, txt }: { image?: string; txt?: string } = {},
+) => {
   const WAIT_TIME = 850;
   const resultMessage = `**${user}**: ${query}`;
-  const files = img
-    ? [
-        {
-          attachment: img,
-          name: 'user-image.png',
-        },
-      ]
-    : undefined;
+  const files: { attachment: string; name: string }[] | undefined = image || txt ? [] : undefined;
+
+  if (files) {
+    if (image) {
+      files.push({
+        attachment: image,
+        name: 'user-image.png',
+      });
+    }
+
+    if (txt) {
+      files.push({
+        attachment: txt,
+        name: 'user-text.txt',
+      });
+    }
+  }
 
   await interaction.reply({
     content: resultMessage + '\n。',

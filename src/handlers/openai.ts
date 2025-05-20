@@ -2,6 +2,8 @@ import type { DiscordInteraction } from '../../@types';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 import type { ResponseInputContent } from 'openai/resources/responses/responses';
 
+import axios from 'axios';
+
 import { Emitter, logger } from '../services';
 import { OPENAI_EVENTS } from '../config/constants';
 import { OpenAICommands } from './helpers/commands';
@@ -27,58 +29,75 @@ type WebQueryParams = Omit<TextQueryParams, 'image'>;
 const cacheKey = 'openai-chat-history';
 const getGuildKey = (guildId: string): string => `${guildId}-${cacheKey}`;
 
+const getTextFileContent = async (txtFile: string): Promise<string> => {
+  const fileContent = await axios.get(txtFile, { responseType: 'arraybuffer' });
+
+  return fileContent.data.toString('utf-8');
+};
+
 const handler = () => {
-  Emitter.on(
-    OPENAI_EVENTS.OPENAI_TEXT_QUERY,
-    async ({ interaction, content, user, guildId, image }: TextQueryParams) => {
-      let interval;
-
-      try {
-        interval = await handleResponseLoading(interaction, user, content, image);
-
-        const guildCacheKey = guildId ? getGuildKey(guildId) : undefined;
-        const history = getHistoryCache({ guildCacheKey });
-
-        const { response } = await OpenAICommands.askGPTText(interaction, {
-          user,
-          chatHistory: history as ChatCompletionMessageParam[],
-        });
-
-        clearInterval(interval);
-
-        setHistoryCache({
-          guildCacheKey,
-          content: [
-            {
-              role: 'user',
-              content: [
-                { type: 'input_text', text: content },
-                ...((image ? [{ type: 'input_image', image_url: image }] : []) as ResponseInputContent[]),
-              ],
-            },
-            { role: 'assistant', content: response },
-          ],
-        });
-
-        logger.log('OpenAI Text Interaction Response:', {
-          user,
-          responseLength: response.length,
-        });
-
-        await handleInteractionReply(interaction, user, content, response);
-      } catch (err) {
-        clearInterval(interval);
-
-        throw err;
-      }
-    },
-  );
-
-  Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async ({ interaction, content, user, guildId }: WebQueryParams) => {
+  Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async ({ interaction, user, guildId, image }: TextQueryParams) => {
     let interval;
+    const originalContent = interaction.content;
 
     try {
-      interval = await handleResponseLoading(interaction, user, content);
+      let fileContent: string | undefined = undefined;
+      if (interaction.txt) {
+        fileContent = await getTextFileContent(interaction.txt);
+        interaction.content = `${originalContent}\nFile content: ${fileContent}`;
+      }
+
+      interval = await handleResponseLoading(interaction, user, originalContent, { image, txt: interaction.txt });
+
+      const guildCacheKey = guildId ? getGuildKey(guildId) : undefined;
+      const history = getHistoryCache({ guildCacheKey });
+
+      const { response } = await OpenAICommands.askGPTText(interaction, {
+        user,
+        chatHistory: history as ChatCompletionMessageParam[],
+      });
+
+      clearInterval(interval);
+
+      setHistoryCache({
+        guildCacheKey,
+        content: [
+          {
+            role: 'user',
+            content: [
+              { type: 'input_text', text: interaction.content },
+              ...((image ? [{ type: 'input_image', image_url: image }] : []) as ResponseInputContent[]),
+            ],
+          },
+          { role: 'assistant', content: response },
+        ],
+      });
+
+      logger.log('OpenAI Text Interaction Response:', {
+        user,
+        responseLength: response.length,
+      });
+
+      await handleInteractionReply(interaction, user, originalContent, response);
+    } catch (err) {
+      clearInterval(interval);
+
+      throw err;
+    }
+  });
+
+  Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async ({ interaction, user, guildId }: WebQueryParams) => {
+    let interval;
+    const originalContent = interaction.content;
+
+    try {
+      let fileContent: string | undefined = undefined;
+      if (interaction.txt) {
+        fileContent = await getTextFileContent(interaction.txt);
+        interaction.content = `${originalContent}\nFile content: ${fileContent}`;
+      }
+
+      interval = await handleResponseLoading(interaction, user, originalContent, { txt: interaction.txt });
 
       const guildCacheKey = guildId ? getGuildKey(guildId) : undefined;
       const history = getHistoryCache({ guildCacheKey, formatter: formatPerplexityHistory });
@@ -93,7 +112,7 @@ const handler = () => {
       setHistoryCache({
         guildCacheKey,
         content: [
-          { role: 'user', content },
+          { role: 'user', content: interaction.content },
           { role: 'assistant', content: response },
         ],
       });
@@ -105,7 +124,7 @@ const handler = () => {
 
       const formattedResponse = embedCitations(response, citations);
 
-      await handleInteractionReply(interaction, user, content, formattedResponse);
+      await handleInteractionReply(interaction, user, originalContent, formattedResponse);
     } catch (err) {
       clearInterval(interval);
 
