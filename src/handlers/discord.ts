@@ -39,7 +39,8 @@ const handler = ({ discord }: { discord: Discord }) => {
     if (isBot) return;
     const command = interaction.commandName;
     const content = interaction.options.get('input')?.value as string;
-    const image = interaction.options.get('image')?.attachment?.url;
+    const image = interaction.options.get('image')?.attachment;
+    const txtFile = interaction.options.get('txt')?.attachment;
     const user = (interaction.member as GuildMember)?.nickname ?? interaction.user.displayName;
     const guildId = interaction.guildId || interaction.user?.id;
 
@@ -52,8 +53,27 @@ const handler = ({ discord }: { discord: Discord }) => {
       command,
       queryLength: content.length,
       hasImage: !!image,
+      hasTxtFile: !!txtFile,
       content,
     });
+
+    if (image && image?.url) {
+      const isImage = image.contentType?.startsWith('image/');
+
+      if (!isImage) {
+        await interaction.reply('Interaction not allowed');
+        return;
+      }
+    }
+
+    if (txtFile && txtFile?.url) {
+      const isTxtFile = txtFile.contentType?.startsWith('text/');
+
+      if (!isTxtFile) {
+        await interaction.reply('Interaction not allowed');
+        return;
+      }
+    }
 
     const eventType = DiscordCommands.getDiscordEventType(command, { isOwner, isAdmin });
 
@@ -63,7 +83,8 @@ const handler = ({ discord }: { discord: Discord }) => {
     }
 
     interaction.content = content;
-    interaction.img = image;
+    interaction.img = image?.url;
+    interaction.txt = txtFile?.url;
 
     Emitter.emit(eventType, { interaction, content, image, user, guildId });
   });
