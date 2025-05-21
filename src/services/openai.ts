@@ -35,10 +35,11 @@ const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) 
     messages: [
       {
         role: 'system',
-        content: `Be precise, concise and organized. You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation. Message sent by user: ${user}`,
+        content:
+          'Be precise, concise and organized. You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation.',
       },
       ...(chatHistory || []),
-      { role: 'user', content: message },
+      { role: 'user', content: `Sent by user ${user}: ${message}` },
     ],
   });
 
@@ -53,7 +54,9 @@ const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) 
 const textQuery = async (message: string, { img, user, chatHistory }: TextQueryConfig) => {
   logger.log('Processing message with model:', OPENAI_TEXT_MODEL);
 
-  const userContent: ResponseInputMessageContentList = [{ type: 'input_text', text: message }];
+  const userContent: ResponseInputMessageContentList = [
+    { type: 'input_text', text: `Sent by user ${user}: ${message}` },
+  ];
 
   if (img) {
     userContent.push({ type: 'input_image', image_url: img } as ResponseInputMessageContentList[0]);
@@ -65,7 +68,8 @@ const textQuery = async (message: string, { img, user, chatHistory }: TextQueryC
     input: [
       {
         role: 'system',
-        content: `You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation. Message sent by user: ${user}`,
+        content:
+          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation.',
       },
       ...((chatHistory || []) as unknown as ResponseInput),
       {
