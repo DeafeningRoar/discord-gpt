@@ -35,17 +35,23 @@ const getTextFileContent = async (txtFile: string): Promise<string> => {
   return fileContent.data.toString('utf-8');
 };
 
+const handleFileContent = async (interaction: DiscordInteraction): Promise<void> => {
+  let fileContent: string | undefined = undefined;
+
+  if (interaction.txt) {
+    fileContent = await getTextFileContent(interaction.txt);
+    interaction.content = `${interaction.content}\nFile content: ${fileContent}`;
+  }
+};
+
 const handler = () => {
   Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async ({ interaction, user, guildId, image }: TextQueryParams) => {
     let interval;
     const originalContent = interaction.content;
+    interaction.content = `Sent by ${user}: ${interaction.content}`;
 
     try {
-      let fileContent: string | undefined = undefined;
-      if (interaction.txt) {
-        fileContent = await getTextFileContent(interaction.txt);
-        interaction.content = `${originalContent}\nFile content: ${fileContent}`;
-      }
+      await handleFileContent(interaction);
 
       interval = await handleResponseLoading(interaction, user, originalContent, { image, txt: interaction.txt });
 
@@ -89,13 +95,10 @@ const handler = () => {
   Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async ({ interaction, user, guildId }: WebQueryParams) => {
     let interval;
     const originalContent = interaction.content;
+    interaction.content = `Sent by ${user}: ${interaction.content}`;
 
     try {
-      let fileContent: string | undefined = undefined;
-      if (interaction.txt) {
-        fileContent = await getTextFileContent(interaction.txt);
-        interaction.content = `${originalContent}\nFile content: ${fileContent}`;
-      }
+      await handleFileContent(interaction);
 
       interval = await handleResponseLoading(interaction, user, originalContent, { txt: interaction.txt });
 

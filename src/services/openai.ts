@@ -24,7 +24,7 @@ const { OPENAI_TEXT_MODEL, PERPLEXITY_MODEL } = process.env as {
   PERPLEXITY_MODEL: string;
 };
 
-const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) => {
+const webQuery = async (message: string, { chatHistory }: WebQueryConfig) => {
   logger.log('Processing message with model:', PERPLEXITY_MODEL);
 
   const response = await perplexityai.chat.completions.create({
@@ -39,7 +39,7 @@ const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) 
           'Be precise, concise and organized. You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation.',
       },
       ...(chatHistory || []),
-      { role: 'user', content: `Sent by user ${user}: ${message}` },
+      { role: 'user', content: message },
     ],
   });
 
@@ -51,12 +51,10 @@ const webQuery = async (message: string, { user, chatHistory }: WebQueryConfig) 
   return response;
 };
 
-const textQuery = async (message: string, { img, user, chatHistory }: TextQueryConfig) => {
+const textQuery = async (message: string, { img, chatHistory }: TextQueryConfig) => {
   logger.log('Processing message with model:', OPENAI_TEXT_MODEL);
 
-  const userContent: ResponseInputMessageContentList = [
-    { type: 'input_text', text: `Sent by user ${user}: ${message}` },
-  ];
+  const userContent: ResponseInputMessageContentList = [{ type: 'input_text', text: message }];
 
   if (img) {
     userContent.push({ type: 'input_image', image_url: img } as ResponseInputMessageContentList[0]);
