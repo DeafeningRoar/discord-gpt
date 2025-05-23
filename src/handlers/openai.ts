@@ -45,7 +45,7 @@ const handleFileContent = async (interaction: DiscordInteraction): Promise<void>
 };
 
 const handler = () => {
-  Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async ({ interaction, user, guildId, image }: TextQueryParams) => {
+  Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async ({ interaction, user, guildId }: TextQueryParams) => {
     let interval;
     const originalContent = interaction.content;
     interaction.content = `Sent by ${user}: ${interaction.content}`;
@@ -53,7 +53,10 @@ const handler = () => {
     try {
       await handleFileContent(interaction);
 
-      interval = await handleResponseLoading(interaction, user, originalContent, { image, txt: interaction.txt });
+      interval = await handleResponseLoading(interaction, user, originalContent, {
+        image: interaction.img,
+        txt: interaction.txt,
+      });
 
       const guildCacheKey = guildId ? getGuildKey(guildId) : undefined;
       const history = getHistoryCache({ guildCacheKey });
@@ -72,7 +75,9 @@ const handler = () => {
             role: 'user',
             content: [
               { type: 'input_text', text: interaction.content },
-              ...((image ? [{ type: 'input_image', image_url: image }] : []) as ResponseInputContent[]),
+              ...((interaction.img
+                ? [{ type: 'input_image', image_url: interaction.img }]
+                : []) as ResponseInputContent[]),
             ],
           },
           { role: 'assistant', content: response },
