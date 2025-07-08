@@ -19,9 +19,10 @@ const perplexityai = new OpenAI({
   apiKey: process.env.PERPLEXITY_API_KEY,
 });
 
-const { OPENAI_TEXT_MODEL, PERPLEXITY_MODEL } = process.env as {
+const { OPENAI_TEXT_MODEL, PERPLEXITY_MODEL, MCP_SERVERS } = process.env as {
   OPENAI_TEXT_MODEL: string;
   PERPLEXITY_MODEL: string;
+  MCP_SERVERS: string;
 };
 
 const webQuery = async (message: string, { chatHistory }: WebQueryConfig) => {
@@ -60,7 +61,14 @@ const textQuery = async (message: string, { img, chatHistory }: TextQueryConfig)
     userContent.push({ type: 'input_image', image_url: img } as ResponseInputMessageContentList[0]);
   }
 
+  let tools = undefined;
+
+  if (MCP_SERVERS) {
+    tools = JSON.parse(MCP_SERVERS);
+  }
+
   const response = await openai.responses.create({
+    tools,
     model: OPENAI_TEXT_MODEL,
     // previous_response_id: previousResponseId,
     input: [
@@ -80,6 +88,7 @@ const textQuery = async (message: string, { img, chatHistory }: TextQueryConfig)
   logger.log('Metadata from model response', {
     model: OPENAI_TEXT_MODEL,
     usage: response.usage,
+    response: response.output,
   });
 
   return response;
