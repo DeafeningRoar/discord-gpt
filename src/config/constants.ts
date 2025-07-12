@@ -16,6 +16,7 @@ const EVENTS = {
 };
 
 const OPENAI_EVENTS = {
+  OPENAI_PROCESS_INPUT: 'OpenAIProcessInput',
   OPENAI_TEXT_QUERY: 'OpenAITextQuery',
   OPENAI_WEB_QUERY: 'OpenAIWebQuery',
 };

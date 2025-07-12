@@ -42,10 +42,78 @@ const saveToCache = (id: string, content: ChatCompletionMessageParam[]) => {
   setHistoryCache({ cacheKey, content });
 };
 
+interface OpenAIProcessInputEvent extends BusinessLogicEvent {
+  processMetadata: {
+    openAICommand: typeof OpenAICommands.askGPTText | typeof OpenAICommands.askGPTWeb;
+    responseFormatter(response: AIResponse): string;
+    cache: {
+      save: (input: string, response: string) => void;
+      get: () => ChatCompletionMessageParam[];
+    };
+  };
+}
+
+interface AIResponse { response: string; citations?: string[] }
+
 const handler = () => {
+  Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async (event: BusinessLogicEvent) => {
+    const aiProcessInputEvent: OpenAIProcessInputEvent = {
+      ...event,
+      processMetadata: {
+        openAICommand: OpenAICommands.askGPTText,
+        responseFormatter: ({ response }) => response,
+        cache: {
+          save: (input, response) => {
+            const newChatHistory = [
+              {
+                role: 'user',
+                content: [
+                  { type: 'input_text', text: input },
+                  ...((event.data.files?.image
+                    ? [{ type: 'input_image', image_url: event.data.files.image }]
+                    : []) as ResponseInputContent[]),
+                ],
+              },
+              { role: 'assistant', content: response },
+            ] as ChatCompletionMessageParam[];
+
+            saveToCache(event.data.id, newChatHistory);
+          },
+          get: () => getFromCache(event.data.id),
+        },
+      },
+    };
+
+    Emitter.emit(OPENAI_EVENTS.OPENAI_PROCESS_INPUT, aiProcessInputEvent);
+  });
+
+  Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async (event: BusinessLogicEvent) => {
+    const aiProcessInputEvent: OpenAIProcessInputEvent = {
+      ...event,
+      processMetadata: {
+        openAICommand: OpenAICommands.askGPTWeb,
+        responseFormatter: ({ response, citations }) => embedCitations(response, citations),
+        cache: {
+          save: (input, response) => {
+            const newChatHistory = [
+              { role: 'user', content: input },
+              { role: 'assistant', content: response },
+            ] as ChatCompletionMessageParam[];
+
+            saveToCache(event.data.id, newChatHistory);
+          },
+          get: () => getFromCache(event.data.id, formatPerplexityHistory),
+        },
+      },
+    };
+
+    Emitter.emit(OPENAI_EVENTS.OPENAI_PROCESS_INPUT, aiProcessInputEvent);
+  });
+
   Emitter.on(
-    OPENAI_EVENTS.OPENAI_TEXT_QUERY,
-    async ({ data, responseEvent, responseMetadata, loadingInterval }: BusinessLogicEvent) => {
+    OPENAI_EVENTS.OPENAI_PROCESS_INPUT,
+    async ({ data, responseEvent, responseMetadata, loadingInterval, processMetadata }: OpenAIProcessInputEvent) => {
+      const { openAICommand, responseFormatter, cache } = processMetadata;
       const { id, name, input: userInput, files } = data;
       let input = `Sent by ${name}: ${userInput}`;
 
@@ -54,82 +122,22 @@ const handler = () => {
           input = await appendTextFileContent({ txtFile: files.txt, input });
         }
 
-        const chatHistory = getFromCache(id);
+        const chatHistory = cache.get();
 
-        const { response } = await OpenAICommands.askGPTText({
+        const aiResponse = await openAICommand({
           input,
           image: files?.image,
           chatHistory,
         });
 
-        const newChatHistory = [
-          {
-            role: 'user',
-            content: [
-              { type: 'input_text', text: input },
-              ...((files?.image ? [{ type: 'input_image', image_url: files.image }] : []) as ResponseInputContent[]),
-            ],
-          },
-          { role: 'assistant', content: response },
-        ] as ChatCompletionMessageParam[];
+        const formattedResponse = responseFormatter(aiResponse);
 
-        saveToCache(id, newChatHistory);
+        cache.save(input, formattedResponse);
 
-        logger.log('OpenAI Text Response:', {
+        logger.log('OpenAI Response:', {
           id,
           name,
-          responseLength: response.length,
-        });
-
-        if (loadingInterval) {
-          clearInterval(loadingInterval);
-        }
-
-        Emitter.emit(responseEvent, {
-          response,
-          responseMetadata,
-        });
-      } catch (err) {
-        if (loadingInterval) {
-          clearInterval(loadingInterval);
-        }
-
-        throw err;
-      }
-    },
-  );
-
-  Emitter.on(
-    OPENAI_EVENTS.OPENAI_WEB_QUERY,
-    async ({ data, responseEvent, responseMetadata, loadingInterval }: BusinessLogicEvent) => {
-      const { id, name, input: userInput, files } = data;
-      let input = `Sent by ${name}: ${userInput}`;
-
-      try {
-        if (files?.txt) {
-          input = await appendTextFileContent({ txtFile: files.txt, input });
-        }
-
-        const chatHistory = getFromCache(id, formatPerplexityHistory);
-
-        const { response, citations } = await OpenAICommands.askGPTWeb({
-          input,
-          chatHistory,
-        });
-
-        const newChatHistory = [
-          { role: 'user', content: input },
-          { role: 'assistant', content: response },
-        ] as ChatCompletionMessageParam[];
-
-        saveToCache(id, newChatHistory);
-
-        const formattedResponse = embedCitations(response, citations);
-
-        logger.log('OpenAI Web Response:', {
-          id,
-          name,
-          responseLength: response.length,
+          responseLength: formattedResponse.length,
         });
 
         if (loadingInterval) {
