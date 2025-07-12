@@ -53,7 +53,10 @@ interface OpenAIProcessInputEvent extends BusinessLogicEvent {
   };
 }
 
-interface AIResponse { response: string; citations?: string[] }
+interface AIResponse {
+  response: string;
+  citations?: string[];
+}
 
 const handler = () => {
   Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async (event: BusinessLogicEvent) => {
@@ -137,6 +140,7 @@ const handler = () => {
         logger.log('OpenAI Response:', {
           id,
           name,
+          handler: openAICommand.name,
           responseLength: formattedResponse.length,
         });
 
@@ -152,6 +156,11 @@ const handler = () => {
         if (loadingInterval) {
           clearInterval(loadingInterval);
         }
+
+        Emitter.emit(responseEvent, {
+          response: 'Error 💀',
+          responseMetadata,
+        });
 
         throw err;
       }
