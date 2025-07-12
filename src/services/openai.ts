@@ -4,14 +4,12 @@ import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 import OpenAI from 'openai';
 import logger from './logger';
 
-interface TextQueryConfig {
-  user: string;
-  img?: string;
-  previousResponseId?: string;
+export interface TextQueryConfig {
+  image?: string;
   chatHistory?: ChatCompletionMessageParam[];
 }
 
-type WebQueryConfig = Pick<TextQueryConfig, 'user' | 'chatHistory'>;
+export type WebQueryConfig = Omit<TextQueryConfig, 'image'>;
 
 const openai = new OpenAI();
 const perplexityai = new OpenAI({
@@ -25,7 +23,7 @@ const { OPENAI_TEXT_MODEL, PERPLEXITY_MODEL, MCP_SERVERS } = process.env as {
   MCP_SERVERS: string;
 };
 
-const webQuery = async (message: string, { chatHistory }: WebQueryConfig) => {
+const webQuery = async (input: string, { chatHistory }: WebQueryConfig) => {
   logger.log('Processing message with model:', PERPLEXITY_MODEL);
 
   const response = await perplexityai.chat.completions.create({
@@ -36,11 +34,10 @@ const webQuery = async (message: string, { chatHistory }: WebQueryConfig) => {
     messages: [
       {
         role: 'system',
-        content:
-          'Be precise, concise and organized. You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation.',
+        content: process.env.PERPLEXITY_SYSTEM_PROMPT as string,
       },
       ...(chatHistory || []),
-      { role: 'user', content: message },
+      { role: 'user', content: input },
     ],
   });
 
@@ -52,13 +49,13 @@ const webQuery = async (message: string, { chatHistory }: WebQueryConfig) => {
   return response;
 };
 
-const textQuery = async (message: string, { img, chatHistory }: TextQueryConfig) => {
+const textQuery = async (input: string, { image, chatHistory }: TextQueryConfig) => {
   logger.log('Processing message with model:', OPENAI_TEXT_MODEL);
 
-  const userContent: ResponseInputMessageContentList = [{ type: 'input_text', text: message }];
+  const userContent: ResponseInputMessageContentList = [{ type: 'input_text', text: input }];
 
-  if (img) {
-    userContent.push({ type: 'input_image', image_url: img } as ResponseInputMessageContentList[0]);
+  if (image) {
+    userContent.push({ type: 'input_image', image_url: image } as ResponseInputMessageContentList[0]);
   }
 
   let tools = undefined;
@@ -70,12 +67,10 @@ const textQuery = async (message: string, { img, chatHistory }: TextQueryConfig)
   const response = await openai.responses.create({
     tools,
     model: OPENAI_TEXT_MODEL,
-    // previous_response_id: previousResponseId,
     input: [
       {
         role: 'system',
-        content:
-          'You are Pochita in a Discord chat. Respond in a casual, friendly tone and use Discord formatting when appropriate. Multiple users could be in this conversation.',
+        content: process.env.OPENAI_SYSTEM_PROMPT as string,
       },
       ...((chatHistory || []) as unknown as ResponseInput),
       {
@@ -88,7 +83,8 @@ const textQuery = async (message: string, { img, chatHistory }: TextQueryConfig)
   logger.log('Metadata from model response', {
     model: OPENAI_TEXT_MODEL,
     usage: response.usage,
-    response: response.output,
+    /* eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
+    response: response.output.map(({ output, ...rest }: any) => ({ ...rest, output: '[redacted]' })),
   });
 
   return response;

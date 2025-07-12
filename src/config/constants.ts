@@ -10,10 +10,13 @@ const EVENTS = {
   DISCORD_READY: 'DiscordReady',
   DISCORD_MESSAGE_CREATED: 'DiscordMessageCreated',
   DISCORD_INTERACTION_CREATED: 'DiscordInteractionCreated',
+  DISCORD_INTERACTION_VALIDATED: 'DiscordInteractionValidated',
+  DISCORD_INTERACTION_PROCESSED: 'DiscordInteractionProcessed',
   PROCESS_ERROR: 'ProcessError',
 };
 
 const OPENAI_EVENTS = {
+  OPENAI_PROCESS_INPUT: 'OpenAIProcessInput',
   OPENAI_TEXT_QUERY: 'OpenAITextQuery',
   OPENAI_WEB_QUERY: 'OpenAIWebQuery',
 };

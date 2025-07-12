@@ -1,33 +1,18 @@
-import type { DiscordInteraction } from '../../@types';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 import type { ResponseInputContent } from 'openai/resources/responses/responses';
+import type { BusinessLogicEvent } from '../../@types';
+import type { CacheFormatter } from './helpers/openai-interaction';
 
 import axios from 'axios';
 
 import { Emitter, logger } from '../services';
 import { OPENAI_EVENTS } from '../config/constants';
 import { OpenAICommands } from './helpers/commands';
-import {
-  handleResponseLoading,
-  handleInteractionReply,
-  getHistoryCache,
-  setHistoryCache,
-  formatPerplexityHistory,
-} from './helpers/openai-interaction';
+import { getHistoryCache, setHistoryCache, formatPerplexityHistory } from './helpers/openai-interaction';
 import { embedCitations } from './helpers/response-formatters';
 
-interface TextQueryParams {
-  interaction: DiscordInteraction;
-  content: string;
-  user: string;
-  guildId: string;
-  image?: string;
-}
-
-type WebQueryParams = Omit<TextQueryParams, 'image'>;
-
 const cacheKey = 'openai-chat-history';
-const getGuildKey = (guildId: string): string => `${guildId}-${cacheKey}`;
+const getCacheKey = (id: string): string => `${id}-${cacheKey}`;
 
 const getTextFileContent = async (txtFile: string): Promise<string> => {
   const fileContent = await axios.get(txtFile, { responseType: 'arraybuffer' });
@@ -35,110 +20,152 @@ const getTextFileContent = async (txtFile: string): Promise<string> => {
   return fileContent.data.toString('utf-8');
 };
 
-const handleFileContent = async (interaction: DiscordInteraction): Promise<void> => {
+const appendTextFileContent = async ({ txtFile, input }: { txtFile: string; input: string }): Promise<string> => {
   let fileContent: string | undefined = undefined;
 
-  if (interaction.txt) {
-    fileContent = await getTextFileContent(interaction.txt);
-    interaction.content = `${interaction.content}\nFile content: ${fileContent}`;
+  if (txtFile) {
+    fileContent = await getTextFileContent(txtFile);
+
+    return `${input}\n\nFile content:\n\n${fileContent}`;
   }
+
+  return input;
 };
 
+const getFromCache = (id: string, formatter?: CacheFormatter) => {
+  const cacheKey = getCacheKey(id);
+  return getHistoryCache({ cacheKey, formatter });
+};
+
+const saveToCache = (id: string, content: ChatCompletionMessageParam[]) => {
+  const cacheKey = getCacheKey(id);
+  setHistoryCache({ cacheKey, content });
+};
+
+interface OpenAIProcessInputEvent extends BusinessLogicEvent {
+  processMetadata: {
+    openAICommand: typeof OpenAICommands.askGPTText | typeof OpenAICommands.askGPTWeb;
+    responseFormatter(response: AIResponse): string;
+    cache: {
+      save: (input: string, response: string) => void;
+      get: () => ChatCompletionMessageParam[];
+    };
+  };
+}
+
+interface AIResponse {
+  response: string;
+  citations?: string[];
+}
+
 const handler = () => {
-  Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async ({ interaction, user, guildId }: TextQueryParams) => {
-    let interval;
-    const originalContent = interaction.content;
-    interaction.content = `Sent by ${user}: ${interaction.content}`;
+  Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async (event: BusinessLogicEvent) => {
+    const aiProcessInputEvent: OpenAIProcessInputEvent = {
+      ...event,
+      processMetadata: {
+        openAICommand: OpenAICommands.askGPTText,
+        responseFormatter: ({ response }) => response,
+        cache: {
+          save: (input, response) => {
+            const newChatHistory = [
+              {
+                role: 'user',
+                content: [
+                  { type: 'input_text', text: input },
+                  ...((event.data.files?.image
+                    ? [{ type: 'input_image', image_url: event.data.files.image }]
+                    : []) as ResponseInputContent[]),
+                ],
+              },
+              { role: 'assistant', content: response },
+            ] as ChatCompletionMessageParam[];
 
-    try {
-      await handleFileContent(interaction);
-
-      interval = await handleResponseLoading(interaction, user, originalContent, {
-        image: interaction.img,
-        txt: interaction.txt,
-      });
-
-      const guildCacheKey = guildId ? getGuildKey(guildId) : undefined;
-      const history = getHistoryCache({ guildCacheKey });
-
-      const { response } = await OpenAICommands.askGPTText(interaction, {
-        user,
-        chatHistory: history as ChatCompletionMessageParam[],
-      });
-
-      clearInterval(interval);
-
-      setHistoryCache({
-        guildCacheKey,
-        content: [
-          {
-            role: 'user',
-            content: [
-              { type: 'input_text', text: interaction.content },
-              ...((interaction.img
-                ? [{ type: 'input_image', image_url: interaction.img }]
-                : []) as ResponseInputContent[]),
-            ],
+            saveToCache(event.data.id, newChatHistory);
           },
-          { role: 'assistant', content: response },
-        ],
-      });
+          get: () => getFromCache(event.data.id),
+        },
+      },
+    };
 
-      logger.log('OpenAI Text Interaction Response:', {
-        user,
-        responseLength: response.length,
-      });
-
-      await handleInteractionReply(interaction, user, originalContent, response);
-    } catch (err) {
-      clearInterval(interval);
-
-      throw err;
-    }
+    Emitter.emit(OPENAI_EVENTS.OPENAI_PROCESS_INPUT, aiProcessInputEvent);
   });
 
-  Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async ({ interaction, user, guildId }: WebQueryParams) => {
-    let interval;
-    const originalContent = interaction.content;
-    interaction.content = `Sent by ${user}: ${interaction.content}`;
+  Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async (event: BusinessLogicEvent) => {
+    const aiProcessInputEvent: OpenAIProcessInputEvent = {
+      ...event,
+      processMetadata: {
+        openAICommand: OpenAICommands.askGPTWeb,
+        responseFormatter: ({ response, citations }) => embedCitations(response, citations),
+        cache: {
+          save: (input, response) => {
+            const newChatHistory = [
+              { role: 'user', content: input },
+              { role: 'assistant', content: response },
+            ] as ChatCompletionMessageParam[];
 
-    try {
-      await handleFileContent(interaction);
+            saveToCache(event.data.id, newChatHistory);
+          },
+          get: () => getFromCache(event.data.id, formatPerplexityHistory),
+        },
+      },
+    };
 
-      interval = await handleResponseLoading(interaction, user, originalContent, { txt: interaction.txt });
-
-      const guildCacheKey = guildId ? getGuildKey(guildId) : undefined;
-      const history = getHistoryCache({ guildCacheKey, formatter: formatPerplexityHistory });
-
-      const { response, citations } = await OpenAICommands.askGPTWeb(interaction, {
-        user,
-        chatHistory: history,
-      });
-
-      clearInterval(interval);
-
-      setHistoryCache({
-        guildCacheKey,
-        content: [
-          { role: 'user', content: interaction.content },
-          { role: 'assistant', content: response },
-        ],
-      });
-
-      logger.log('OpenAI Web Interaction Response:', {
-        user,
-        responseLength: response.length,
-      });
-
-      const formattedResponse = embedCitations(response, citations);
-
-      await handleInteractionReply(interaction, user, originalContent, formattedResponse);
-    } catch (err) {
-      clearInterval(interval);
-
-      throw err;
-    }
+    Emitter.emit(OPENAI_EVENTS.OPENAI_PROCESS_INPUT, aiProcessInputEvent);
   });
+
+  Emitter.on(
+    OPENAI_EVENTS.OPENAI_PROCESS_INPUT,
+    async ({ data, responseEvent, responseMetadata, loadingInterval, processMetadata }: OpenAIProcessInputEvent) => {
+      const { openAICommand, responseFormatter, cache } = processMetadata;
+      const { id, name, input: userInput, files } = data;
+      let input = `Sent by ${name}: ${userInput}`;
+
+      try {
+        if (files?.txt) {
+          input = await appendTextFileContent({ txtFile: files.txt, input });
+        }
+
+        const chatHistory = cache.get();
+
+        const aiResponse = await openAICommand({
+          input,
+          image: files?.image,
+          chatHistory,
+        });
+
+        const formattedResponse = responseFormatter(aiResponse);
+
+        cache.save(input, formattedResponse);
+
+        logger.log('OpenAI Response:', {
+          id,
+          name,
+          handler: openAICommand.name,
+          responseLength: formattedResponse.length,
+        });
+
+        if (loadingInterval) {
+          clearInterval(loadingInterval);
+        }
+
+        Emitter.emit(responseEvent, {
+          response: formattedResponse,
+          responseMetadata,
+        });
+      } catch (err) {
+        if (loadingInterval) {
+          clearInterval(loadingInterval);
+        }
+
+        Emitter.emit(responseEvent, {
+          response: 'Error 💀',
+          responseMetadata,
+        });
+
+        throw err;
+      }
+    },
+  );
 };
 
 export default handler;

@@ -1,14 +1,8 @@
-import type { DiscordInteraction, PerplexityResponse } from '../../../../@types';
+import type { PerplexityResponse } from '../../../../@types';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 import type { Response } from '../../../services/openai';
 
 import { OpenAI as OpenAIService, logger } from '../../../services';
-
-interface IAskGPTConfig {
-  user: string;
-  previousResponseId?: string;
-  chatHistory?: ChatCompletionMessageParam[];
-}
 
 interface IAskGPTResponse {
   id: string;
@@ -16,11 +10,14 @@ interface IAskGPTResponse {
   citations?: string[];
 }
 
-async function askGPT(
-  message: DiscordInteraction,
-  type: 'web' | 'text',
-  { user, previousResponseId, chatHistory }: IAskGPTConfig,
-): Promise<IAskGPTResponse> {
+interface AskGPTParams {
+  input: string;
+  image?: string;
+  type: 'web' | 'text';
+  chatHistory?: ChatCompletionMessageParam[];
+}
+
+async function askGPT({ input, image, type, chatHistory }: AskGPTParams): Promise<IAskGPTResponse> {
   try {
     const OpenAIQueryTypes = {
       web: OpenAIService.webQuery,
@@ -29,7 +26,7 @@ async function askGPT(
 
     const OpenAIQuery = OpenAIQueryTypes[type];
 
-    const response = await OpenAIQuery(message.content, { img: message.img, user, previousResponseId, chatHistory });
+    const response = await OpenAIQuery(input, { image, chatHistory });
 
     let openAIResponse: string;
     let citations: string[] | undefined;
@@ -49,14 +46,14 @@ async function askGPT(
   }
 }
 
-async function askGPTWeb(message: DiscordInteraction, config: Pick<IAskGPTConfig, 'user' | 'chatHistory'>) {
-  return askGPT(message, 'web', config);
+async function askGPTWeb({ input, chatHistory }: Omit<AskGPTParams, 'image' | 'type'>) {
+  return askGPT({ input, type: 'web', chatHistory });
 }
 
-async function askGPTText(message: DiscordInteraction, config: IAskGPTConfig) {
-  return askGPT(message, 'text', config);
+async function askGPTText({ input, image, chatHistory }: Omit<AskGPTParams, 'type'>) {
+  return askGPT({ input, image, type: 'text', chatHistory });
 }
 
 export { askGPTText, askGPTWeb };
-export type { IAskGPTResponse, IAskGPTConfig };
+export type { IAskGPTResponse };
 export default { askGPTText, askGPTWeb };
