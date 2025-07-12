@@ -1,9 +1,15 @@
+/* eslint-disable @typescript-eslint/no-extraneous-class */
 import EventEmitter from 'events';
 
-let emitter = null;
+class EventEmitterService {
+  private static instance: EventEmitter;
 
-if (emitter === null) {
-  emitter = new EventEmitter({ captureRejections: true });
+  static getInstance(): EventEmitter {
+    if (!EventEmitterService.instance) {
+      EventEmitterService.instance = new EventEmitter({ captureRejections: true });
+    }
+    return EventEmitterService.instance;
+  }
 }
 
-export default emitter as EventEmitter;
+export default EventEmitterService.getInstance();

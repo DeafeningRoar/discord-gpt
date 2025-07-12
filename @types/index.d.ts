@@ -32,3 +32,5 @@ export type ResponseEvent<T = Record<string, unknown>, R = string> = {
   response: R;
   responseMetadata: T;
 };
+
+export type DiscordResponseEvent = ResponseEvent<DiscordResponseMetadata, string>;
