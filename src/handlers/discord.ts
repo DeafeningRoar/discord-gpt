@@ -1,6 +1,6 @@
 import type { GuildMember } from 'discord.js';
 import type { Discord } from '../services';
-import type { DiscordInteraction, DiscordResponseMetadata, ResponseEvent } from '../../@types';
+import type { DiscordInteraction, DiscordResponseEvent } from '../../@types';
 
 import { Emitter, logger } from '../services';
 import { EVENTS } from '../config/constants';
@@ -14,14 +14,11 @@ const handler = ({ discord }: { discord: Discord }) => {
     }
   });
 
-  Emitter.on(
-    EVENTS.DISCORD_INTERACTION_PROCESSED,
-    async ({ response, responseMetadata }: ResponseEvent<DiscordResponseMetadata, string>) => {
-      const { interaction, user, query, isEdit } = responseMetadata;
+  Emitter.on(EVENTS.DISCORD_INTERACTION_PROCESSED, async ({ response, responseMetadata }: DiscordResponseEvent) => {
+    const { interaction, user, query, isEdit } = responseMetadata;
 
-      await handleInteractionReply(interaction, user, query, response as string, !isEdit);
-    },
-  );
+    await handleInteractionReply(interaction, user, query, response, !isEdit);
+  });
 
   Emitter.on(EVENTS.DISCORD_INTERACTION_CREATED, async ({ interaction }: { interaction: DiscordInteraction }) => {
     const { isOwner, isAdmin, isBot } = getUserTypes(interaction.user, interaction.member);
