@@ -68,6 +68,8 @@ For Discord commands to work, they must be registered via their [Commands API](h
 
 Chat with OpenAI GPT for intelligent text-based conversations. This command supports:
 
+_MCP Servers are only supported for OpenAI models currently_
+
 - **Text Input**: Natural language conversations with context awareness
 - **Image Uploads**: Process and analyze images using OpenAI's vision capabilities (Requires using an OpenAI model that supports image processing)
 - **Text File Attachments**: Upload `.txt` files to provide additional context
