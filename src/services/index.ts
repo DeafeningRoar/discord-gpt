@@ -1,6 +1,6 @@
 import Discord from './discord';
 import Emitter from './event-emitter';
-import OpenAI from './openai';
+import OpenAI from './ai-services/openai';
 import Cache from './cache';
 import logger from './logger';
 
