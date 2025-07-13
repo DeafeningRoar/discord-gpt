@@ -10,7 +10,7 @@ import { appendTextFileContent } from '../helpers';
 class OpenAIStrategy implements AIStrategy<Response, AICacheStrategy> {
   name = AIStrategyName.OPENAI;
 
-  readonly cacheService = AICacheStrategy;
+  readonly cacheService = new AICacheStrategy();
 
   async process({
     id,
@@ -69,8 +69,9 @@ class OpenAIStrategy implements AIStrategy<Response, AICacheStrategy> {
     return this.cacheService.setHistoryCache({ cacheKey, content: newContent });
   }
 
-  setCacheStrategy(cacheStrategy: string) {
-    this.cacheService.baseCacheKey = cacheStrategy;
+  setCacheStrategy(cacheConfig: { cacheTTL?: number; baseCacheKey?: string }) {
+    if (cacheConfig.cacheTTL) this.cacheService.setCacheTTL(cacheConfig.cacheTTL);
+    if (cacheConfig.baseCacheKey) this.cacheService.setBaseCacheKey(cacheConfig.baseCacheKey);
   }
 }
 

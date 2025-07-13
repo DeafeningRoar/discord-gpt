@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-extraneous-class */
 import type { ResponseInput, ResponseInputText } from 'openai/resources/responses/responses';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
@@ -16,15 +15,27 @@ export type CacheFormatter = (history: ChatHistoryItem[]) => ChatCompletionMessa
 class AICacheStrategy {
   static cacheService = Cache;
 
-  static baseCacheKey = crypto.randomUUID().toString();
+  cacheTTL: number;
+  baseCacheKey: string;
 
-  private static cacheTTL = Number(process.env.OPENAI_CACHE_TTL || 300); // 5 minutes
+  constructor({ cacheTTL, baseCacheKey }: { cacheTTL?: number; baseCacheKey?: string } = {}) {
+    this.cacheTTL = cacheTTL || 300;
+    this.baseCacheKey = baseCacheKey || crypto.randomUUID().toString();
+  }
 
-  static getCacheKey(id: string): string {
+  setCacheTTL(cacheTTL: number) {
+    this.cacheTTL = cacheTTL;
+  }
+
+  setBaseCacheKey(baseCacheKey: string) {
+    this.baseCacheKey = baseCacheKey;
+  }
+
+  getCacheKey(id: string): string {
     return `${this.baseCacheKey}:${id}`;
   }
 
-  static getHistoryCache({
+  getHistoryCache({
     cacheKey,
     formatter = v => v as ChatCompletionMessageParam[],
   }: {
@@ -41,7 +52,7 @@ class AICacheStrategy {
     return formatter(history);
   }
 
-  static setHistoryCache({
+  setHistoryCache({
     cacheKey,
     content,
   }: {

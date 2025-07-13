@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import type { CacheStrategy } from '../../@types';
+
 export interface AIStrategy<TResponse = unknown, TCacheService = unknown> {
   name: string;
-  readonly cacheService: TCacheService;
+  readonly cacheService?: TCacheService;
   process: ({
     id,
     name,
@@ -19,7 +21,7 @@ export interface AIStrategy<TResponse = unknown, TCacheService = unknown> {
   handleTextFile: (input: string, txt?: string) => Promise<string>;
   getFromCache: (...args: any[]) => any;
   saveToCache: (...args: any[]) => any;
-  setCacheStrategy: (cacheStrategy: string) => void;
+  setCacheStrategy: (cacheConfig: CacheStrategy) => void;
 }
 
 export interface AIResponse {

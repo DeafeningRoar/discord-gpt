@@ -26,7 +26,12 @@ export type BusinessLogicEvent = {
   responseEvent: string;
   responseMetadata: Record<string, unknown>;
   loadingInterval?: NodeJS.Timeout;
-  cacheStrategy?: string;
+  cacheStrategy?: CacheStrategy;
+};
+
+export type CacheStrategy = {
+  cacheTTL?: number;
+  baseCacheKey?: string;
 };
 
 export interface AIProcessInputEvent extends BusinessLogicEvent {

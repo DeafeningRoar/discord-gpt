@@ -123,7 +123,10 @@ const handler = ({ discord }: { discord: Discord }) => {
             user,
           },
           loadingInterval,
-          cacheStrategy: process.env.DISCORD_CHAT_HISTORY_CACHE,
+          cacheStrategy: {
+            cacheTTL: Number(process.env.DISCORD_CHAT_HISTORY_CACHE_TTL),
+            baseCacheKey: process.env.DISCORD_CHAT_HISTORY_CACHE,
+          },
         });
       } catch (error: unknown) {
         logger.error('Error processing interaction:', error);

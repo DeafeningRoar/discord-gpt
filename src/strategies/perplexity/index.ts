@@ -26,7 +26,7 @@ const formatPerplexityHistory = (history: ChatHistoryItem[]) =>
 class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrategy> {
   name = AIStrategyName.PERPLEXITY;
 
-  readonly cacheService = AICacheStrategy;
+  readonly cacheService = new AICacheStrategy();
 
   async process({ id, name, input, txt }: { id: string; name: string; input: string; txt?: string }) {
     const chatHistory = this.getFromCache(id);
@@ -70,8 +70,9 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
     return this.cacheService.setHistoryCache({ cacheKey, content: newContent });
   }
 
-  setCacheStrategy(cacheStrategy: string) {
-    this.cacheService.baseCacheKey = cacheStrategy;
+  setCacheStrategy(cacheConfig: { cacheTTL?: number; baseCacheKey?: string }) {
+    if (cacheConfig.cacheTTL) this.cacheService.setCacheTTL(cacheConfig.cacheTTL);
+    if (cacheConfig.baseCacheKey) this.cacheService.setBaseCacheKey(cacheConfig.baseCacheKey);
   }
 }
 

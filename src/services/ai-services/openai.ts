@@ -26,7 +26,7 @@ class OpenAIService {
 
   static getInstance(): OpenAIService {
     if (!OpenAIService.instance) {
-      OpenAIService.instance = new OpenAIService({ tools: process.env.MCP_SERVERS });
+      OpenAIService.instance = new OpenAIService({ tools: process.env.OPENAI_MCP_SERVERS });
     }
 
     return OpenAIService.instance;
