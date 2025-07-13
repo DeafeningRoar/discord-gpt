@@ -5,6 +5,7 @@ import { Router } from 'express';
 import { Emitter } from '../services';
 import { EVENTS } from '../config/constants';
 import { AIStrategyName } from '../strategies/ai-strategy';
+import { EXPRESS_CHAT_HISTORY_CACHE, EXPRESS_CHAT_HISTORY_CACHE_TTL } from '../config/env';
 
 const router = Router();
 
@@ -24,6 +25,10 @@ router.post('/prompt', (req, res) => {
     },
     processMetadata: {
       strategyName: AIStrategyName.OPENAI,
+    },
+    cacheStrategy: {
+      cacheTTL: Number(EXPRESS_CHAT_HISTORY_CACHE_TTL),
+      baseCacheKey: EXPRESS_CHAT_HISTORY_CACHE,
     },
   };
 
