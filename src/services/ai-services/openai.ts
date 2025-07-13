@@ -70,6 +70,7 @@ class OpenAIService {
     logger.log('Metadata from model response', {
       model: this.model,
       usage: response.usage,
+      systemPrompt: systemPrompt,
       /* eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
       response: response.output.map(({ output, ...rest }: any) => ({ ...rest, output: '[redacted]' })),
     });

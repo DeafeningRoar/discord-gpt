@@ -52,6 +52,7 @@ class PerplexityService {
     logger.log('Metadata from model response', {
       model: this.model,
       usage: response.usage,
+      systemPrompt: systemPrompt,
     });
 
     return response;

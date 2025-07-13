@@ -1,5 +1,6 @@
 import type { AIProcessInputEvent } from '../../@types';
 
+import crypto from 'crypto';
 import { Router } from 'express';
 
 import { Emitter } from '../services';
@@ -15,7 +16,7 @@ router.post('/alexa/prompt', (req, res) => {
 
   const event: AIProcessInputEvent = {
     data: {
-      id: deviceId as string,
+      id: (deviceId as string) || crypto.randomUUID().toString(),
       name: 'Amazon Alexa',
       input: query,
     },
@@ -24,7 +25,7 @@ router.post('/alexa/prompt', (req, res) => {
       res,
     },
     processMetadata: {
-      strategyName: AIStrategyName.OPENAI,
+      strategyName: AIStrategyName.PERPLEXITY,
     },
     cacheStrategy: {
       cacheTTL: Number(EXPRESS_CHAT_HISTORY_CACHE_TTL),
@@ -33,7 +34,7 @@ router.post('/alexa/prompt', (req, res) => {
     context: { source: EVENT_SOURCE.ALEXA },
   };
 
-  Emitter.emit(EVENTS.OPENAI_TEXT_QUERY, event);
+  Emitter.emit(EVENTS.OPENAI_WEB_QUERY, event);
 });
 
 export default router;
