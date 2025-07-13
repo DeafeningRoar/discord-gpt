@@ -2,10 +2,11 @@ import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
 import OpenAI from 'openai';
 import logger from '../logger';
-import { PERPLEXITY_BASE_URL, PERPLEXITY_API_KEY, PERPLEXITY_SYSTEM_PROMPT, PERPLEXITY_MODEL } from '../../config/env';
+import { PERPLEXITY_BASE_URL, PERPLEXITY_API_KEY, PERPLEXITY_MODEL } from '../../config/env';
 
 export interface WebQueryConfig {
   chatHistory?: ChatCompletionMessageParam[];
+  systemPrompt: string;
 }
 
 class PerplexityService {
@@ -16,7 +17,6 @@ class PerplexityService {
     apiKey: PERPLEXITY_API_KEY,
   });
 
-  private readonly systemPrompt = PERPLEXITY_SYSTEM_PROMPT as string;
   private readonly model = PERPLEXITY_MODEL as string;
 
   static getInstance() {
@@ -27,7 +27,7 @@ class PerplexityService {
     return PerplexityService.instance;
   }
 
-  async query(input: string, { chatHistory }: WebQueryConfig) {
+  async query(input: string, { chatHistory, systemPrompt }: WebQueryConfig) {
     logger.log('Processing message with model:', this.model);
 
     const webSearchOptions: OpenAI.Chat.Completions.ChatCompletionCreateParams.WebSearchOptions = {
@@ -37,7 +37,7 @@ class PerplexityService {
     const aiInput: ChatCompletionMessageParam[] = [
       {
         role: 'system',
-        content: this.systemPrompt,
+        content: systemPrompt,
       },
       ...(chatHistory || []),
       { role: 'user', content: input },

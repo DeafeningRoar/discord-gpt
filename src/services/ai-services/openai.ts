@@ -4,18 +4,18 @@ import type { ResponsesModel } from 'openai/resources/shared';
 
 import OpenAI from 'openai';
 import logger from '../logger';
-import { OPENAI_SYSTEM_PROMPT, OPENAI_TEXT_MODEL, OPENAI_MCP_SERVERS } from '../../config/env';
+import { OPENAI_TEXT_MODEL, OPENAI_MCP_SERVERS } from '../../config/env';
 
 export interface TextQueryConfig {
   image?: string;
   chatHistory?: ChatCompletionMessageParam[];
+  systemPrompt: string;
 }
 
 class OpenAIService {
   private static instance: OpenAIService;
   static readonly name = 'openai';
   private readonly client = new OpenAI();
-  private readonly systemPrompt = OPENAI_SYSTEM_PROMPT as string;
   private readonly model = OPENAI_TEXT_MODEL as ResponsesModel;
   private tools: OpenAI.Responses.Tool[] | undefined;
 
@@ -41,7 +41,7 @@ class OpenAIService {
     return [{ type: 'input_image', image_url: image, detail: 'auto' }];
   }
 
-  async query(input: string, { image, chatHistory }: TextQueryConfig) {
+  async query(input: string, { image, chatHistory, systemPrompt }: TextQueryConfig) {
     logger.log('Processing message with model:', this.model);
 
     const userContent: ResponseInputMessageContentList = [
@@ -52,7 +52,7 @@ class OpenAIService {
     const aiInput: ResponseInput = [
       {
         role: 'system',
-        content: this.systemPrompt,
+        content: systemPrompt,
       },
       ...((chatHistory || []) as ResponseInput),
       {

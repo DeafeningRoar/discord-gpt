@@ -38,12 +38,17 @@ const handler = () => {
       loadingInterval,
       processMetadata,
       cacheStrategy,
+      context,
     }: AIProcessInputEvent) => {
       const { id, name, input, files } = data;
 
       const strategy = AIStrategyFactory.getStrategy(processMetadata.strategyName);
       if (cacheStrategy) {
         strategy.setCacheStrategy(cacheStrategy);
+      }
+
+      if (context?.source) {
+        strategy.setSystemPrompt({ source: context.source });
       }
 
       try {

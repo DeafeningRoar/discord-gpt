@@ -26,7 +26,6 @@ class ExpressService {
     app.use(helmet());
     app.use((req, res, next) => {
       logger.log(`Received request: ${req.method} - ${req.url}`, {
-        headers: req.headers,
         body: req.body,
       });
       next();

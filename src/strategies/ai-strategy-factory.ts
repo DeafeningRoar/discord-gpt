@@ -4,19 +4,15 @@ import { OpenAIStrategy } from './openai';
 import { PerplexityStrategy } from './perplexity';
 
 class AIStrategyFactory {
-  private static strategies = new Map<string, AIStrategy<any, any>>([
-    [AIStrategyName.OPENAI, new OpenAIStrategy()],
-    [AIStrategyName.PERPLEXITY, new PerplexityStrategy()],
-  ]);
-
-  static getStrategy(name: string): AIStrategy {
-    const strategy = this.strategies.get(name);
-
-    if (!strategy) {
-      throw new Error(`Unknown AI strategy: ${name}`);
+  static getStrategy(name: string): AIStrategy<any, any> {
+    switch (name) {
+      case AIStrategyName.OPENAI:
+        return new OpenAIStrategy();
+      case AIStrategyName.PERPLEXITY:
+        return new PerplexityStrategy();
+      default:
+        throw new Error(`Unknown AI strategy: ${name}`);
     }
-
-    return strategy;
   }
 }
 
