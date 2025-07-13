@@ -20,8 +20,6 @@ const appendTextFileContent = async ({ txtFile, input }: { txtFile?: string; inp
   return input;
 };
 
-const getCacheKey = (id: string): string => `${id}-${process.env.AI_CACHE_KEY}`;
-
 const embedCitations = (response: string, citations?: string[]): string => {
   try {
     if (!response || !citations?.length) return response;
@@ -41,4 +39,4 @@ const embedCitations = (response: string, citations?: string[]): string => {
   return response;
 };
 
-export { appendTextFileContent, getTextFileContent, getCacheKey, embedCitations };
+export { appendTextFileContent, getTextFileContent, embedCitations };

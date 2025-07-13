@@ -1,4 +1,4 @@
-import type { BusinessLogicEvent } from '../../@types';
+import type { BusinessLogicEvent, AIProcessInputEvent } from '../../@types';
 
 import { Emitter, logger } from '../services';
 import { OPENAI_EVENTS } from '../config/constants';
@@ -6,15 +6,9 @@ import { OPENAI_EVENTS } from '../config/constants';
 import { AIStrategyFactory } from '../strategies/ai-strategy-factory';
 import { AIStrategyName } from '../strategies/ai-strategy';
 
-interface OpenAIProcessInputEvent extends BusinessLogicEvent {
-  processMetadata: {
-    strategyName: string;
-  };
-}
-
 const handler = () => {
   Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async (event: BusinessLogicEvent) => {
-    const aiProcessInputEvent = {
+    const aiProcessInputEvent: AIProcessInputEvent = {
       ...event,
       processMetadata: {
         strategyName: AIStrategyName.OPENAI,
@@ -25,7 +19,7 @@ const handler = () => {
   });
 
   Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async (event: BusinessLogicEvent) => {
-    const aiProcessInputEvent: OpenAIProcessInputEvent = {
+    const aiProcessInputEvent: AIProcessInputEvent = {
       ...event,
       processMetadata: {
         strategyName: AIStrategyName.PERPLEXITY,
@@ -37,9 +31,20 @@ const handler = () => {
 
   Emitter.on(
     OPENAI_EVENTS.OPENAI_PROCESS_INPUT,
-    async ({ data, responseEvent, responseMetadata, loadingInterval, processMetadata }: OpenAIProcessInputEvent) => {
-      const strategy = AIStrategyFactory.getStrategy(processMetadata.strategyName);
+    async ({
+      data,
+      responseEvent,
+      responseMetadata,
+      loadingInterval,
+      processMetadata,
+      cacheStrategy,
+    }: AIProcessInputEvent) => {
       const { id, name, input, files } = data;
+
+      const strategy = AIStrategyFactory.getStrategy(processMetadata.strategyName);
+      if (cacheStrategy) {
+        strategy.setCacheStrategy(cacheStrategy);
+      }
 
       try {
         const response = await strategy.process({

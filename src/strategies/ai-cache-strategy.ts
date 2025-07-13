@@ -2,6 +2,8 @@
 import type { ResponseInput, ResponseInputText } from 'openai/resources/responses/responses';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
+import crypto from 'crypto';
+
 import { Cache } from '../services';
 
 type ChatHistoryItem = Pick<ChatCompletionMessageParam, 'role'> & {
@@ -14,7 +16,13 @@ export type CacheFormatter = (history: ChatHistoryItem[]) => ChatCompletionMessa
 class AICacheStrategy {
   static cacheService = Cache;
 
+  static baseCacheKey = crypto.randomUUID().toString();
+
   private static cacheTTL = Number(process.env.OPENAI_CACHE_TTL || 300); // 5 minutes
+
+  static getCacheKey(id: string): string {
+    return `${this.baseCacheKey}:${id}`;
+  }
 
   static getHistoryCache({
     cacheKey,

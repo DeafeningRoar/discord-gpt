@@ -19,6 +19,7 @@ export interface AIStrategy<TResponse = unknown, TCacheService = unknown> {
   handleTextFile: (input: string, txt?: string) => Promise<string>;
   getFromCache: (...args: any[]) => any;
   saveToCache: (...args: any[]) => any;
+  setCacheStrategy: (cacheStrategy: string) => void;
 }
 
 export interface AIResponse {

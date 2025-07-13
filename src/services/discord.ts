@@ -44,6 +44,10 @@ class Discord {
 
   async initialize(): Promise<boolean> {
     try {
+      if (this.client?.isReady()) {
+        return true;
+      }
+
       await this.login();
       this.subscribe();
 

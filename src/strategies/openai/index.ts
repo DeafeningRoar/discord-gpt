@@ -5,7 +5,7 @@ import { AIStrategy, AIStrategyName } from '../ai-strategy';
 import { AICacheStrategy } from '../ai-cache-strategy';
 import OpenAIService from '../../services/ai-services/openai';
 
-import { appendTextFileContent, getCacheKey } from '../helpers';
+import { appendTextFileContent } from '../helpers';
 
 class OpenAIStrategy implements AIStrategy<Response, AICacheStrategy> {
   name = AIStrategyName.OPENAI;
@@ -48,12 +48,12 @@ class OpenAIStrategy implements AIStrategy<Response, AICacheStrategy> {
   }
 
   getFromCache(id: string) {
-    const cacheKey = getCacheKey(id);
+    const cacheKey = this.cacheService.getCacheKey(id);
     return this.cacheService.getHistoryCache({ cacheKey });
   }
 
   saveToCache(id: string, input: string, response: string, files?: { image?: string }) {
-    const cacheKey = getCacheKey(id);
+    const cacheKey = this.cacheService.getCacheKey(id);
 
     const newContent = [
       {
@@ -67,6 +67,10 @@ class OpenAIStrategy implements AIStrategy<Response, AICacheStrategy> {
     ] as ChatCompletionMessageParam[];
 
     return this.cacheService.setHistoryCache({ cacheKey, content: newContent });
+  }
+
+  setCacheStrategy(cacheStrategy: string) {
+    this.cacheService.baseCacheKey = cacheStrategy;
   }
 }
 

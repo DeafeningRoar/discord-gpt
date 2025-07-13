@@ -6,7 +6,7 @@ import { AIStrategy, AIStrategyName } from '../ai-strategy';
 import { AICacheStrategy } from '../ai-cache-strategy';
 import PerplexityService from '../../services/ai-services/perplexity';
 
-import { appendTextFileContent, getCacheKey, embedCitations } from '../helpers';
+import { appendTextFileContent, embedCitations } from '../helpers';
 
 type PerplexityResponse = ChatCompletion & {
   citations: string[];
@@ -55,12 +55,12 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
   }
 
   getFromCache(id: string) {
-    const cacheKey = getCacheKey(id);
+    const cacheKey = this.cacheService.getCacheKey(id);
     return this.cacheService.getHistoryCache({ cacheKey, formatter: formatPerplexityHistory });
   }
 
   saveToCache(id: string, input: string, response: string) {
-    const cacheKey = getCacheKey(id);
+    const cacheKey = this.cacheService.getCacheKey(id);
 
     const newContent = [
       { role: 'user', content: input },
@@ -68,6 +68,10 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
     ] as ChatCompletionMessageParam[];
 
     return this.cacheService.setHistoryCache({ cacheKey, content: newContent });
+  }
+
+  setCacheStrategy(cacheStrategy: string) {
+    this.cacheService.baseCacheKey = cacheStrategy;
   }
 }
 

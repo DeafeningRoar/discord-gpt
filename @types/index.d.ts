@@ -1,7 +1,7 @@
-import type { BaseInteraction, CommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction } from 'discord.js';
 import type { ChatCompletion } from 'openai/resources/chat';
 
-export type DiscordInteraction = CommandInteraction & BaseInteraction & { content: string; img?: string; txt?: string };
+export type DiscordInteraction = ChatInputCommandInteraction & { content: string; img?: string; txt?: string };
 export interface PerplexityResponse extends ChatCompletion {
   citations: string[];
 }
@@ -26,7 +26,14 @@ export type BusinessLogicEvent = {
   responseEvent: string;
   responseMetadata: Record<string, unknown>;
   loadingInterval?: NodeJS.Timeout;
+  cacheStrategy?: string;
 };
+
+export interface AIProcessInputEvent extends BusinessLogicEvent {
+  processMetadata: {
+    strategyName: string;
+  };
+}
 
 export type ResponseEvent<T = Record<string, unknown>, R = string> = {
   response: R;

@@ -2,12 +2,20 @@ import type { GuildMember } from 'discord.js';
 import type { Discord } from '../services';
 import type { DiscordInteraction, DiscordResponseEvent } from '../../@types';
 
+import { sleep } from '../utils';
 import { Emitter, logger } from '../services';
-import { EVENTS } from '../config/constants';
+import { EVENTS, FIVE_MINUTES_MS } from '../config/constants';
 import { DiscordCommands } from './helpers/commands';
 import { getUserTypes, handleInteractionReply, handleResponseLoading } from './helpers/discord';
 
 const handler = ({ discord }: { discord: Discord }) => {
+  Emitter.on(EVENTS.DISCORD_CONNECTION_ERROR, async (discordInstance) => {
+    logger.log(`Reinitializing Discord in ${FIVE_MINUTES_MS / 5}ms`);
+    await sleep(FIVE_MINUTES_MS / 5);
+    logger.log('Reinitializing Discord connection');
+    await discordInstance.initialize();
+  });
+
   Emitter.on(EVENTS.DISCORD_READY, async () => {
     if (!discord.client?.isReady()) {
       throw new Error(`${EVENTS.DISCORD_READY} - Discord client not ready`);
@@ -25,9 +33,9 @@ const handler = ({ discord }: { discord: Discord }) => {
 
     if (isBot) return;
     const command = interaction.commandName;
-    const content = interaction.options.get('input')?.value as string;
-    const image = interaction.options.get('image')?.attachment;
-    const txtFile = interaction.options.get('txt')?.attachment;
+    const content = interaction.options.getString('input') || '';
+    const image = interaction.options.getAttachment('image');
+    const txtFile = interaction.options.getAttachment('txt');
     const user = (interaction.member as GuildMember)?.nickname ?? interaction.user.displayName;
     const guildId = interaction.guildId || interaction.user?.id;
 
@@ -44,7 +52,7 @@ const handler = ({ discord }: { discord: Discord }) => {
       content,
     });
 
-    if (image && image?.url) {
+    if (image) {
       const isImage = image.contentType?.startsWith('image/');
 
       if (!isImage) {
@@ -53,7 +61,7 @@ const handler = ({ discord }: { discord: Discord }) => {
       }
     }
 
-    if (txtFile && txtFile?.url) {
+    if (txtFile) {
       const isTxtFile = txtFile.contentType?.startsWith('text/');
 
       if (!isTxtFile) {
@@ -115,6 +123,7 @@ const handler = ({ discord }: { discord: Discord }) => {
             user,
           },
           loadingInterval,
+          cacheStrategy: process.env.DISCORD_CHAT_HISTORY_CACHE,
         });
       } catch (error: unknown) {
         logger.error('Error processing interaction:', error);
