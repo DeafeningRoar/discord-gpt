@@ -2,6 +2,7 @@ import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
 import OpenAI from 'openai';
 import logger from '../logger';
+import { PERPLEXITY_BASE_URL, PERPLEXITY_API_KEY, PERPLEXITY_SYSTEM_PROMPT, PERPLEXITY_MODEL } from '../../config/env';
 
 export interface WebQueryConfig {
   chatHistory?: ChatCompletionMessageParam[];
@@ -11,12 +12,12 @@ class PerplexityService {
   private static instance: PerplexityService;
   static readonly name = 'perplexity';
   private readonly client = new OpenAI({
-    baseURL: process.env.PERPLEXITY_BASE_URL,
-    apiKey: process.env.PERPLEXITY_API_KEY,
+    baseURL: PERPLEXITY_BASE_URL,
+    apiKey: PERPLEXITY_API_KEY,
   });
 
-  private readonly systemPrompt = process.env.PERPLEXITY_SYSTEM_PROMPT as string;
-  private readonly model = process.env.PERPLEXITY_MODEL as string;
+  private readonly systemPrompt = PERPLEXITY_SYSTEM_PROMPT as string;
+  private readonly model = PERPLEXITY_MODEL as string;
 
   static getInstance() {
     if (!PerplexityService.instance) {

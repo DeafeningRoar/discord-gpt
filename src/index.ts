@@ -3,18 +3,36 @@ if (process.env.NODE_ENV !== 'production') {
   Dotenv.config();
 }
 
-import { Discord, Emitter, logger } from './services';
+import { Discord, Emitter, logger, ExpressService } from './services';
 import { FIVE_MINUTES_MS, EVENTS } from './config/constants';
+import { DISCORD_ENABLED, EXPRESS_ENABLED } from './config/env';
 import { sleep } from './utils';
 import eventHandlers from './handlers';
 
 async function start(): Promise<void> {
   try {
-    const discord = new Discord();
+    let discord: Discord | undefined;
+    let express: ExpressService | undefined;
+
+    if (DISCORD_ENABLED === 'true') {
+      logger.log('Discord integration enabled');
+      discord = new Discord();
+    }
+
+    if (EXPRESS_ENABLED === 'true') {
+      logger.log('Express integration enabled');
+      express = new ExpressService();
+    }
 
     eventHandlers({ discord });
 
-    await discord.initialize();
+    if (discord) {
+      await discord.initialize();
+    }
+
+    if (express) {
+      express.init();
+    }
   } catch (error) {
     logger.error('Process error', error);
 

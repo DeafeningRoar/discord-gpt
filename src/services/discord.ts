@@ -3,6 +3,7 @@ import { Client, GatewayIntentBits } from 'discord.js';
 import emitter from './event-emitter';
 import logger from './logger';
 import { EVENTS } from '../config/constants';
+import { DISCORD_TOKEN } from '../config/env';
 
 class Discord {
   client: Client | null;
@@ -33,7 +34,7 @@ class Discord {
       intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
     });
 
-    await this.client.login(process.env.DISCORD_TOKEN);
+    await this.client.login(DISCORD_TOKEN);
     logger.log('Successfully logged in to Discord');
 
     this.client.on('ready', () => {

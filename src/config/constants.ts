@@ -19,11 +19,16 @@ const OPENAI_EVENTS = {
   OPENAI_WEB_QUERY: 'OpenAIWebQuery',
 };
 
+const EXPRESS_EVENTS = {
+  EXPRESS_RESPONSE_READY: 'ExpressResponseReady',
+};
+
 const EVENTS = {
   ERROR: 'error',
   PROCESS_ERROR: 'ProcessError',
   ...DISCORD_EVENTS,
   ...OPENAI_EVENTS,
+  ...EXPRESS_EVENTS,
 };
 
 export { FIVE_MINUTES_MS, DISCORD_ACTIONS, DISCORD_EVENTS, OPENAI_EVENTS, EVENTS };

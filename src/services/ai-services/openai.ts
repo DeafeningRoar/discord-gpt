@@ -4,6 +4,7 @@ import type { ResponsesModel } from 'openai/resources/shared';
 
 import OpenAI from 'openai';
 import logger from '../logger';
+import { OPENAI_SYSTEM_PROMPT, OPENAI_TEXT_MODEL, OPENAI_MCP_SERVERS } from '../../config/env';
 
 export interface TextQueryConfig {
   image?: string;
@@ -14,8 +15,8 @@ class OpenAIService {
   private static instance: OpenAIService;
   static readonly name = 'openai';
   private readonly client = new OpenAI();
-  private readonly systemPrompt = process.env.OPENAI_SYSTEM_PROMPT as string;
-  private readonly model = process.env.OPENAI_TEXT_MODEL as ResponsesModel;
+  private readonly systemPrompt = OPENAI_SYSTEM_PROMPT as string;
+  private readonly model = OPENAI_TEXT_MODEL as ResponsesModel;
   private tools: OpenAI.Responses.Tool[] | undefined;
 
   private constructor({ tools }: { tools?: string }) {
@@ -26,7 +27,7 @@ class OpenAIService {
 
   static getInstance(): OpenAIService {
     if (!OpenAIService.instance) {
-      OpenAIService.instance = new OpenAIService({ tools: process.env.OPENAI_MCP_SERVERS });
+      OpenAIService.instance = new OpenAIService({ tools: OPENAI_MCP_SERVERS });
     }
 
     return OpenAIService.instance;
