@@ -25,7 +25,10 @@ class ExpressService {
     app.use(cors());
     app.use(helmet());
     app.use((req, res, next) => {
-      logger.log(`Received request: ${req.method} - ${req.url}`);
+      logger.log(`Received request: ${req.method} - ${req.url}`, {
+        headers: req.headers,
+        body: req.body,
+      });
       next();
     });
 
