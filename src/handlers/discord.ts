@@ -110,7 +110,7 @@ const handler = ({ discord }: { discord: Discord }) => {
           data: {
             id: guildId,
             name: user,
-            input: interaction.content,
+            input: `Sent by ${user}: ${interaction.content}`,
             files: {
               image: interaction.img,
               txt: interaction.txt,

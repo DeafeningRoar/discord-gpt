@@ -28,9 +28,9 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
 
   readonly cacheService = new AICacheStrategy();
 
-  async process({ id, name, input, txt }: { id: string; name: string; input: string; txt?: string }) {
+  async process({ id, input, txt }: { id: string; name?: string; input: string; txt?: string }) {
     const chatHistory = this.getFromCache(id);
-    const userInput = `Sent by ${name}: ${input}`;
+    const userInput = input;
 
     const inputWithTextFile = await this.handleTextFile(userInput, txt);
 
