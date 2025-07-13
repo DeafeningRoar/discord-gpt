@@ -1,7 +1,7 @@
 {
   "name": "discord-gpt",
-  "version": "1.3.0",
-  "description": "A sophisticated, event-driven Discord bot with multi-AI provider support, built using TypeScript and design patterns for maximum extensibility and maintainability",
+  "version": "2.0.0",
+  "description": "A sophisticated, event-driven bot with multi-AI provider support, built using TypeScript and design patterns for maximum extensibility and maintainability",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

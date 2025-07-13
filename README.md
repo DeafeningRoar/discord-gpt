@@ -1,6 +1,6 @@
-# Discord GPT 🤖
+# Bot GPT 🤖
 
-> A sophisticated, event-driven Discord bot powered by multiple AI providers with a modular, extensible architecture.
+> A sophisticated, event-driven smart bot powered by multiple AI providers with a modular, extensible architecture. Currently supports Discord integration with plans for additional platforms.
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
@@ -11,10 +11,37 @@
 - 🤖 **Multi-AI Support**: OpenAI GPT and Perplexity AI integration
 - 📁 **File Processing**: Support for text files and image attachments
 - ⚡ **Real-time**: Live interaction with loading animations
+- 🔌 **Platform Agnostic**: Modular design supports multiple platforms (Discord currently implemented)
 
 ## 🏗️ Architecture
 
 This project is built with a **modular, event-driven architecture** that makes it easy to add new AI providers, platforms, and features.
+
+### How It Works
+
+```mermaid
+graph TD
+    A[User Input] --> B[Platform Handler<br/>Discord/Other]
+    B --> C[Event Handler]
+    C --> D[AI Strategy Factory]
+    D --> E{AI Provider}
+    E -->|GPT| F[OpenAI Strategy<br/>Text + Images + Txt Files]
+    E -->|Web Search| G[Perplexity Strategy<br/>Text + Txt Files]
+    F --> H[AI Service]
+    G --> H
+    H --> I[Cache Service]
+    I --> J[Response Processing]
+    J --> K[Platform Response<br/>Discord/Other]
+    K --> L[User]
+
+    style A fill:#e1f5fe
+    style L fill:#e1f5fe
+    style E fill:#fff3e0
+    style F fill:#f3e5f5
+    style G fill:#f3e5f5
+    style H fill:#e8f5e8
+    style I fill:#e8f5e8
+```
 
 ### Core Components
 
@@ -39,7 +66,7 @@ src/
 ### Prerequisites
 
 - Node.js 18+
-- Discord Bot Token
+- Platform-specific credentials (Discord Bot Token for Discord integration)
 - OpenAI API Key (for GPT)
 - Perplexity API Key (for web search)
 
@@ -60,9 +87,9 @@ npm run lint:fix
 
 ## 🎮 Usage
 
-### Discord Commands
+### Discord Integration
 
-For Discord commands to work, they must be registered via their [Commands API](https://discord.com/developers/docs/interactions/application-commands#registering-a-command)
+Currently, the bot is implemented with Discord integration. Commands must be registered via their [Commands API](https://discord.com/developers/docs/interactions/application-commands#registering-a-command)
 
 #### `/gpt <message>` - OpenAI Text & Image Processing
 
@@ -87,7 +114,7 @@ Use Perplexity AI for real-time web search and information retrieval. This comma
 
 ### Key Features
 
-- **Shared Conversation History**: Conversation history is maintaned across both commands, so you can freely switch between them while maintaining the context.
+- **Shared Conversation History**: Conversation history is maintained across both commands, so you can freely switch between them while maintaining the context.
 - **Smart Caching**: Intelligent conversation history management
 - **Real-time Processing**: Live interaction with loading animations
 - **Error Handling**: Graceful error recovery and user feedback
