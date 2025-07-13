@@ -12,21 +12,9 @@ class OpenAIStrategy implements AIStrategy<Response, AICacheStrategy> {
 
   readonly cacheService = new AICacheStrategy();
 
-  async process({
-    id,
-    name,
-    input,
-    image,
-    txt,
-  }: {
-    id: string;
-    name: string;
-    input: string;
-    image?: string;
-    txt?: string;
-  }) {
+  async process({ id, input, image, txt }: { id: string; name?: string; input: string; image?: string; txt?: string }) {
     const chatHistory = this.getFromCache(id);
-    const userInput = `Sent by ${name}: ${input}`;
+    const userInput = input;
 
     const inputWithTextFile = await this.handleTextFile(userInput, txt);
 
