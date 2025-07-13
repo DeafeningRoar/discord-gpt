@@ -11,12 +11,12 @@ const router = Router();
 
 router.post('/prompt', (req, res) => {
   const { query } = req.body;
-  const { 'x-skill-id': skillId } = req.headers;
+  const { 'x-device-id': deviceId } = req.headers;
 
   const event: AIProcessInputEvent = {
     data: {
-      id: skillId as string,
-      name: 'Desconocido',
+      id: deviceId as string,
+      name: 'Amazon Alexa',
       input: query,
     },
     responseEvent: EVENTS.EXPRESS_RESPONSE_READY,
