@@ -1,5 +1,10 @@
 const FIVE_MINUTES_MS = 300000;
 
+enum EVENT_SOURCE {
+  DISCORD = 'discord',
+  ALEXA = 'alexa',
+}
+
 const DISCORD_ACTIONS = {
   MESSAGE_CREATE: 'messageCreate',
 };
@@ -19,11 +24,16 @@ const OPENAI_EVENTS = {
   OPENAI_WEB_QUERY: 'OpenAIWebQuery',
 };
 
+const EXPRESS_EVENTS = {
+  EXPRESS_RESPONSE_READY: 'ExpressResponseReady',
+};
+
 const EVENTS = {
   ERROR: 'error',
   PROCESS_ERROR: 'ProcessError',
   ...DISCORD_EVENTS,
   ...OPENAI_EVENTS,
+  ...EXPRESS_EVENTS,
 };
 
-export { FIVE_MINUTES_MS, DISCORD_ACTIONS, DISCORD_EVENTS, OPENAI_EVENTS, EVENTS };
+export { FIVE_MINUTES_MS, DISCORD_ACTIONS, DISCORD_EVENTS, OPENAI_EVENTS, EVENTS, EVENT_SOURCE };

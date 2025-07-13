@@ -4,18 +4,19 @@ import type { ResponsesModel } from 'openai/resources/shared';
 
 import OpenAI from 'openai';
 import logger from '../logger';
+import { OPENAI_TEXT_MODEL, OPENAI_MCP_SERVERS } from '../../config/env';
 
 export interface TextQueryConfig {
   image?: string;
   chatHistory?: ChatCompletionMessageParam[];
+  systemPrompt: string;
 }
 
 class OpenAIService {
   private static instance: OpenAIService;
   static readonly name = 'openai';
   private readonly client = new OpenAI();
-  private readonly systemPrompt = process.env.OPENAI_SYSTEM_PROMPT as string;
-  private readonly model = process.env.OPENAI_TEXT_MODEL as ResponsesModel;
+  private readonly model = OPENAI_TEXT_MODEL as ResponsesModel;
   private tools: OpenAI.Responses.Tool[] | undefined;
 
   private constructor({ tools }: { tools?: string }) {
@@ -26,7 +27,7 @@ class OpenAIService {
 
   static getInstance(): OpenAIService {
     if (!OpenAIService.instance) {
-      OpenAIService.instance = new OpenAIService({ tools: process.env.OPENAI_MCP_SERVERS });
+      OpenAIService.instance = new OpenAIService({ tools: OPENAI_MCP_SERVERS });
     }
 
     return OpenAIService.instance;
@@ -40,7 +41,7 @@ class OpenAIService {
     return [{ type: 'input_image', image_url: image, detail: 'auto' }];
   }
 
-  async query(input: string, { image, chatHistory }: TextQueryConfig) {
+  async query(input: string, { image, chatHistory, systemPrompt }: TextQueryConfig) {
     logger.log('Processing message with model:', this.model);
 
     const userContent: ResponseInputMessageContentList = [
@@ -51,7 +52,7 @@ class OpenAIService {
     const aiInput: ResponseInput = [
       {
         role: 'system',
-        content: this.systemPrompt,
+        content: systemPrompt,
       },
       ...((chatHistory || []) as ResponseInput),
       {
@@ -69,6 +70,7 @@ class OpenAIService {
     logger.log('Metadata from model response', {
       model: this.model,
       usage: response.usage,
+      systemPrompt: systemPrompt,
       /* eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
       response: response.output.map(({ output, ...rest }: any) => ({ ...rest, output: '[redacted]' })),
     });

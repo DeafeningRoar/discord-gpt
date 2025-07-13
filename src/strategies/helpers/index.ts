@@ -39,4 +39,8 @@ const embedCitations = (response: string, citations?: string[]): string => {
   return response;
 };
 
-export { appendTextFileContent, getTextFileContent, embedCitations };
+const removeCitations = (response: string): string => {
+  return response.replace(/\[{1,2}(\d+)\]{1,2}(?:\(([^)]+)\))?/gm, '');
+};
+
+export { appendTextFileContent, getTextFileContent, embedCitations, removeCitations };

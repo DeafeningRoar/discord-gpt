@@ -2,21 +2,22 @@ import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 
 import OpenAI from 'openai';
 import logger from '../logger';
+import { PERPLEXITY_BASE_URL, PERPLEXITY_API_KEY, PERPLEXITY_MODEL } from '../../config/env';
 
 export interface WebQueryConfig {
   chatHistory?: ChatCompletionMessageParam[];
+  systemPrompt: string;
 }
 
 class PerplexityService {
   private static instance: PerplexityService;
   static readonly name = 'perplexity';
   private readonly client = new OpenAI({
-    baseURL: process.env.PERPLEXITY_BASE_URL,
-    apiKey: process.env.PERPLEXITY_API_KEY,
+    baseURL: PERPLEXITY_BASE_URL,
+    apiKey: PERPLEXITY_API_KEY,
   });
 
-  private readonly systemPrompt = process.env.PERPLEXITY_SYSTEM_PROMPT as string;
-  private readonly model = process.env.PERPLEXITY_MODEL as string;
+  private readonly model = PERPLEXITY_MODEL as string;
 
   static getInstance() {
     if (!PerplexityService.instance) {
@@ -26,7 +27,7 @@ class PerplexityService {
     return PerplexityService.instance;
   }
 
-  async query(input: string, { chatHistory }: WebQueryConfig) {
+  async query(input: string, { chatHistory, systemPrompt }: WebQueryConfig) {
     logger.log('Processing message with model:', this.model);
 
     const webSearchOptions: OpenAI.Chat.Completions.ChatCompletionCreateParams.WebSearchOptions = {
@@ -36,7 +37,7 @@ class PerplexityService {
     const aiInput: ChatCompletionMessageParam[] = [
       {
         role: 'system',
-        content: this.systemPrompt,
+        content: systemPrompt,
       },
       ...(chatHistory || []),
       { role: 'user', content: input },
@@ -51,6 +52,7 @@ class PerplexityService {
     logger.log('Metadata from model response', {
       model: this.model,
       usage: response.usage,
+      systemPrompt: systemPrompt,
     });
 
     return response;

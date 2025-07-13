@@ -2,6 +2,8 @@ import type { User, GuildMember, APIInteractionGuildMember, InteractionResponse,
 import type { DiscordInteraction } from '../../../@types';
 
 import { hideLinkEmbed, PermissionsBitField, PermissionFlagsBits, EmbedType } from 'discord.js';
+
+import { DISCORD_ADMIN_ID } from '../../config/env';
 import { sleep } from '../../utils';
 import { splitText } from './split-text';
 
@@ -30,7 +32,7 @@ const hideLinkEmbeds = (message: string) => {
 const getUserTypes = (user: User, member: GuildMember | APIInteractionGuildMember | null) => {
   const permissions = new PermissionsBitField(BigInt(PermissionFlagsBits.Administrator));
   const isAdmin = member ? (member as GuildMember).permissions.has(permissions) : false;
-  const isOwner = process.env.ADMIN_ID === user.id;
+  const isOwner = DISCORD_ADMIN_ID === user.id;
   const isBot = user.bot;
 
   return {

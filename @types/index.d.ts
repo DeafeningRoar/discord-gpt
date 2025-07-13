@@ -1,5 +1,6 @@
 import type { ChatInputCommandInteraction } from 'discord.js';
 import type { ChatCompletion } from 'openai/resources/chat';
+import type { EVENT_SOURCE } from '../src/config/constants';
 
 export type DiscordInteraction = ChatInputCommandInteraction & { content: string; img?: string; txt?: string };
 export interface PerplexityResponse extends ChatCompletion {
@@ -23,6 +24,7 @@ export type BusinessLogicEvent = {
       txt?: string;
     };
   };
+  context?: { source: EVENT_SOURCE };
   responseEvent: string;
   responseMetadata: Record<string, unknown>;
   loadingInterval?: NodeJS.Timeout;

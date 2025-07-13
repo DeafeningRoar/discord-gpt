@@ -4,7 +4,8 @@ import type { DiscordInteraction, DiscordResponseEvent } from '../../@types';
 
 import { sleep } from '../utils';
 import { Emitter, logger } from '../services';
-import { EVENTS, FIVE_MINUTES_MS } from '../config/constants';
+import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE } from '../config/constants';
+import { DISCORD_CHAT_HISTORY_CACHE, DISCORD_CHAT_HISTORY_CACHE_TTL } from '../config/env';
 import { DiscordCommands } from './helpers/commands';
 import { getUserTypes, handleInteractionReply, handleResponseLoading } from './helpers/discord';
 
@@ -109,12 +110,13 @@ const handler = ({ discord }: { discord: Discord }) => {
           data: {
             id: guildId,
             name: user,
-            input: interaction.content,
+            input: `Sent by ${user}: ${interaction.content}`,
             files: {
               image: interaction.img,
               txt: interaction.txt,
             },
           },
+          context: { source: EVENT_SOURCE.DISCORD },
           responseEvent: EVENTS.DISCORD_INTERACTION_PROCESSED,
           responseMetadata: {
             query: interaction.content,
@@ -124,8 +126,8 @@ const handler = ({ discord }: { discord: Discord }) => {
           },
           loadingInterval,
           cacheStrategy: {
-            cacheTTL: Number(process.env.DISCORD_CHAT_HISTORY_CACHE_TTL),
-            baseCacheKey: process.env.DISCORD_CHAT_HISTORY_CACHE,
+            cacheTTL: Number(DISCORD_CHAT_HISTORY_CACHE_TTL),
+            baseCacheKey: DISCORD_CHAT_HISTORY_CACHE,
           },
         });
       } catch (error: unknown) {

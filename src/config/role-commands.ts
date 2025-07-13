@@ -1,4 +1,5 @@
 import { OPENAI_EVENTS } from './constants';
+import { DISCORD_COMMAND_OVERRIDES } from './env';
 
 enum COMMANDS_LIST {
   GPT = 'gpt',
@@ -44,8 +45,8 @@ const getCommandsByRole = (): Record<Roles, Record<COMMANDS_LIST, string>> => {
     },
   };
 
-  if (process.env.COMMAND_OVERRIDES) {
-    const overrides = JSON.parse(process.env.COMMAND_OVERRIDES);
+  if (DISCORD_COMMAND_OVERRIDES) {
+    const overrides = JSON.parse(DISCORD_COMMAND_OVERRIDES);
     for (const role in aggregatedCommands) {
       if (overrides[role]) {
         const overridesList = Object.keys(overrides[role]).reduce((acc, key) => {
