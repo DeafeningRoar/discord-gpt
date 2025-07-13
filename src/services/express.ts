@@ -10,6 +10,7 @@ import routes from '../routes';
 import logger from './logger';
 import Emitter from './event-emitter';
 import { EVENTS } from '../config/constants';
+import { AWS_ALEXA_SKILL_ID } from '../config/env';
 
 class ExpressService {
   app: Express | undefined;
@@ -25,6 +26,16 @@ class ExpressService {
     app.use(helmet());
     app.use((req, res, next) => {
       logger.log(`Received request: ${req.method} - ${req.url}`);
+      next();
+    });
+
+    app.use((req, res, next) => {
+      const skillId = req.headers['x-skill-id'];
+
+      if (!skillId || skillId !== AWS_ALEXA_SKILL_ID) {
+        return res.status(403).json();
+      }
+
       next();
     });
 

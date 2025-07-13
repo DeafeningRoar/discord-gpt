@@ -8,16 +8,17 @@ import { AIStrategyName } from '../strategies/ai-strategy';
 
 const router = Router();
 
-router.post('/ask', (req, res) => {
+router.post('/prompt', (req, res) => {
   const { query } = req.body;
+  const { 'x-skill-id': skillId } = req.headers;
 
   const event: AIProcessInputEvent = {
     data: {
-      id: '1',
-      name: 'test',
+      id: skillId as string,
+      name: 'Desconocido',
       input: query,
     },
-    responseEvent: 'TEST_EVENT',
+    responseEvent: EVENTS.EXPRESS_RESPONSE_READY,
     responseMetadata: {
       res,
     },
