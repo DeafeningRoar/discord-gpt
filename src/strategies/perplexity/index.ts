@@ -7,8 +7,9 @@ import { PERPLEXITY_DISCORD_SYSTEM_PROMPT, PERPLEXITY_ALEXA_SYSTEM_PROMPT } from
 import { AIStrategy, AIStrategyName } from '../ai-strategy';
 import { AICacheStrategy } from '../ai-cache-strategy';
 import PerplexityService from '../../services/ai-services/perplexity';
+import { ResponseFormatterFactory } from '../response-formatters';
 
-import { appendTextFileContent, embedCitations } from '../helpers';
+import { appendTextFileContent } from '../helpers';
 
 type PerplexityResponse = ChatCompletion & {
   citations: string[];
@@ -29,6 +30,8 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
   name = AIStrategyName.PERPLEXITY;
 
   readonly cacheService = new AICacheStrategy();
+
+  private platform?: string;
 
   private systemPrompt = 'Respond in a casual, friendly tone. Use the same language the user is using unless instructed to use a different one.';
 
@@ -51,7 +54,8 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
     const { choices, citations } = response;
     const openAIResponse = choices[0].message.content as string;
 
-    return embedCitations(openAIResponse, citations);
+    const formatter = ResponseFormatterFactory.getFormatter(this.platform);
+    return formatter.formatResponse(openAIResponse, citations);
   }
 
   async handleTextFile(input: string, txt?: string) {
@@ -80,6 +84,8 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
   }
 
   setSystemPrompt(context?: { source: EVENT_SOURCE }) {
+    this.platform = context?.source;
+
     if (context?.source === EVENT_SOURCE.DISCORD && PERPLEXITY_DISCORD_SYSTEM_PROMPT) {
       this.systemPrompt = PERPLEXITY_DISCORD_SYSTEM_PROMPT as string;
     }
