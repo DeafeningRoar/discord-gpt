@@ -46,7 +46,9 @@ class OpenAIService {
   }
 
   async query(input: string, { image, chatHistory, systemPrompt }: TextQueryConfig, config?: ModelConfig) {
-    logger.log('Processing message with model:', this.model);
+    const model = config?.model || this.model;
+
+    logger.log('Processing message with model:', model);
 
     const userContent: ResponseInputMessageContentList = [
       { type: 'input_text', text: input },
@@ -67,12 +69,12 @@ class OpenAIService {
 
     const response = await this.client.responses.create({
       tools: this.tools,
-      model: config?.model || this.model,
+      model: model,
       input: aiInput,
     });
 
     logger.log('Metadata from model response', {
-      model: this.model,
+      model: model,
       usage: response.usage,
       systemPrompt: systemPrompt,
       /* eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
