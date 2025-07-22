@@ -3,6 +3,7 @@ const FIVE_MINUTES_MS = 300000;
 enum EVENT_SOURCE {
   DISCORD = 'discord',
   ALEXA = 'alexa',
+  EXPRESS = 'express',
 }
 
 const DISCORD_ACTIONS = {

@@ -1,4 +1,4 @@
-import type { BusinessLogicEvent, AIProcessInputEvent } from '../../@types';
+import type { AIProcessInputEvent } from '../../@types';
 
 import { Emitter, logger } from '../services';
 import { OPENAI_EVENTS } from '../config/constants';
@@ -7,10 +7,11 @@ import { AIStrategyFactory } from '../strategies/ai-strategy-factory';
 import { AIStrategyName } from '../strategies/ai-strategy';
 
 const handler = () => {
-  Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async (event: BusinessLogicEvent) => {
+  Emitter.on(OPENAI_EVENTS.OPENAI_TEXT_QUERY, async (event: AIProcessInputEvent) => {
     const aiProcessInputEvent: AIProcessInputEvent = {
       ...event,
       processMetadata: {
+        ...event.processMetadata,
         strategyName: AIStrategyName.OPENAI,
       },
     };
@@ -18,10 +19,11 @@ const handler = () => {
     Emitter.emit(OPENAI_EVENTS.OPENAI_PROCESS_INPUT, aiProcessInputEvent);
   });
 
-  Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async (event: BusinessLogicEvent) => {
+  Emitter.on(OPENAI_EVENTS.OPENAI_WEB_QUERY, async (event: AIProcessInputEvent) => {
     const aiProcessInputEvent: AIProcessInputEvent = {
       ...event,
       processMetadata: {
+        ...event.processMetadata,
         strategyName: AIStrategyName.PERPLEXITY,
       },
     };
@@ -48,17 +50,20 @@ const handler = () => {
       }
 
       if (context?.source) {
-        strategy.setSystemPrompt({ source: context.source });
+        strategy.setSystemPrompt({ source: context.source, prompt: processMetadata.modelConfig?.systemPrompt });
       }
 
       try {
-        const response = await strategy.process({
-          id,
-          name,
-          input,
-          image: files?.image,
-          txt: files?.txt,
-        });
+        const response = await strategy.process(
+          {
+            id,
+            name,
+            input,
+            image: files?.image,
+            txt: files?.txt,
+          },
+          processMetadata.modelConfig,
+        );
 
         logger.log('OpenAI Response:', {
           id,

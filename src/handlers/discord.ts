@@ -1,6 +1,6 @@
 import type { GuildMember } from 'discord.js';
 import type { Discord } from '../services';
-import type { DiscordInteraction, DiscordResponseEvent } from '../../@types';
+import type { BusinessLogicEvent, DiscordInteraction, DiscordResponseEvent } from '../../@types';
 
 import { sleep } from '../utils';
 import { Emitter, logger } from '../services';
@@ -129,7 +129,7 @@ const handler = ({ discord }: { discord: Discord }) => {
             cacheTTL: Number(DISCORD_CHAT_HISTORY_CACHE_TTL),
             baseCacheKey: DISCORD_CHAT_HISTORY_CACHE,
           },
-        });
+        } as BusinessLogicEvent);
       } catch (error: unknown) {
         logger.error('Error processing interaction:', error);
 

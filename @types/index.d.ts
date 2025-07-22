@@ -39,6 +39,10 @@ export type CacheStrategy = {
 export interface AIProcessInputEvent extends BusinessLogicEvent {
   processMetadata: {
     strategyName: string;
+    modelConfig?: {
+      model?: string;
+      systemPrompt?: string;
+    };
   };
 }
 

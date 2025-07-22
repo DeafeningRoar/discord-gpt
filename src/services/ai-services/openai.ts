@@ -12,6 +12,10 @@ export interface TextQueryConfig {
   systemPrompt: string;
 }
 
+export interface ModelConfig {
+  model?: string;
+}
+
 class OpenAIService {
   private static instance: OpenAIService;
   static readonly name = 'openai';
@@ -41,7 +45,7 @@ class OpenAIService {
     return [{ type: 'input_image', image_url: image, detail: 'auto' }];
   }
 
-  async query(input: string, { image, chatHistory, systemPrompt }: TextQueryConfig) {
+  async query(input: string, { image, chatHistory, systemPrompt }: TextQueryConfig, config?: ModelConfig) {
     logger.log('Processing message with model:', this.model);
 
     const userContent: ResponseInputMessageContentList = [
@@ -63,7 +67,7 @@ class OpenAIService {
 
     const response = await this.client.responses.create({
       tools: this.tools,
-      model: this.model,
+      model: config?.model || this.model,
       input: aiInput,
     });
 
