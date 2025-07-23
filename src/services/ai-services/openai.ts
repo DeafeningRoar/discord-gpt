@@ -106,7 +106,7 @@ class OpenAIService {
     const response = await this.client.audio.speech.create({
       input,
       model,
-      voice: 'sage',
+      voice: 'nova',
     });
 
     return response;
