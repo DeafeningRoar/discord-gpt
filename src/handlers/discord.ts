@@ -7,7 +7,7 @@ import { Emitter, logger } from '../services';
 import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE } from '../config/constants';
 import { DISCORD_CHAT_HISTORY_CACHE, DISCORD_CHAT_HISTORY_CACHE_TTL } from '../config/env';
 import { DiscordCommands } from './helpers/commands';
-import { getUserTypes, handleInteractionReply, handleResponseLoading } from './helpers/discord';
+import { buildUserPrompt, getUserTypes, handleInteractionReply, handleResponseLoading } from './helpers/discord';
 
 const handler = ({ discord }: { discord: Discord }) => {
   Emitter.on(EVENTS.DISCORD_CONNECTION_ERROR, async (discordInstance) => {
@@ -110,7 +110,7 @@ const handler = ({ discord }: { discord: Discord }) => {
           data: {
             id: guildId,
             name: user,
-            input: `Sent by ${user}: ${interaction.content}`,
+            input: buildUserPrompt(interaction.user, user, interaction.content),
             files: {
               image: interaction.img,
               txt: interaction.txt,

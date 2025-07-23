@@ -140,6 +140,17 @@ const handleInteractionReply = async (
   }
 };
 
+const buildUserPrompt = (user: User, userName: string, prompt: string): string => {
+  return `
+[USER]
+Id: ${user.id}
+name: ${userName}
+
+[MESSAGE]
+${prompt}
+`;
+};
+
 export {
   DISCORD_MAX_LENGTH,
   getUserTypes,
@@ -147,4 +158,5 @@ export {
   hideLinkEmbeds,
   handleResponseLoading,
   handleInteractionReply,
+  buildUserPrompt,
 };

@@ -14,7 +14,11 @@ const appendTextFileContent = async ({ txtFile, input }: { txtFile?: string; inp
   if (txtFile) {
     fileContent = await getTextFileContent(txtFile);
 
-    return `${input}\n\nFile content:\n\n${fileContent}`;
+    return `${input}
+
+    [ATTACHMENTS]
+    ${fileContent}
+    `;
   }
 
   return input;
