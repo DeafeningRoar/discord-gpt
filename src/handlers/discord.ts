@@ -23,12 +23,6 @@ const handler = ({ discord }: { discord: Discord }) => {
     }
   });
 
-  Emitter.on(EVENTS.DISCORD_INTERACTION_PROCESSED, async ({ response, responseMetadata }: DiscordResponseEvent) => {
-    const { interaction, user, query, isEdit } = responseMetadata;
-
-    await handleInteractionReply(interaction, user, query, response, !isEdit);
-  });
-
   Emitter.on(EVENTS.DISCORD_INTERACTION_CREATED, async ({ interaction }: { interaction: DiscordInteraction }) => {
     const { isOwner, isAdmin, isBot } = getUserTypes(interaction.user, interaction.member);
 
@@ -139,6 +133,12 @@ const handler = ({ discord }: { discord: Discord }) => {
       }
     },
   );
+
+  Emitter.on(EVENTS.DISCORD_INTERACTION_PROCESSED, async ({ response, responseMetadata }: DiscordResponseEvent) => {
+    const { interaction, user, query, isEdit, type } = responseMetadata;
+
+    await handleInteractionReply(interaction, user, query, response, !isEdit, type);
+  });
 };
 
 export default handler;

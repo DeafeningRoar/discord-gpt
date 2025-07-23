@@ -1,4 +1,4 @@
-import type { Response } from 'openai/resources/responses/responses';
+import type { Response, ResponseFunctionToolCall } from 'openai/resources/responses/responses';
 import type { ChatCompletionMessageParam } from 'openai/resources/index';
 
 import { EVENT_SOURCE } from '../../config/constants';
@@ -12,7 +12,8 @@ import { appendTextFileContent } from '../helpers';
 class OpenAIStrategy implements AIStrategy<Response, AICacheStrategy> {
   name = AIStrategyName.OPENAI;
 
-  private systemPrompt = 'Respond in a casual, friendly tone. Use the same language the user is using unless instructed to use a different one.';
+  private systemPrompt
+    = 'Respond in a casual, friendly tone. Use the same language the user is using unless instructed to use a different one.';
 
   readonly cacheService = new AICacheStrategy();
 
@@ -28,11 +29,31 @@ class OpenAIStrategy implements AIStrategy<Response, AICacheStrategy> {
       systemPrompt: this.systemPrompt,
     });
 
+    const functionCall = response.output.find(
+      output => output.type === 'function_call' && output.status === 'completed' && output.arguments.length,
+    ) as ResponseFunctionToolCall | null;
+
+    let ttsInput: string | undefined;
+    let ttsResponse: unknown;
+    if (functionCall && functionCall.name === 'tts') {
+      const fnCallArguments = JSON.parse(functionCall.arguments);
+      ttsInput = fnCallArguments.input as string;
+      ttsResponse = await this.handleTTS(fnCallArguments);
+    }
+
     const formattedResponse = this.formatResponse(response);
 
-    this.saveToCache(id, inputWithTextFile, formattedResponse, { image });
+    this.saveToCache(id, inputWithTextFile, ttsInput || formattedResponse, { image });
 
-    return formattedResponse;
+    const result = {
+      type: ttsResponse ? 'audio' : 'text',
+      response: (ttsResponse as { body: ReadableStream })?.body || formattedResponse,
+    };
+
+    ttsResponse = undefined;
+    ttsInput = undefined;
+
+    return result;
   }
 
   formatResponse(response: Response): string {
@@ -77,6 +98,10 @@ class OpenAIStrategy implements AIStrategy<Response, AICacheStrategy> {
     if (context?.source === EVENT_SOURCE.ALEXA && OPENAI_ALEXA_SYSTEM_PROMPT) {
       this.systemPrompt = OPENAI_ALEXA_SYSTEM_PROMPT as string;
     }
+  }
+
+  async handleTTS({ input }: { input: string }) {
+    return await OpenAIService.tts(input);
   }
 }
 

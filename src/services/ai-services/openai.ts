@@ -12,6 +12,26 @@ export interface TextQueryConfig {
   systemPrompt: string;
 }
 
+const extraTools = [
+  {
+    type: 'function',
+    name: 'tts',
+    description: 'Converts a text input into audio',
+    parameters: {
+      type: 'object',
+      properties: {
+        input: {
+          type: 'string',
+          description: 'Text to be converted into audio',
+        },
+      },
+      required: ['input'],
+      additionalProperties: false,
+    },
+    strict: true,
+  },
+];
+
 class OpenAIService {
   private static instance: OpenAIService;
   static readonly name = 'openai';
@@ -21,7 +41,7 @@ class OpenAIService {
 
   private constructor({ tools }: { tools?: string }) {
     if (tools) {
-      this.tools = JSON.parse(tools);
+      this.tools = [...JSON.parse(tools), ...extraTools];
     }
   }
 
@@ -71,8 +91,22 @@ class OpenAIService {
       model: this.model,
       usage: response.usage,
       systemPrompt: systemPrompt,
+      responseText: `${response.output_text.slice(0, 150)}...`,
       /* eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
       response: response.output.map(({ output, ...rest }: any) => ({ ...rest, output: '[redacted]' })),
+    });
+
+    return response;
+  }
+
+  async tts(input: string) {
+    const model = 'gpt-4o-mini-tts';
+    logger.log('Processing TTS with model:', model);
+
+    const response = await this.client.audio.speech.create({
+      input,
+      model,
+      voice: 'sage',
     });
 
     return response;

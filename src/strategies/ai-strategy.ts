@@ -17,7 +17,7 @@ export interface AIStrategy<TResponse = unknown, TCacheService = unknown> {
     input: string;
     image?: string;
     txt?: string;
-  }) => Promise<string>;
+  }) => Promise<{ type: string; response: unknown }>;
   formatResponse: (response: TResponse) => string;
   handleTextFile: (input: string, txt?: string) => Promise<string>;
   getFromCache: (...args: any[]) => any;

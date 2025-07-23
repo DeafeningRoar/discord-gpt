@@ -96,14 +96,36 @@ const handleResponseLoading = async (
   return interval;
 };
 
+const handleAudioInteractionReply = async (
+  interaction: DiscordInteraction,
+  user: string,
+  query: string,
+  buffer: Buffer,
+) => {
+  return await interaction.editReply({
+    content: `**${user}**: ${query}`,
+    files: [
+      {
+        attachment: buffer,
+        name: 'pochita.mp3',
+      },
+    ],
+  });
+};
+
 const handleInteractionReply = async (
   interaction: DiscordInteraction,
   user: string,
   query: string,
-  response: string,
+  response: string | Buffer,
   isInitialReply = false,
+  type: 'text' | 'audio',
 ) => {
-  const formattedResponse = formatResponse(response);
+  if (type === 'audio') {
+    return await handleAudioInteractionReply(interaction, user, query, response as Buffer);
+  }
+
+  const formattedResponse = formatResponse(response as string);
 
   const replyContent = {
     content: `**${user}**: ${query}`,

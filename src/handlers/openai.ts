@@ -52,7 +52,7 @@ const handler = () => {
       }
 
       try {
-        const response = await strategy.process({
+        const { type, response } = await strategy.process({
           id,
           name,
           input,
@@ -64,7 +64,7 @@ const handler = () => {
           id,
           name,
           strategy: strategy.name,
-          responseLength: response.length,
+          responseType: type,
         });
 
         if (loadingInterval) {
@@ -73,7 +73,10 @@ const handler = () => {
 
         Emitter.emit(responseEvent, {
           response,
-          responseMetadata,
+          responseMetadata: {
+            ...responseMetadata,
+            type,
+          },
         });
       } catch (err) {
         if (loadingInterval) {

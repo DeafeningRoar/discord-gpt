@@ -12,6 +12,7 @@ export type DiscordResponseMetadata = {
   isEdit: boolean;
   interaction: DiscordInteraction;
   user: string;
+  type: 'text' | 'audio';
 };
 
 export type BusinessLogicEvent = {

@@ -33,7 +33,8 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
 
   private platform?: string;
 
-  private systemPrompt = 'Respond in a casual, friendly tone. Use the same language the user is using unless instructed to use a different one.';
+  private systemPrompt
+    = 'Respond in a casual, friendly tone. Use the same language the user is using unless instructed to use a different one.';
 
   async process({ id, input, txt }: { id: string; name?: string; input: string; txt?: string }) {
     const chatHistory = this.getFromCache(id);
@@ -47,7 +48,7 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
 
     this.saveToCache(id, inputWithTextFile, formattedResponse);
 
-    return formattedResponse;
+    return { type: 'text', response: formattedResponse };
   }
 
   formatResponse(response: PerplexityResponse): string {
