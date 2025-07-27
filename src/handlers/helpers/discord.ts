@@ -143,8 +143,8 @@ const handleInteractionReply = async (
 const buildUserPrompt = (user: User, userName: string, prompt: string): string => {
   return `
 [USER]
-Id: ${user.id}
-name: ${userName}
+ID: ${user.id}
+Name: ${userName}
 
 [MESSAGE]
 ${prompt}

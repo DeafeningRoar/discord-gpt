@@ -1,6 +1,6 @@
 import type { GuildMember } from 'discord.js';
 import type { Discord } from '../services';
-import type { DiscordInteraction, DiscordResponseEvent } from '../../@types';
+import type { DiscordInteraction, DiscordInteractionResponseEvent, DiscordCreateMessageEvent } from '../../@types';
 
 import { sleep } from '../utils';
 import { Emitter, logger } from '../services';
@@ -23,11 +23,28 @@ const handler = ({ discord }: { discord: Discord }) => {
     }
   });
 
-  Emitter.on(EVENTS.DISCORD_INTERACTION_PROCESSED, async ({ response, responseMetadata }: DiscordResponseEvent) => {
-    const { interaction, user, query, isEdit } = responseMetadata;
+  Emitter.on(EVENTS.DISCORD_CREATE_MESSAGE, async ({ response, responseMetadata }: DiscordCreateMessageEvent) => {
+    const { userId } = responseMetadata;
 
-    await handleInteractionReply(interaction, user, query, response, !isEdit);
+    const discordClient = discord.client;
+
+    if (!discordClient) {
+      logger.log('Discord client not available');
+      return;
+    }
+
+    const dmChannel = await discordClient.users.createDM(userId);
+    await dmChannel.send(response);
   });
+
+  Emitter.on(
+    EVENTS.DISCORD_INTERACTION_PROCESSED,
+    async ({ response, responseMetadata }: DiscordInteractionResponseEvent) => {
+      const { interaction, user, query, isEdit } = responseMetadata;
+
+      await handleInteractionReply(interaction, user, query, response, !isEdit);
+    },
+  );
 
   Emitter.on(EVENTS.DISCORD_INTERACTION_CREATED, async ({ interaction }: { interaction: DiscordInteraction }) => {
     const { isOwner, isAdmin, isBot } = getUserTypes(interaction.user, interaction.member);
