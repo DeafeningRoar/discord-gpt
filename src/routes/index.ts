@@ -42,10 +42,15 @@ router.post('/alexa/prompt', (req, res) => {
   Emitter.emit(EVENTS.OPENAI_WEB_QUERY, event);
 });
 
-router.post('/reminder', (req, res) => {
-  const { userId, userName, description } = req.body;
+router.post('/reminders', (req, res) => {
+  const reminders = req.body;
 
-  const input = `
+  if (!reminders.length) {
+    return res.status(201).send();
+  }
+
+  reminders.forEach(({ userId, userName, description }: { userId: string; userName: string; description: string }) => {
+    const input = `
   [USER]
   ID: ${userId}
   Name: ${userName}
@@ -53,27 +58,28 @@ router.post('/reminder', (req, res) => {
   [REMINDER TRIGGERED]
   ${description}`;
 
-  const event: AIProcessInputEvent = {
-    data: {
-      id: userId,
-      name: userName,
-      input,
-    },
-    context: { source: EVENT_SOURCE.DISCORD },
-    responseEvent: EVENTS.DISCORD_CREATE_MESSAGE,
-    responseMetadata: {
-      userId,
-    },
-    processMetadata: {
-      strategyName: AIStrategyName.OPENAI,
-    },
-    cacheStrategy: {
-      cacheTTL: Number(DISCORD_CHAT_HISTORY_CACHE_TTL),
-      baseCacheKey: DISCORD_CHAT_HISTORY_CACHE,
-    },
-  };
+    const event: AIProcessInputEvent = {
+      data: {
+        id: userId,
+        name: userName,
+        input,
+      },
+      context: { source: EVENT_SOURCE.DISCORD },
+      responseEvent: EVENTS.DISCORD_CREATE_MESSAGE,
+      responseMetadata: {
+        userId,
+      },
+      processMetadata: {
+        strategyName: AIStrategyName.OPENAI,
+      },
+      cacheStrategy: {
+        cacheTTL: Number(DISCORD_CHAT_HISTORY_CACHE_TTL),
+        baseCacheKey: DISCORD_CHAT_HISTORY_CACHE,
+      },
+    };
 
-  Emitter.emit(EVENTS.OPENAI_TEXT_QUERY, event);
+    Emitter.emit(EVENTS.OPENAI_TEXT_QUERY, event);
+  });
 
   res.status(201).send();
 });
