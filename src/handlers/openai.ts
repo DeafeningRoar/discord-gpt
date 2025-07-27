@@ -80,6 +80,13 @@ const handler = () => {
           clearInterval(loadingInterval);
         }
 
+        logger.error('Error processing Agent request', {
+          id,
+          name,
+          input,
+          files,
+        });
+
         Emitter.emit(responseEvent, {
           response: 'Error 💀',
           responseMetadata,

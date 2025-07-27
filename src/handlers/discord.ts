@@ -25,16 +25,24 @@ const handler = ({ discord }: { discord: Discord }) => {
 
   Emitter.on(EVENTS.DISCORD_CREATE_MESSAGE, async ({ response, responseMetadata }: DiscordCreateMessageEvent) => {
     const { userId } = responseMetadata;
+    try {
+      const discordClient = discord.client;
 
-    const discordClient = discord.client;
+      if (!discordClient) {
+        logger.error('Error creating Discord Message: Discord client not available.', { userId, response });
+        return;
+      }
 
-    if (!discordClient) {
-      logger.log('Discord client not available');
-      return;
+      const dmChannel = await discordClient.users.createDM(userId);
+      await dmChannel.send(response);
+    } catch (error: unknown) {
+      logger.error('Error creating Discord Message', {
+        userId,
+        response,
+      });
+
+      throw error;
     }
-
-    const dmChannel = await discordClient.users.createDM(userId);
-    await dmChannel.send(response);
   });
 
   Emitter.on(
@@ -42,7 +50,13 @@ const handler = ({ discord }: { discord: Discord }) => {
     async ({ response, responseMetadata }: DiscordInteractionResponseEvent) => {
       const { interaction, user, query, isEdit } = responseMetadata;
 
-      await handleInteractionReply(interaction, user, query, response, !isEdit);
+      try {
+        await handleInteractionReply(interaction, user, query, response, !isEdit);
+      } catch (error: unknown) {
+        logger.error('Error replying to interaction', { ...interaction.__metadata__, query, response });
+
+        throw error;
+      }
     },
   );
 
@@ -56,50 +70,59 @@ const handler = ({ discord }: { discord: Discord }) => {
     const txtFile = interaction.options.getAttachment('txt');
     const user = (interaction.member as GuildMember)?.nickname ?? interaction.user.displayName;
     const guildId = interaction.guildId || interaction.user?.id;
+    const guild = interaction?.guild?.name || null;
+    const isDM = !interaction.guildId;
 
-    logger.log('Processing Interaction by User:', {
+    interaction.__metadata__ = {
       user,
-      guildName: interaction?.guild?.name || null,
-      isDirectMessage: !interaction.guildId,
+      guild,
+      isDM,
       isAdmin,
       isOwner,
       command,
-      queryLength: content.length,
+      contentLength: content.length,
       hasImage: !!image,
       hasTxtFile: !!txtFile,
-      content,
-    });
+    };
 
-    if (image) {
-      const isImage = image.contentType?.startsWith('image/');
+    try {
+      logger.log('Processing Interaction by User:', interaction.__metadata__);
 
-      if (!isImage) {
+      if (image) {
+        const isImage = image.contentType?.startsWith('image/');
+
+        if (!isImage) {
+          await interaction.reply('Interaction not allowed');
+          return;
+        }
+      }
+
+      if (txtFile) {
+        const isTxtFile = txtFile.contentType?.startsWith('text/');
+
+        if (!isTxtFile) {
+          await interaction.reply('Interaction not allowed');
+          return;
+        }
+      }
+
+      const eventType = DiscordCommands.getDiscordEventType(command, { isOwner, isAdmin });
+
+      if (!eventType) {
         await interaction.reply('Interaction not allowed');
         return;
       }
+
+      interaction.content = content;
+      interaction.img = image?.url;
+      interaction.txt = txtFile?.url;
+
+      Emitter.emit(EVENTS.DISCORD_INTERACTION_VALIDATED, { eventType, interaction, content, image, user, guildId });
+    } catch (error: unknown) {
+      logger.error('Error validating interaction', { ...interaction.__metadata__, content });
+
+      throw error;
     }
-
-    if (txtFile) {
-      const isTxtFile = txtFile.contentType?.startsWith('text/');
-
-      if (!isTxtFile) {
-        await interaction.reply('Interaction not allowed');
-        return;
-      }
-    }
-
-    const eventType = DiscordCommands.getDiscordEventType(command, { isOwner, isAdmin });
-
-    if (!eventType) {
-      await interaction.reply('Interaction not allowed');
-      return;
-    }
-
-    interaction.content = content;
-    interaction.img = image?.url;
-    interaction.txt = txtFile?.url;
-
-    Emitter.emit(EVENTS.DISCORD_INTERACTION_VALIDATED, { eventType, interaction, content, image, user, guildId });
   });
 
   Emitter.on(
@@ -148,11 +171,13 @@ const handler = ({ discord }: { discord: Discord }) => {
           },
         });
       } catch (error: unknown) {
-        logger.error('Error processing interaction:', error);
+        logger.error('Error processing valid interaction:', { ...interaction.__metadata__, content: interaction.content });
 
         if (loadingInterval) {
           clearInterval(loadingInterval);
         }
+
+        throw error;
       }
     },
   );

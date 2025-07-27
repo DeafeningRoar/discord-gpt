@@ -2,7 +2,12 @@ import type { ChatInputCommandInteraction } from 'discord.js';
 import type { ChatCompletion } from 'openai/resources/chat';
 import type { EVENT_SOURCE } from '../src/config/constants';
 
-export type DiscordInteraction = ChatInputCommandInteraction & { content: string; img?: string; txt?: string };
+export type DiscordInteraction = ChatInputCommandInteraction & {
+  content: string;
+  img?: string;
+  txt?: string;
+  __metadata__: Record<string, unknown>;
+};
 export interface PerplexityResponse extends ChatCompletion {
   citations: string[];
 }
