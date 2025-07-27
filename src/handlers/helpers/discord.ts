@@ -140,11 +140,12 @@ const handleInteractionReply = async (
   }
 };
 
-const buildUserPrompt = (user: User, userName: string, prompt: string): string => {
+const buildUserPrompt = (user: User, userName: string, prompt: string, channelId: string): string => {
   return `
 [USER]
-ID: ${user.id}
+Id: ${user.id}
 Name: ${userName}
+ChannelId: ${channelId}
 
 [MESSAGE]
 ${prompt}

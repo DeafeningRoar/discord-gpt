@@ -1,6 +1,11 @@
 import type { GuildMember, TextChannel } from 'discord.js';
 import type { Discord } from '../services';
-import type { DiscordInteraction, DiscordInteractionResponseEvent, DiscordCreateMessageEvent, DiscordEnrichMessageEvent } from '../../@types';
+import type {
+  DiscordInteraction,
+  DiscordInteractionResponseEvent,
+  DiscordCreateMessageEvent,
+  DiscordEnrichMessageEvent,
+} from '../../@types';
 
 import { sleep } from '../utils';
 import { Emitter, logger } from '../services';
@@ -186,7 +191,7 @@ const handler = ({ discord }: { discord: Discord }) => {
           data: {
             id: guildId,
             name: user,
-            input: buildUserPrompt(interaction.user, user, interaction.content),
+            input: buildUserPrompt(interaction.user, user, interaction.content, interaction.channelId),
             files: {
               image: interaction.img,
               txt: interaction.txt,
@@ -207,7 +212,10 @@ const handler = ({ discord }: { discord: Discord }) => {
           },
         });
       } catch (error: unknown) {
-        logger.error('Error processing valid interaction:', { ...interaction.__metadata__, content: interaction.content });
+        logger.error('Error processing valid interaction:', {
+          ...interaction.__metadata__,
+          content: interaction.content,
+        });
 
         if (loadingInterval) {
           clearInterval(loadingInterval);
