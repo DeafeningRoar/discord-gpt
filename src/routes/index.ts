@@ -49,37 +49,53 @@ router.post('/reminders', (req, res) => {
     return res.status(201).send();
   }
 
-  reminders.forEach(({ userId, userName, description }: { userId: string; userName: string; description: string }) => {
-    const input = `
+  reminders.forEach(
+    ({
+      userId,
+      userName,
+      prompt,
+      description,
+    }: {
+      userId: string;
+      userName: string;
+      prompt: string;
+      description: string;
+    }) => {
+      const input = `
   [USER]
   ID: ${userId}
   Name: ${userName}
 
-  [REMINDER TRIGGERED]
+  **REMINDER TRIGGERED**
+  [TRIGGER PROMPT]
+  ${prompt}
+
+  [DESCRIPTION]
   ${description}`;
 
-    const event: AIProcessInputEvent = {
-      data: {
-        id: userId,
-        name: userName,
-        input,
-      },
-      context: { source: EVENT_SOURCE.DISCORD },
-      responseEvent: EVENTS.DISCORD_CREATE_MESSAGE,
-      responseMetadata: {
-        userId,
-      },
-      processMetadata: {
-        strategyName: AIStrategyName.OPENAI,
-      },
-      cacheStrategy: {
-        cacheTTL: Number(DISCORD_CHAT_HISTORY_CACHE_TTL),
-        baseCacheKey: DISCORD_CHAT_HISTORY_CACHE,
-      },
-    };
+      const event: AIProcessInputEvent = {
+        data: {
+          id: userId,
+          name: userName,
+          input,
+        },
+        context: { source: EVENT_SOURCE.DISCORD },
+        responseEvent: EVENTS.DISCORD_CREATE_MESSAGE,
+        responseMetadata: {
+          userId,
+        },
+        processMetadata: {
+          strategyName: AIStrategyName.OPENAI,
+        },
+        cacheStrategy: {
+          cacheTTL: Number(DISCORD_CHAT_HISTORY_CACHE_TTL),
+          baseCacheKey: DISCORD_CHAT_HISTORY_CACHE,
+        },
+      };
 
-    Emitter.emit(EVENTS.OPENAI_TEXT_QUERY, event);
-  });
+      Emitter.emit(EVENTS.OPENAI_TEXT_QUERY, event);
+    },
+  );
 
   res.status(201).send();
 });
