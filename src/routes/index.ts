@@ -51,19 +51,19 @@ router.post('/reminders', (req, res) => {
 
   reminders.forEach(
     ({
-      userId,
+      targetId,
       userName,
       prompt,
       description,
     }: {
-      userId: string;
+      targetId: string;
       userName: string;
       prompt: string;
       description: string;
     }) => {
       const input = `
-  [USER]
-  ID: ${userId}
+  [METADATA]
+  TargetId: ${targetId}
   Name: ${userName}
 
   **REMINDER TRIGGERED**
@@ -75,14 +75,14 @@ router.post('/reminders', (req, res) => {
 
       const event: AIProcessInputEvent = {
         data: {
-          id: userId,
+          id: targetId,
           name: userName,
           input,
         },
         context: { source: EVENT_SOURCE.DISCORD },
-        responseEvent: EVENTS.DISCORD_CREATE_MESSAGE,
+        responseEvent: EVENTS.OPENAI_TEXT_QUERY,
         responseMetadata: {
-          userId,
+          targetId,
         },
         processMetadata: {
           strategyName: AIStrategyName.OPENAI,
@@ -93,7 +93,7 @@ router.post('/reminders', (req, res) => {
         },
       };
 
-      Emitter.emit(EVENTS.OPENAI_TEXT_QUERY, event);
+      Emitter.emit(EVENTS.DISCORD_ENRICHED_MESSAGE, event);
     },
   );
 

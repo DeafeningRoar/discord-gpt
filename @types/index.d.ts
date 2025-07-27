@@ -20,7 +20,7 @@ export type DiscordInteractionResponseMetadata = {
 };
 
 export type DiscordCreateMessageMetadata = {
-  userId: string;
+  targetId: string;
 };
 
 export type BusinessLogicEvent = {
@@ -58,3 +58,4 @@ export type ResponseEvent<T = Record<string, unknown>, R = string> = {
 
 export type DiscordInteractionResponseEvent = ResponseEvent<DiscordInteractionResponseMetadata, string>;
 export type DiscordCreateMessageEvent = ResponseEvent<DiscordCreateMessageMetadata, string>;
+export type DiscordEnrichMessageEvent = BusinessLogicEvent & ResponseEvent<DiscordCreateMessageMetadata, string>;

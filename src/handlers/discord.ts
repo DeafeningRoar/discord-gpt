@@ -1,6 +1,6 @@
-import type { GuildMember } from 'discord.js';
+import type { GuildMember, TextChannel } from 'discord.js';
 import type { Discord } from '../services';
-import type { DiscordInteraction, DiscordInteractionResponseEvent, DiscordCreateMessageEvent } from '../../@types';
+import type { DiscordInteraction, DiscordInteractionResponseEvent, DiscordCreateMessageEvent, DiscordEnrichMessageEvent } from '../../@types';
 
 import { sleep } from '../utils';
 import { Emitter, logger } from '../services';
@@ -23,21 +23,57 @@ const handler = ({ discord }: { discord: Discord }) => {
     }
   });
 
-  Emitter.on(EVENTS.DISCORD_CREATE_MESSAGE, async ({ response, responseMetadata }: DiscordCreateMessageEvent) => {
-    const { userId } = responseMetadata;
+  Emitter.on(EVENTS.DISCORD_ENRICHED_MESSAGE, async (event: DiscordEnrichMessageEvent) => {
+    const { data, responseEvent, responseMetadata } = event;
     try {
       const discordClient = discord.client;
 
       if (!discordClient) {
-        logger.error('Error creating Discord Message: Discord client not available.', { userId, response });
+        logger.error('Error enriching Discord Message: Discord client not available.');
         return;
       }
 
-      const dmChannel = await discordClient.users.createDM(userId);
-      await dmChannel.send(response);
+      const channel = discordClient.channels.cache.get(responseMetadata.targetId);
+
+      if (channel) {
+        const guildId = (channel as TextChannel).guildId;
+
+        data.id = guildId;
+      }
+
+      const originalResponseEvent = responseEvent;
+
+      Emitter.emit(originalResponseEvent, { ...event, responseEvent: EVENTS.DISCORD_CREATED_MESSAGE });
+    } catch (error: unknown) {
+      logger.error('Error enriching Discord message', {
+        targetId: responseMetadata.targetId,
+        ...data,
+      });
+
+      throw error;
+    }
+  });
+
+  Emitter.on(EVENTS.DISCORD_CREATED_MESSAGE, async ({ response, responseMetadata }: DiscordCreateMessageEvent) => {
+    const { targetId } = responseMetadata;
+    try {
+      const discordClient = discord.client;
+
+      if (!discordClient) {
+        logger.error('Error creating Discord Message: Discord client not available.', { targetId, response });
+        return;
+      }
+
+      const channel = discordClient.channels.cache.get(targetId);
+
+      if (channel) {
+        await (channel as TextChannel).send(response);
+      } else {
+        await discordClient.users.send(targetId, response);
+      }
     } catch (error: unknown) {
       logger.error('Error creating Discord Message', {
-        userId,
+        targetId,
         response,
       });
 

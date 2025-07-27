@@ -16,7 +16,8 @@ const DISCORD_EVENTS = {
   DISCORD_INTERACTION_CREATED: 'DiscordInteractionCreated',
   DISCORD_INTERACTION_VALIDATED: 'DiscordInteractionValidated',
   DISCORD_INTERACTION_PROCESSED: 'DiscordInteractionProcessed',
-  DISCORD_CREATE_MESSAGE: 'DiscordCreateMessage',
+  DISCORD_CREATED_MESSAGE: 'DiscordCreatedMessage',
+  DISCORD_ENRICHED_MESSAGE: 'DiscordEnrichedMessage',
 };
 
 const OPENAI_EVENTS = {
