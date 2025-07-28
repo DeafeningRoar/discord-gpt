@@ -11,7 +11,10 @@
 - 🤖 **Multi-AI Support**: OpenAI GPT and Perplexity AI integration
 - 📁 **File Processing**: Support for text files and image attachments
 - ⚡ **Real-time**: Live interaction with loading animations
-- 🔌 **Platform Agnostic**: Modular design supports multiple platforms (Discord currently implemented)
+- 🔌 **Platform Agnostic**: Modular design supports multiple platforms (Discord, Express API)
+- 🌐 **REST API**: Express server
+- 🔐 **Secure Authentication**: API key and skill ID validation
+- 📱 **Multi-platform**: Discord bot + HTTP API for external integrations
 
 ## 🏗️ Architecture
 
@@ -21,8 +24,8 @@ This project is built with a **modular, event-driven architecture** that makes i
 
 ```mermaid
 graph TD
-    A[User Input] --> B[Platform Handler<br/>Discord/Other]
-    B --> C[Event Handler]
+    A[User Input] --> B[Platform Listener<br/>Discord/Other]
+    B --> C[Event Controller]
     C --> D[AI Strategy Factory]
     D --> E{AI Provider}
     E -->|GPT| F[OpenAI Strategy<br/>Text + Images + Txt Files]
@@ -36,6 +39,8 @@ graph TD
 
     style A fill:#e1f5fe
     style L fill:#e1f5fe
+    style B fill:#fff3e0
+    style C fill:#fff3e0
     style E fill:#fff3e0
     style F fill:#f3e5f5
     style G fill:#f3e5f5
@@ -47,17 +52,27 @@ graph TD
 
 ```
 src/
-├── strategies/          # AI provider strategies (Strategy Pattern)
+├── events/             # Event-driven architecture (Observer Pattern)
+│   ├── listeners/      # Event listeners (routing layer)
+│   │   ├── discord.ts  # Discord event listeners
+│   │   └── openai.ts   # AI event listeners
+│   └── controllers/    # Business logic controllers
+│       ├── discord.ts  # Discord interaction logic
+│       ├── openai.ts   # AI processing logic
+│       └── helpers/    # Controller utilities
+├── strategies/         # AI provider strategies (Strategy Pattern)
 │   ├── openai/         # OpenAI GPT implementation
 │   ├── perplexity/     # Perplexity AI implementation
 │   └── ai-strategy.ts  # Common strategy interface
 ├── services/           # Core services (Singleton Pattern)
 │   ├── ai-services/    # AI provider services
 │   ├── discord.ts      # Discord client service
-│   └── cache.ts        # Caching service
-├── handlers/           # Event handlers (Observer Pattern)
-│   ├── discord.ts      # Discord interaction handling
-│   └── openai.ts       # AI processing orchestration
+│   ├── express.ts      # Express HTTP server service
+│   ├── cache.ts        # Caching service
+│   ├── event-emitter.ts # Event emitter service
+│   └── logger.ts       # Logging service
+├── routes/             # Express API routes
+│   └── index.ts        # API endpoints (Alexa, reminders)
 └── config/             # Configuration and constants
 ```
 
@@ -66,9 +81,13 @@ src/
 ### Prerequisites
 
 - Node.js 18+
-- Platform-specific credentials (Discord Bot Token for Discord integration)
-- OpenAI API Key (for GPT)
-- Perplexity API Key (for web search)
+- Platform-specific credentials:
+  - Discord Bot Token (for Discord integration)
+  - Amazon Alexa Skill ID (for Alexa integration)
+  - API Key (for express API processing)
+- AI Provider Keys:
+  - OpenAI API Key (for GPT)
+  - Perplexity API Key (for web search)
 
 ### Running the Bot
 
@@ -111,6 +130,10 @@ Use Perplexity AI for real-time web search and information retrieval. This comma
 - **Text File Attachments**: Upload `.txt` files to provide context for web searches
 - **Citation Links**: Receive source links for all information provided
 - **No Image Support**: This command focuses on text-based web queries
+
+### Express API Integration
+
+The bot also provides a REST API for external integrations
 
 ### Key Features
 
