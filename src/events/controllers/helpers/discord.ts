@@ -1,10 +1,10 @@
 import type { User, GuildMember, APIInteractionGuildMember, InteractionResponse, Message } from 'discord.js';
-import type { DiscordInteraction } from '../../../@types';
+import type { DiscordInteraction } from '../../../../@types';
 
 import { hideLinkEmbed, PermissionsBitField, PermissionFlagsBits, EmbedType } from 'discord.js';
 
-import { DISCORD_ADMIN_ID } from '../../config/env';
-import { sleep } from '../../utils';
+import { DISCORD_ADMIN_ID } from '../../../config/env';
+import { sleep } from '../../../utils';
 import { splitText } from './split-text';
 
 const DISCORD_MAX_LENGTH = 4000;

@@ -1,4 +1,4 @@
-import { getCommandsByRole, COMMANDS_LIST } from '../../../config/role-commands';
+import { getCommandsByRole, COMMANDS_LIST } from '../../../../config/role-commands';
 
 const getAvailableEvents = ({ isAdmin, isOwner }: { isAdmin: boolean; isOwner: boolean }) => {
   const availableCommands = getCommandsByRole();
