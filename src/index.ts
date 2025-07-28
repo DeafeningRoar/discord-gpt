@@ -7,7 +7,7 @@ import { Discord, Emitter, logger, ExpressService } from './services';
 import { FIVE_MINUTES_MS, EVENTS } from './config/constants';
 import { DISCORD_ENABLED, EXPRESS_ENABLED } from './config/env';
 import { sleep } from './utils';
-import eventHandlers from './handlers';
+import setupEventListeners from './events';
 
 async function start(): Promise<void> {
   try {
@@ -24,7 +24,7 @@ async function start(): Promise<void> {
       express = new ExpressService();
     }
 
-    eventHandlers({ discord });
+    setupEventListeners({ discord });
 
     if (discord) {
       await discord.initialize();
