@@ -42,10 +42,10 @@ const getUserTypes = (user: User, member: GuildMember | APIInteractionGuildMembe
   };
 };
 
-const formatResponse = (response: string): string[] => {
+const formatResponse = (response: string, maxLength: number = DISCORD_MAX_LENGTH): string[] => {
   let responseMessages = [];
-  if (response.length > DISCORD_MAX_LENGTH) {
-    responseMessages = splitText(response, DISCORD_MAX_LENGTH);
+  if (response.length > maxLength) {
+    responseMessages = splitText(response, maxLength);
   } else {
     responseMessages.push(response);
   }
@@ -140,6 +140,23 @@ const handleInteractionReply = async (
   }
 };
 
+const handleSendMessage = async (
+  sendFn: (msg: string) => Promise<unknown>,
+  message: string,
+) => {
+  const maxResponseLength = 1500;
+  const formattedResponse = formatResponse(message, maxResponseLength);
+
+  await sendFn(formattedResponse[0]);
+
+  if (formattedResponse.length > 1) {
+    for (let i = 1; i < formattedResponse.length; i++) {
+      await sleep(500);
+      await sendFn(formattedResponse[i]);
+    }
+  }
+};
+
 const buildUserPrompt = (user: User, userName: string, prompt: string, channelId: string): string => {
   return `
 [USER]
@@ -159,5 +176,6 @@ export {
   hideLinkEmbeds,
   handleResponseLoading,
   handleInteractionReply,
+  handleSendMessage,
   buildUserPrompt,
 };

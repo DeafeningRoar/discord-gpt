@@ -12,7 +12,7 @@ import { Emitter, logger } from '../../services';
 import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE } from '../../config/constants';
 import { DISCORD_CHAT_HISTORY_CACHE, DISCORD_CHAT_HISTORY_CACHE_TTL } from '../../config/env';
 import { DiscordCommands } from './helpers/commands';
-import { buildUserPrompt, getUserTypes, handleInteractionReply, handleResponseLoading } from './helpers/discord';
+import { buildUserPrompt, getUserTypes, handleInteractionReply, handleResponseLoading, handleSendMessage } from './helpers/discord';
 
 const handleConnectionError = async (discord: Discord) => {
   logger.log(`Reinitializing Discord in ${FIVE_MINUTES_MS / 5}ms`);
@@ -69,12 +69,15 @@ const handleCreatedMessage = async ({ response, responseMetadata }: DiscordCreat
     }
 
     const channel = discordClient.channels.cache.get(targetId);
+    let sendFn;
 
     if (channel) {
-      await (channel as TextChannel).send(response);
+      sendFn = async (message: string) => (channel as TextChannel).send(message);
     } else {
-      await discordClient.users.send(targetId, response);
+      sendFn = async (message: string) => discordClient.users.send(targetId, message);
     }
+
+    await handleSendMessage(sendFn, response);
   } catch (error: unknown) {
     logger.error('Error creating Discord Message', {
       targetId,
