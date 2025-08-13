@@ -4,7 +4,7 @@ import type { ResponseInputText } from 'openai/resources/responses/responses';
 
 import { EVENT_SOURCE } from '../../config/constants';
 import { PERPLEXITY_DISCORD_SYSTEM_PROMPT, PERPLEXITY_ALEXA_SYSTEM_PROMPT } from '../../config/env';
-import { AIStrategy, AIStrategyName } from '../ai-strategy';
+import { AIStrategy, AIStrategyName, InitialConfig } from '../ai-strategy';
 import { AICacheStrategy } from '../ai-cache-strategy';
 import PerplexityService from '../../services/ai-services/perplexity';
 import { ResponseFormatterFactory } from '../response-formatters';
@@ -78,12 +78,17 @@ class PerplexityStrategy implements AIStrategy<PerplexityResponse, AICacheStrate
     return this.cacheService.setHistoryCache({ cacheKey, content: newContent });
   }
 
-  setCacheStrategy(cacheConfig: { cacheTTL?: number; baseCacheKey?: string }) {
-    if (cacheConfig.cacheTTL) this.cacheService.setCacheTTL(cacheConfig.cacheTTL);
-    if (cacheConfig.baseCacheKey) this.cacheService.setBaseCacheKey(cacheConfig.baseCacheKey);
+  async initialize(config: InitialConfig) {
+    this.setCacheStrategy(config.cacheConfig);
+    this.setSystemPrompt(config.context);
   }
 
-  setSystemPrompt(context?: { source: EVENT_SOURCE }) {
+  private setCacheStrategy(cacheConfig?: { cacheTTL?: number; baseCacheKey?: string }) {
+    if (cacheConfig?.cacheTTL) this.cacheService.setCacheTTL(cacheConfig.cacheTTL);
+    if (cacheConfig?.baseCacheKey) this.cacheService.setBaseCacheKey(cacheConfig.baseCacheKey);
+  }
+
+  private setSystemPrompt(context?: { source: EVENT_SOURCE }) {
     this.platform = context?.source;
 
     if (context?.source === EVENT_SOURCE.DISCORD && PERPLEXITY_DISCORD_SYSTEM_PROMPT) {

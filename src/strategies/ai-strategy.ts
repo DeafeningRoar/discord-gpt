@@ -2,6 +2,14 @@
 import type { CacheStrategy } from '../../@types';
 import type { EVENT_SOURCE } from '../config/constants';
 
+export interface InitialConfig {
+  id: string;
+  userId: string;
+  context?: {
+    source: EVENT_SOURCE;
+  };
+  cacheConfig?: CacheStrategy;
+}
 export interface AIStrategy<TResponse = unknown, TCacheService = unknown> {
   name: string;
   readonly cacheService?: TCacheService;
@@ -22,8 +30,7 @@ export interface AIStrategy<TResponse = unknown, TCacheService = unknown> {
   handleTextFile: (input: string, txt?: string) => Promise<string>;
   getFromCache: (...args: any[]) => any;
   saveToCache: (...args: any[]) => any;
-  setCacheStrategy: (cacheConfig: CacheStrategy) => void;
-  setSystemPrompt: (context?: { source: EVENT_SOURCE }) => void;
+  initialize: (config: InitialConfig) => Promise<void>;
 }
 
 export interface AIResponse {

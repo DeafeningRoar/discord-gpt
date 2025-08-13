@@ -37,18 +37,13 @@ const handleOpenAIInput = async ({
   cacheStrategy,
   context,
 }: AIProcessInputEvent) => {
-  const { id, name, input, files } = data;
+  const { id, userId, name, input, files } = data;
 
   const strategy = AIStrategyFactory.getStrategy(processMetadata.strategyName);
-  if (cacheStrategy) {
-    strategy.setCacheStrategy(cacheStrategy);
-  }
-
-  if (context?.source) {
-    strategy.setSystemPrompt({ source: context.source });
-  }
 
   try {
+    await strategy.initialize({ id, userId, context, cacheConfig: cacheStrategy });
+
     const response = await strategy.process({
       id,
       name,

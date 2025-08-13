@@ -79,6 +79,14 @@ class AICacheStrategy {
 
     return Cache.setCache(cacheKey, JSON.stringify(history), this.cacheTTL);
   }
+
+  getCache(key: string) {
+    return Cache.getCache(key);
+  }
+
+  setCache(key: string, value: unknown) {
+    Cache.setCache(key, value, this.cacheTTL);
+  }
 }
 
 export { AICacheStrategy };
