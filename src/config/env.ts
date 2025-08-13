@@ -25,6 +25,8 @@ const {
 
   AWS_ALEXA_SKILL_ID,
   API_KEY,
+  INTERNAL_BASE_URL,
+  INTERNAL_API_KEY,
 } = process.env;
 
 export {
@@ -48,4 +50,6 @@ export {
   PERPLEXITY_ALEXA_SYSTEM_PROMPT,
   AWS_ALEXA_SKILL_ID,
   API_KEY,
+  INTERNAL_BASE_URL,
+  INTERNAL_API_KEY,
 };

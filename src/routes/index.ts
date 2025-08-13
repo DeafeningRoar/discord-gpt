@@ -19,9 +19,12 @@ router.post('/alexa/prompt', (req, res) => {
   const { query } = req.body;
   const { 'x-device-id': deviceId } = req.headers;
 
+  const id = (deviceId as string) || crypto.randomUUID().toString();
+
   const event: AIProcessInputEvent = {
     data: {
-      id: (deviceId as string) || crypto.randomUUID().toString(),
+      id,
+      userId: id,
       name: 'Amazon Alexa',
       input: query,
     },
@@ -76,6 +79,7 @@ router.post('/reminders', (req, res) => {
       const event: AIProcessInputEvent = {
         data: {
           id: targetId,
+          userId: targetId,
           name: userName,
           input,
         },

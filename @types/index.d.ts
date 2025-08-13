@@ -26,6 +26,7 @@ export type DiscordCreateMessageMetadata = {
 export type BusinessLogicEvent = {
   data: {
     id: string;
+    userId: string;
     name: string;
     input: string;
     files?: {
