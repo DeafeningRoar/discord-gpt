@@ -14,6 +14,8 @@ const getFacts = async (id: string) => {
   try {
     const { data } = await api.get<string>(`/facts/${id}`);
 
+    logger.info('Fetched internal facts', { id, facts: data?.length });
+
     return data?.length ? data : undefined;
   } catch (error: unknown) {
     logger.error('Error fetching facts', error);
