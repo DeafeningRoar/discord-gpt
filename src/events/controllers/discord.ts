@@ -92,6 +92,8 @@ const handleInteractionProcessed = async ({ response, responseMetadata }: Discor
   const { interaction, user, query, isEdit } = responseMetadata;
 
   try {
+    logger.info('Interaction processed', { user });
+
     await handleInteractionReply(interaction, user, query, response, !isEdit);
   } catch (error: unknown) {
     logger.error('Error replying to interaction', { ...interaction.__metadata__, query, response });
