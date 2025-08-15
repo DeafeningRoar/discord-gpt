@@ -1,10 +1,11 @@
-import type { ResponseInputMessageContentList, ResponseInput } from 'openai/resources/responses/responses';
+import type { ResponseInputMessageContentList, ResponseInput, Response } from 'openai/resources/responses/responses';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat';
 import type { ResponsesModel } from 'openai/resources/shared';
 
 import OpenAI from 'openai';
 import logger from '../logger';
 import { OPENAI_TEXT_MODEL, OPENAI_MCP_SERVERS } from '../../config/env';
+import { countTokens } from '../../utils';
 
 export interface TextQueryConfig {
   image?: string;
@@ -67,15 +68,30 @@ class OpenAIService {
       input: aiInput,
     });
 
-    logger.log('Metadata from model response', {
-      model: this.model,
-      usage: response.usage,
-      systemPrompt: systemPrompt,
-      /* eslint-disable-next-line @typescript-eslint/no-unused-vars,@typescript-eslint/no-explicit-any */
-      response: response.output.map(({ output, ...rest }: any) => ({ ...rest, output: '[redacted]' })),
-    });
+    logger.log('Metadata from model response', this.logUsageMetrics(response, aiInput, systemPrompt));
 
     return response;
+  }
+
+  private logUsageMetrics(response: Response, input: unknown, systemPrompt: string) {
+    return {
+      model: response.model,
+      usage: response.usage,
+      internalUsageBreakdown: {
+        internalCount: countTokens({ model: this.model, input: response.output }),
+        systemPrompt: countTokens({ model: this.model, input: systemPrompt }),
+        toolsList: countTokens({
+          model: this.model,
+          input: response.output.find(o => o.type === 'mcp_list_tools'),
+        }),
+        toolsUsage: countTokens({
+          model: this.model,
+          input: response.output.filter(o => o.type === 'mcp_call'),
+        }),
+        input: countTokens({ model: this.model, input }),
+      },
+      usedTools: response.output.filter(o => o.type === 'mcp_call')?.map(o => o.name),
+    };
   }
 }
 
