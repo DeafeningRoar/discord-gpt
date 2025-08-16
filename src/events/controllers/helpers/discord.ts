@@ -59,7 +59,7 @@ const handleResponseLoading = async (
   query: string,
   { image, txt }: { image?: string; txt?: string } = {},
 ) => {
-  const WAIT_TIME = 850;
+  const WAIT_TIME = 1000;
   const resultMessage = `**${user}**: ${query}`;
   const files: { attachment: string; name: string }[] | undefined = image || txt ? [] : undefined;
 
