@@ -31,7 +31,7 @@ class Discord {
   async login(): Promise<void> {
     logger.log('Logging in to Discord');
     this.client = new Client({
-      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent],
+      intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.DirectMessages],
     });
 
     await this.client.login(DISCORD_TOKEN);
