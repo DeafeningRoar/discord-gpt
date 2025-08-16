@@ -58,17 +58,19 @@ const setupLoadingMessage = () => {
   const loadingPhrases = LOADING_PHRASES[THEME ?? ''];
   if (!loadingPhrases) {
     let dots = 0;
-    return () => {
-      if (dots > 3) {
+    const generateMessage = () => {
+      if (dots > 2) {
         dots = 0;
       }
       dots++;
       return '。'.repeat(dots);
     };
+
+    return { waitTime: 1000, generateMessage };
   }
 
   const lastValue = Math.floor(Math.random() * loadingPhrases.length);
-  return () => {
+  const generateMessage = () => {
     let randomIndex = lastValue;
     while (lastValue === randomIndex) {
       randomIndex = Math.floor(Math.random() * loadingPhrases.length);
@@ -76,6 +78,8 @@ const setupLoadingMessage = () => {
 
     return loadingPhrases[randomIndex];
   };
+
+  return { waitTime: 2500, generateMessage };
 };
 
 const handleResponseLoading = async (
@@ -84,7 +88,7 @@ const handleResponseLoading = async (
   query: string,
   { image, txt }: { image?: string; txt?: string } = {},
 ) => {
-  const WAIT_TIME = 2500;
+  const { waitTime, generateMessage } = setupLoadingMessage();
   const resultMessage = `**${user}**: ${query}`;
   const files: { attachment: string; name: string }[] | undefined = image || txt ? [] : undefined;
 
@@ -104,18 +108,16 @@ const handleResponseLoading = async (
     }
   }
 
-  const generateLoadingMessage = setupLoadingMessage();
-
   await interaction.reply({
-    content: `${resultMessage}\n_${generateLoadingMessage()}_`,
+    content: `${resultMessage}\n_${generateMessage()}_`,
     files,
   });
 
   const interval = setInterval(async () => {
     await interaction.editReply({
-      content: `${resultMessage}\n_${generateLoadingMessage()}_`,
+      content: `${resultMessage}\n_${generateMessage()}_`,
     });
-  }, WAIT_TIME);
+  }, waitTime);
 
   return interval;
 };
