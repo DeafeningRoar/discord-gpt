@@ -89,10 +89,14 @@ const handleCreatedMessage = async ({ response, responseMetadata }: DiscordCreat
 };
 
 const handleInteractionProcessed = async ({ response, responseMetadata }: DiscordInteractionResponseEvent) => {
-  const { interaction, user, query, isEdit } = responseMetadata;
+  const { interaction, user, query, isEdit, loadingInterval } = responseMetadata;
 
   try {
     logger.info('Interaction processed', { user });
+
+    if (loadingInterval) {
+      clearInterval(loadingInterval);
+    }
 
     await handleInteractionReply(interaction, user, query, response, !isEdit);
   } catch (error: unknown) {
@@ -207,6 +211,7 @@ const handleInteractionValidated = async ({
         isEdit: true,
         interaction,
         user,
+        loadingInterval,
       },
       loadingInterval,
       cacheStrategy: {

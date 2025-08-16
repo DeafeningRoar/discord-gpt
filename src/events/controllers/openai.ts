@@ -59,10 +59,6 @@ const handleOpenAIInput = async ({
       responseLength: response.length,
     });
 
-    if (loadingInterval) {
-      clearInterval(loadingInterval);
-    }
-
     Emitter.emit(responseEvent, {
       response,
       responseMetadata,

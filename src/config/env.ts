@@ -27,6 +27,7 @@ const {
   API_KEY,
   INTERNAL_BASE_URL,
   INTERNAL_API_KEY,
+  THEME,
 } = process.env;
 
 export {
@@ -52,4 +53,5 @@ export {
   API_KEY,
   INTERNAL_BASE_URL,
   INTERNAL_API_KEY,
+  THEME,
 };

@@ -3,7 +3,8 @@ import type { DiscordInteraction } from '../../../../@types';
 
 import { hideLinkEmbed, PermissionsBitField, PermissionFlagsBits, EmbedType } from 'discord.js';
 
-import { DISCORD_ADMIN_ID } from '../../../config/env';
+import { DISCORD_ADMIN_ID, THEME } from '../../../config/env';
+import { LOADING_PHRASES } from '../../../config/phrases';
 import { sleep } from '../../../utils';
 import { splitText } from './split-text';
 
@@ -53,13 +54,37 @@ const formatResponse = (response: string, maxLength: number = DISCORD_MAX_LENGTH
   return responseMessages;
 };
 
+const setupLoadingMessage = () => {
+  const loadingPhrases = LOADING_PHRASES[THEME ?? ''];
+  if (!loadingPhrases) {
+    let dots = 0;
+    return () => {
+      if (dots > 3) {
+        dots = 0;
+      }
+      dots++;
+      return '。'.repeat(dots);
+    };
+  }
+
+  const lastValue = Math.floor(Math.random() * loadingPhrases.length);
+  return () => {
+    let randomIndex = lastValue;
+    while (lastValue === randomIndex) {
+      randomIndex = Math.floor(Math.random() * loadingPhrases.length);
+    }
+
+    return loadingPhrases[randomIndex];
+  };
+};
+
 const handleResponseLoading = async (
   interaction: DiscordInteraction,
   user: string,
   query: string,
   { image, txt }: { image?: string; txt?: string } = {},
 ) => {
-  const WAIT_TIME = 1000;
+  const WAIT_TIME = 2500;
   const resultMessage = `**${user}**: ${query}`;
   const files: { attachment: string; name: string }[] | undefined = image || txt ? [] : undefined;
 
@@ -79,18 +104,17 @@ const handleResponseLoading = async (
     }
   }
 
+  const generateLoadingMessage = setupLoadingMessage();
+
   await interaction.reply({
-    content: resultMessage + '\n。',
+    content: `${resultMessage}\n_${generateLoadingMessage()}_`,
     files,
   });
 
-  let dots = 2;
   const interval = setInterval(async () => {
-    if (dots > 3) dots = 1;
     await interaction.editReply({
-      content: `${resultMessage}\n` + '。'.repeat(dots),
+      content: `${resultMessage}\n_${generateLoadingMessage()}_`,
     });
-    dots++;
   }, WAIT_TIME);
 
   return interval;
@@ -140,10 +164,7 @@ const handleInteractionReply = async (
   }
 };
 
-const handleSendMessage = async (
-  sendFn: (msg: string) => Promise<unknown>,
-  message: string,
-) => {
+const handleSendMessage = async (sendFn: (msg: string) => Promise<unknown>, message: string) => {
   const maxResponseLength = 1500;
   const formattedResponse = formatResponse(message, maxResponseLength);
 

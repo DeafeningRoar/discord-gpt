@@ -17,6 +17,7 @@ export type DiscordInteractionResponseMetadata = {
   isEdit: boolean;
   interaction: DiscordInteraction;
   user: string;
+  loadingInterval?: NodeJS.Timeout;
 };
 
 export type DiscordCreateMessageMetadata = {
