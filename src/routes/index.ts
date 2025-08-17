@@ -32,7 +32,7 @@ router.post('/alexa/prompt', (req, res) => {
     responseMetadata: {
       res,
     },
-    processMetadata: {
+    aiProcessMetadata: {
       strategyName: AIStrategyName.PERPLEXITY,
     },
     cacheStrategy: {
@@ -88,7 +88,7 @@ router.post('/reminders', (req, res) => {
         responseMetadata: {
           targetId,
         },
-        processMetadata: {
+        aiProcessMetadata: {
           strategyName: AIStrategyName.OPENAI,
         },
         cacheStrategy: {

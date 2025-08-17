@@ -5,6 +5,8 @@ import type {
   DiscordInteractionResponseEvent,
   DiscordCreateMessageEvent,
   DiscordEnrichMessageEvent,
+  DiscordProcessingErrorEvent,
+  BusinessLogicEvent,
 } from '../../../@types';
 
 import { sleep } from '../../utils';
@@ -25,6 +27,13 @@ const handleDiscordReady = async (discord: Discord) => {
   if (!discord.client?.isReady()) {
     throw new Error(`${EVENTS.DISCORD_READY} - Discord client not ready`);
   }
+};
+
+const handleProcessingError = (event: DiscordProcessingErrorEvent) => {
+  const { processMetadata } = event;
+  if (processMetadata?.loadingInterval) {
+    clearInterval(processMetadata.loadingInterval);
+  };
 };
 
 const handleEnrichedMessage = async (event: DiscordEnrichMessageEvent, discord: Discord) => {
@@ -88,8 +97,9 @@ const handleCreatedMessage = async ({ response, responseMetadata }: DiscordCreat
   }
 };
 
-const handleInteractionProcessed = async ({ response, responseMetadata }: DiscordInteractionResponseEvent) => {
-  const { interaction, user, query, isEdit, loadingInterval } = responseMetadata;
+const handleInteractionProcessed = async ({ response, responseMetadata, processMetadata }: DiscordInteractionResponseEvent) => {
+  const { interaction, user, query, isEdit } = responseMetadata;
+  const { loadingInterval } = processMetadata;
 
   try {
     logger.info('Interaction processed', { user });
@@ -206,19 +216,19 @@ const handleInteractionValidated = async ({
       },
       context: { source: EVENT_SOURCE.DISCORD },
       responseEvent: EVENTS.DISCORD_INTERACTION_PROCESSED,
+      errorEvent: EVENTS.DISCORD_PROCESSING_ERROR,
       responseMetadata: {
         query: interaction.content,
         isEdit: true,
         interaction,
         user,
-        loadingInterval,
       },
-      loadingInterval,
+      processMetadata: { loadingInterval },
       cacheStrategy: {
         cacheTTL: Number(DISCORD_CHAT_HISTORY_CACHE_TTL),
         baseCacheKey: DISCORD_CHAT_HISTORY_CACHE,
       },
-    });
+    } as BusinessLogicEvent);
   } catch (error: unknown) {
     logger.error('Error processing valid interaction:', {
       ...interaction.__metadata__,
@@ -236,6 +246,7 @@ const handleInteractionValidated = async ({
 export default {
   handleConnectionError,
   handleDiscordReady,
+  handleProcessingError,
   handleEnrichedMessage,
   handleCreatedMessage,
   handleInteractionProcessed,

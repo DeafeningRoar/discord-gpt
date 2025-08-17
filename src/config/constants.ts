@@ -12,6 +12,7 @@ const DISCORD_ACTIONS = {
 const DISCORD_EVENTS = {
   DISCORD_READY: 'DiscordReady',
   DISCORD_CONNECTION_ERROR: 'DiscordConnectionError',
+  DISCORD_PROCESSING_ERROR: 'DiscordProcessingError',
   DISCORD_MESSAGE_CREATED: 'DiscordMessageCreated',
   DISCORD_INTERACTION_CREATED: 'DiscordInteractionCreated',
   DISCORD_INTERACTION_VALIDATED: 'DiscordInteractionValidated',

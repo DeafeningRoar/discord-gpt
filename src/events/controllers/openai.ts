@@ -9,7 +9,7 @@ import { AIStrategyName } from '../../strategies/ai-strategy';
 const handleOpenAITextQuery = async (event: BusinessLogicEvent) => {
   const aiProcessInputEvent: AIProcessInputEvent = {
     ...event,
-    processMetadata: {
+    aiProcessMetadata: {
       strategyName: AIStrategyName.OPENAI,
     },
   };
@@ -20,7 +20,7 @@ const handleOpenAITextQuery = async (event: BusinessLogicEvent) => {
 const handleOpenAIWebQuery = async (event: BusinessLogicEvent) => {
   const aiProcessInputEvent: AIProcessInputEvent = {
     ...event,
-    processMetadata: {
+    aiProcessMetadata: {
       strategyName: AIStrategyName.PERPLEXITY,
     },
   };
@@ -31,15 +31,16 @@ const handleOpenAIWebQuery = async (event: BusinessLogicEvent) => {
 const handleOpenAIInput = async ({
   data,
   responseEvent,
+  errorEvent,
   responseMetadata,
-  loadingInterval,
   processMetadata,
+  aiProcessMetadata,
   cacheStrategy,
   context,
 }: AIProcessInputEvent) => {
   const { id, userId, name, input, files } = data;
 
-  const strategy = AIStrategyFactory.getStrategy(processMetadata.strategyName);
+  const strategy = AIStrategyFactory.getStrategy(aiProcessMetadata.strategyName);
 
   try {
     await strategy.initialize({ id, userId, context, cacheConfig: cacheStrategy });
@@ -62,12 +63,9 @@ const handleOpenAIInput = async ({
     Emitter.emit(responseEvent, {
       response,
       responseMetadata,
+      processMetadata,
     });
   } catch (err) {
-    if (loadingInterval) {
-      clearInterval(loadingInterval);
-    }
-
     logger.error('Error processing Agent request', {
       id,
       name,
@@ -75,9 +73,14 @@ const handleOpenAIInput = async ({
       files,
     });
 
+    if (errorEvent) {
+      Emitter.emit(errorEvent, { processMetadata });
+    }
+
     Emitter.emit(responseEvent, {
       response: 'Error 💀',
       responseMetadata,
+      processMetadata,
     });
 
     throw err;

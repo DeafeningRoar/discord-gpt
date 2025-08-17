@@ -4,6 +4,7 @@ import type {
   DiscordInteractionResponseEvent,
   DiscordCreateMessageEvent,
   DiscordEnrichMessageEvent,
+  DiscordProcessingErrorEvent,
 } from '../../../@types';
 
 import { Emitter } from '../../services';
@@ -43,6 +44,12 @@ const startListeners = ({ discord }: { discord: Discord }) => {
     EVENTS.DISCORD_INTERACTION_VALIDATED,
     async (event: { eventType: string; interaction: DiscordInteraction; user: string; guildId: string; userId: string }) =>
       DiscordControllers.handleInteractionValidated(event),
+  );
+
+  Emitter.on(
+    EVENTS.DISCORD_PROCESSING_ERROR,
+    (event: DiscordProcessingErrorEvent) =>
+      DiscordControllers.handleProcessingError(event),
   );
 };
 

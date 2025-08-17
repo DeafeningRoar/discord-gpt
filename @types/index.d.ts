@@ -17,7 +17,6 @@ export type DiscordInteractionResponseMetadata = {
   isEdit: boolean;
   interaction: DiscordInteraction;
   user: string;
-  loadingInterval?: NodeJS.Timeout;
 };
 
 export type DiscordCreateMessageMetadata = {
@@ -37,8 +36,9 @@ export type BusinessLogicEvent = {
   };
   context?: { source: EVENT_SOURCE };
   responseEvent: string;
+  errorEvent?: string;
   responseMetadata: Record<string, unknown>;
-  loadingInterval?: NodeJS.Timeout;
+  processMetadata?: DiscordProcessMetadata;
   cacheStrategy?: CacheStrategy;
 };
 
@@ -48,7 +48,7 @@ export type CacheStrategy = {
 };
 
 export interface AIProcessInputEvent extends BusinessLogicEvent {
-  processMetadata: {
+  aiProcessMetadata: {
     strategyName: string;
   };
 }
@@ -56,8 +56,19 @@ export interface AIProcessInputEvent extends BusinessLogicEvent {
 export type ResponseEvent<T = Record<string, unknown>, R = string> = {
   response: R;
   responseMetadata: T;
+  processMetadata: DiscordProcessMetadata;
 };
+
+export type ErrorEvent<R> = {
+  error?: unknown;
+  processMetadata: R
+};
+
+export type DiscordProcessMetadata = {
+  loadingInterval?: NodeJS.Timeout;
+}
 
 export type DiscordInteractionResponseEvent = ResponseEvent<DiscordInteractionResponseMetadata, string>;
 export type DiscordCreateMessageEvent = ResponseEvent<DiscordCreateMessageMetadata, string>;
 export type DiscordEnrichMessageEvent = BusinessLogicEvent & ResponseEvent<DiscordCreateMessageMetadata, string>;
+export type DiscordProcessingErrorEvent = ErrorEvent<DiscordProcessMetadata>;
