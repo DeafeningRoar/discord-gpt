@@ -54,19 +54,55 @@ const formatResponse = (response: string, maxLength: number = DISCORD_MAX_LENGTH
   return responseMessages;
 };
 
+const dottedSequence = () => {
+  let position = 0;
+  const fn = () => {
+    const sequence = ['●', '○', '○'];
+    if (position > sequence.length - 1) {
+      position = 0;
+    }
+
+    const message = sequence
+      .reduce((acc, next, index) => {
+        let auxPosition = index + position;
+        if (auxPosition > sequence.length - 1) {
+          auxPosition = Math.abs(sequence.length - auxPosition);
+        }
+        acc[auxPosition] = next;
+        return acc;
+      }, [] as string[])
+      .join(' ');
+
+    position++;
+    return message;
+  };
+
+  return { waitTime: 1000, next: fn };
+};
+
+const snakeSequence = () => {
+  let position = 0;
+  const fn = () => {
+    const sequence = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    if (position > sequence.length - 1) {
+      position = 0;
+    }
+
+    const message = sequence[position];
+
+    position++;
+    return message;
+  };
+
+  return { waitTime: 500, next: fn };
+};
+
 const setupLoadingMessage = () => {
   const loadingPhrases = LOADING_PHRASES[THEME ?? ''];
   if (!loadingPhrases) {
-    let dots = 0;
-    const generateMessage = () => {
-      if (dots > 2) {
-        dots = 0;
-      }
-      dots++;
-      return '。'.repeat(dots);
-    };
-
-    return { waitTime: 1000, generateMessage };
+    const sequenceSelector = Math.floor(Math.random() * 2) + 1;
+    const generator = sequenceSelector === 1 ? dottedSequence() : snakeSequence();
+    return { waitTime: generator.waitTime, generateMessage: generator.next };
   }
 
   const lastValue = Math.floor(Math.random() * loadingPhrases.length);
