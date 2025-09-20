@@ -68,7 +68,7 @@ const handleEnrichedMessage = async (event: DiscordEnrichMessageEvent, discord: 
 };
 
 const handleCreatedMessage = async ({ response, responseMetadata }: DiscordCreateMessageEvent, discord: Discord) => {
-  const { targetId } = responseMetadata;
+  const { targetId, attachments } = responseMetadata;
   try {
     const discordClient = discord.client;
 
@@ -81,9 +81,15 @@ const handleCreatedMessage = async ({ response, responseMetadata }: DiscordCreat
     let sendFn;
 
     if (channel) {
-      sendFn = async (message: string) => (channel as TextChannel).send(message);
+      sendFn = async (message: string) => (channel as TextChannel).send({
+        content: message,
+        files: attachments?.image ? [{ attachment: attachments.image, name: 'generated-image.png' }] : undefined,
+      });
     } else {
-      sendFn = async (message: string) => discordClient.users.send(targetId, message);
+      sendFn = async (message: string) => discordClient.users.send(targetId, {
+        content: message,
+        files: attachments?.image ? [{ attachment: attachments.image, name: 'generated-image.png' }] : undefined,
+      });
     }
 
     await handleSendMessage(sendFn, response);

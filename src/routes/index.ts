@@ -104,4 +104,55 @@ router.post('/reminders', (req, res) => {
   res.status(201).send();
 });
 
+router.post('/message', (req, res) => {
+  try {
+    const { message, reason, targetId, userName, attachments } = req.body;
+
+    const input = `
+  [METADATA]
+  TargetId: ${targetId}
+  Name: ${userName}
+
+  **MESSAGE TRIGGERED**
+  [TRIGGER REASON]
+  ${reason}
+
+  [MESSAGE]
+  ${message}`;
+
+    const event: AIProcessInputEvent = {
+      data: {
+        id: targetId,
+        userId: targetId,
+        name: userName,
+        input,
+        files: {
+          image: attachments?.image,
+        },
+      },
+      context: { source: EVENT_SOURCE.DISCORD },
+      responseEvent: EVENTS.OPENAI_TEXT_QUERY,
+      responseMetadata: {
+        targetId,
+        attachments,
+      },
+      aiProcessMetadata: {
+        strategyName: AIStrategyName.OPENAI,
+      },
+      cacheStrategy: {
+        cacheTTL: Number(DISCORD_CHAT_HISTORY_CACHE_TTL),
+        baseCacheKey: DISCORD_CHAT_HISTORY_CACHE,
+      },
+    };
+
+    Emitter.emit(EVENTS.DISCORD_ENRICHED_MESSAGE, event);
+
+    res.status(201).send();
+  } catch (error: unknown) {
+    // eslint-disable-next-line no-console
+    console.error('Error sending message', error);
+    res.status(500).send();
+  }
+});
+
 export default router;

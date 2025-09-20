@@ -21,6 +21,9 @@ export type DiscordInteractionResponseMetadata = {
 
 export type DiscordCreateMessageMetadata = {
   targetId: string;
+  attachments?: {
+    image?: string;
+  };
 };
 
 export type BusinessLogicEvent = {
