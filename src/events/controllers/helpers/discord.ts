@@ -187,6 +187,13 @@ const handleInteractionReply = async (
     ],
   };
 
+  // Force save channel to cache to prevent Discord error where DMs immediately delete the channel from cache.
+  if (interaction.guildId) {
+    await interaction.guild?.channels.fetch(interaction.channelId);
+  } else {
+    await interaction.client.channels.fetch(interaction.channelId);
+  }
+
   let interactionReply: InteractionResponse | Message | DiscordInteraction = interaction;
 
   if (isInitialReply) {
