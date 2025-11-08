@@ -125,8 +125,12 @@ const handleResponseLoading = async (
   { image, txt }: { image?: string; txt?: string } = {},
 ) => {
   const { waitTime, generateMessage } = setupLoadingMessage();
-  const resultMessage = `**${user}**: ${query}`;
+  let resultMessage = `**${user}**: ${query}`;
   const files: { attachment: string; name: string }[] | undefined = image || txt ? [] : undefined;
+
+  if (resultMessage.length > 1950) {
+    resultMessage = resultMessage.slice(0, 1950) + '...';
+  }
 
   if (files) {
     if (image) {
@@ -166,9 +170,14 @@ const handleInteractionReply = async (
   isInitialReply = false,
 ) => {
   const formattedResponse = formatResponse(response);
+  let userContent = `**${user}**: ${query}`;
+
+  if (userContent.length > 1950) {
+    userContent = userContent.slice(0, 1950) + '...';
+  }
 
   const replyContent = {
-    content: `**${user}**: ${query}`,
+    content: userContent,
     embeds: [
       {
         type: EmbedType.Rich,
