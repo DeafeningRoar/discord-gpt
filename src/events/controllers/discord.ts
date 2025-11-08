@@ -131,10 +131,10 @@ const handleInteractionCreated = async ({ interaction }: { interaction: DiscordI
   const image = interaction.options.getAttachment('image');
   const txtFile = interaction.options.getAttachment('txt');
   const user = (interaction.member as GuildMember)?.nickname ?? interaction.user.displayName;
+  const isDM = !interaction.guildId;
   const userId = interaction.user?.id;
   const guildId = interaction.guildId || interaction.user?.id;
   const guild = interaction?.guild?.name || null;
-  const isDM = !interaction.guildId;
 
   interaction.__metadata__ = {
     user,
@@ -180,7 +180,7 @@ const handleInteractionCreated = async ({ interaction }: { interaction: DiscordI
     interaction.img = image?.url;
     interaction.txt = txtFile?.url;
 
-    Emitter.emit(EVENTS.DISCORD_INTERACTION_VALIDATED, { eventType, interaction, content, image, user, userId, guildId });
+    Emitter.emit(EVENTS.DISCORD_INTERACTION_VALIDATED, { eventType, interaction, content, image, user, userId, guildId, isDM });
   } catch (error: unknown) {
     logger.error('Error validating interaction', { ...interaction.__metadata__, content });
 
@@ -194,12 +194,14 @@ const handleInteractionValidated = async ({
   user,
   userId,
   guildId,
+  isDM,
 }: {
   eventType: string;
   interaction: DiscordInteraction;
   user: string;
   userId: string;
   guildId: string;
+  isDM: boolean;
 }) => {
   let loadingInterval: NodeJS.Timeout | undefined;
 
@@ -214,7 +216,7 @@ const handleInteractionValidated = async ({
         id: guildId,
         userId: userId,
         name: user,
-        input: buildUserPrompt(interaction.user, user, interaction.content, interaction.channelId),
+        input: buildUserPrompt(interaction.user, user, interaction.content, interaction.channelId, isDM),
         files: {
           image: interaction.img,
           txt: interaction.txt,

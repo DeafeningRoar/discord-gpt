@@ -216,12 +216,12 @@ const handleSendMessage = async (sendFn: (msg: string) => Promise<unknown>, mess
   }
 };
 
-const buildUserPrompt = (user: User, userName: string, prompt: string, channelId: string): string => {
+const buildUserPrompt = (user: User, userName: string, prompt: string, channelId: string, isDM: boolean): string => {
   return `
 [USER]
 Id: ${user.id}
 Name: ${userName}
-ChannelId: ${channelId}
+ChannelId: ${isDM ? user.id : channelId}
 
 [MESSAGE]
 ${prompt}

@@ -42,7 +42,7 @@ const startListeners = ({ discord }: { discord: Discord }) => {
 
   Emitter.on(
     EVENTS.DISCORD_INTERACTION_VALIDATED,
-    async (event: { eventType: string; interaction: DiscordInteraction; user: string; guildId: string; userId: string }) =>
+    async (event: { eventType: string; interaction: DiscordInteraction; user: string; guildId: string; userId: string; isDM: boolean }) =>
       DiscordControllers.handleInteractionValidated(event),
   );
 
