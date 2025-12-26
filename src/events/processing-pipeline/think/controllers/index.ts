@@ -1,6 +1,6 @@
-import type { ChatCompletionMessageParam } from 'openai/resources/index';
 import type { AIDecisionPipelineEvent } from '../../../../../@types';
 
+import { logger } from '../../../../services';
 import { AICacheStrategy } from '../../../../strategies/ai-cache-strategy';
 
 const handleProcessInputEvent = (event: AIDecisionPipelineEvent) => {
@@ -20,7 +20,7 @@ const handleProcessInputEvent = (event: AIDecisionPipelineEvent) => {
     ],
   });
 
-  console.log('Saved user input to history cache');
+  logger.info('Saved input to memory');
 };
 
 export { handleProcessInputEvent };

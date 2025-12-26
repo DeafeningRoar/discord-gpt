@@ -75,7 +75,7 @@ export interface AIPipelineEvent extends BusinessLogicEvent {
 
 export interface AIDecisionPipelineEvent extends AIPipelineEvent {
   decisionMetadata: {
-    action: "IGNORE" | "THINK" | "SUMMARIZE" | "SPEAK";
+    action: 'IGNORE' | 'THINK' | 'SUMMARIZE' | 'SPEAK';
     confidence: number;
     conversationActive: boolean;
     reason: string;
