@@ -1,9 +1,9 @@
-import type { BusinessLogicEvent, AIProcessInputEvent } from '../../../@types';
+import type { BusinessLogicEvent, AIProcessInputEvent } from '../../../../@types';
 
-import { Emitter } from '../../services';
-import { OPENAI_EVENTS } from '../../config/constants';
+import { Emitter } from '../../../services';
+import { OPENAI_EVENTS } from '../../../config/constants';
 
-import OpenAIControllers from '../controllers/openai';
+import OpenAIControllers from '../controllers';
 
 const startListeners = () => {
   Emitter.on(

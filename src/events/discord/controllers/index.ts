@@ -1,5 +1,5 @@
 import type { GuildMember, TextChannel } from 'discord.js';
-import type { Discord } from '../../integrations';
+import type { Discord } from '../../../integrations';
 import type {
   DiscordInteraction,
   DiscordInteractionResponseEvent,
@@ -7,12 +7,12 @@ import type {
   DiscordEnrichMessageEvent,
   DiscordProcessingErrorEvent,
   BusinessLogicEvent,
-} from '../../../@types';
+} from '../../../../@types';
 
-import { sleep } from '../../utils';
-import { Emitter, logger } from '../../services';
-import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE } from '../../config/constants';
-import { DISCORD_CHAT_HISTORY_CACHE, DISCORD_CHAT_HISTORY_CACHE_TTL } from '../../config/env';
+import { sleep } from '../../../utils';
+import { Emitter, logger } from '../../../services';
+import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE } from '../../../config/constants';
+import { DISCORD_CHAT_HISTORY_CACHE, DISCORD_CHAT_HISTORY_CACHE_TTL } from '../../../config/env';
 import { DiscordCommands } from './helpers/commands';
 import { buildUserPrompt, getUserTypes, handleInteractionReply, handleResponseLoading, handleSendMessage } from './helpers/discord';
 

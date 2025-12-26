@@ -1,16 +1,16 @@
-import type { Discord } from '../../integrations';
+import type { Discord } from '../../../integrations';
 import type {
   DiscordInteraction,
   DiscordInteractionResponseEvent,
   DiscordCreateMessageEvent,
   DiscordEnrichMessageEvent,
   DiscordProcessingErrorEvent,
-} from '../../../@types';
+} from '../../../../@types';
 
-import { Emitter } from '../../services';
-import { EVENTS } from '../../config/constants';
+import { Emitter } from '../../../services';
+import { EVENTS } from '../../../config/constants';
 
-import DiscordControllers from '../controllers/discord';
+import DiscordControllers from '../controllers';
 
 const startListeners = ({ discord }: { discord: Discord }) => {
   Emitter.on(

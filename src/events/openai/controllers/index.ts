@@ -1,10 +1,10 @@
-import type { BusinessLogicEvent, AIProcessInputEvent } from '../../../@types';
+import type { BusinessLogicEvent, AIProcessInputEvent } from '../../../../@types';
 
-import { Emitter, logger } from '../../services';
-import { OPENAI_EVENTS } from '../../config/constants';
+import { Emitter, logger } from '../../../services';
+import { OPENAI_EVENTS } from '../../../config/constants';
 
-import { AIStrategyFactory } from '../../strategies/ai-strategy-factory';
-import { AIStrategyName } from '../../strategies/ai-strategy';
+import { AIStrategyFactory } from '../../../strategies/ai-strategy-factory';
+import { AIStrategyName } from '../../../strategies/ai-strategy';
 
 const handleOpenAITextQuery = async (event: BusinessLogicEvent) => {
   const aiProcessInputEvent: AIProcessInputEvent = {
