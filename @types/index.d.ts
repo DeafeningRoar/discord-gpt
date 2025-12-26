@@ -11,12 +11,13 @@ export type DiscordInteraction = ChatInputCommandInteraction & {
 };
 
 export type DiscordMessage = OmitPartialGroupDMChannel<Message<boolean>> & {
-  user: Message["author"];
+  user: Message['author'];
   img?: string;
   txt?: string;
   eventType: 'message';
   __metadata__: Record<string, unknown>;
-}
+};
+
 export interface PerplexityResponse extends ChatCompletion {
   citations: string[];
 }
@@ -65,6 +66,22 @@ export interface AIProcessInputEvent extends BusinessLogicEvent {
   };
 }
 
+export interface AIPipelineEvent extends BusinessLogicEvent {
+  aiProcessMetadata: {
+    strategyName: string;
+  };
+  eventType: string;
+}
+
+export interface AIDecisionPipelineEvent extends AIPipelineEvent {
+  decisionMetadata: {
+    action: "IGNORE" | "THINK" | "SUMMARIZE" | "SPEAK";
+    confidence: number;
+    conversationActive: boolean;
+    reason: string;
+  };
+}
+
 export type ResponseEvent<T = Record<string, unknown>, R = string> = {
   response: R;
   responseMetadata: T;
@@ -73,12 +90,12 @@ export type ResponseEvent<T = Record<string, unknown>, R = string> = {
 
 export type ErrorEvent<R> = {
   error?: unknown;
-  processMetadata: R
+  processMetadata: R;
 };
 
 export type DiscordProcessMetadata = {
   loadingInterval?: NodeJS.Timeout;
-}
+};
 
 export type DiscordInteractionResponseEvent = ResponseEvent<DiscordInteractionResponseMetadata, string>;
 export type DiscordCreateMessageEvent = ResponseEvent<DiscordCreateMessageMetadata, string>;

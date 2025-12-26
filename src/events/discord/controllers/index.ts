@@ -208,7 +208,7 @@ const handleInteractionCreated = async ({ interaction, type }: { interaction: Di
       }
     }
 
-    const eventType = interaction.eventType === 'message' ? PIPELINE_EVENTS.DECISION_INPUT_PROCESSED : DiscordCommands.getDiscordEventType(command, { isOwner, isAdmin });
+    const eventType = interaction.eventType === 'message' ? PIPELINE_EVENTS.PIPELINE_ENTRY_POINT : DiscordCommands.getDiscordEventType(command, { isOwner, isAdmin });
 
     if (!eventType) {
       await interaction.reply('Interaction not allowed');
