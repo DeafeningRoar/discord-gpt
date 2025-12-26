@@ -1,17 +1,17 @@
-import type { AIProcessInputEvent } from '../../@types';
+import type { AIProcessInputEvent } from '../../../../@types';
 
 import crypto from 'crypto';
 import { Router } from 'express';
 
-import { Emitter } from '../services';
-import { EVENTS, EVENT_SOURCE } from '../config/constants';
-import { AIStrategyName } from '../strategies/ai-strategy';
+import { Emitter } from '../../../services';
+import { EVENTS, EVENT_SOURCE } from '../../../config/constants';
+import { AIStrategyName } from '../../../strategies/ai-strategy';
 import {
   DISCORD_CHAT_HISTORY_CACHE,
   DISCORD_CHAT_HISTORY_CACHE_TTL,
   EXPRESS_CHAT_HISTORY_CACHE,
   EXPRESS_CHAT_HISTORY_CACHE_TTL,
-} from '../config/env';
+} from '../../../config/env';
 
 const router = Router();
 

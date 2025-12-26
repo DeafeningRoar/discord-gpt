@@ -1,5 +1,5 @@
 import type { GuildMember, TextChannel } from 'discord.js';
-import type { Discord } from '../../services';
+import type { Discord } from '../../integrations';
 import type {
   DiscordInteraction,
   DiscordInteractionResponseEvent,

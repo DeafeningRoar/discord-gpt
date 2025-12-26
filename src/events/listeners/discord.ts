@@ -1,4 +1,4 @@
-import type { Discord } from '../../services';
+import type { Discord } from '../../integrations';
 import type {
   DiscordInteraction,
   DiscordInteractionResponseEvent,

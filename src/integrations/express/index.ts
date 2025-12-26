@@ -1,16 +1,16 @@
 import type { Express } from 'express';
 import type { Response } from 'express';
-import type { ResponseEvent } from '../../@types';
+import type { ResponseEvent } from '../../../@types';
 
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 
-import routes from '../routes';
-import logger from './logger';
-import Emitter from './event-emitter';
-import { EVENTS } from '../config/constants';
-import { AWS_ALEXA_SKILL_ID, API_KEY } from '../config/env';
+import routes from './routes';
+import logger from '../../services/logger';
+import Emitter from '../../services/event-emitter';
+import { EVENTS } from '../../config/constants';
+import { AWS_ALEXA_SKILL_ID, API_KEY } from '../../config/env';
 
 class ExpressService {
   app: Express | undefined;
