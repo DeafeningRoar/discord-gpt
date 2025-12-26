@@ -1,7 +1,8 @@
-import type { GuildMember, TextChannel } from 'discord.js';
+import type { TextChannel } from 'discord.js';
 import type { Discord } from '../../../integrations';
 import type {
   DiscordInteraction,
+  DiscordMessage,
   DiscordInteractionResponseEvent,
   DiscordCreateMessageEvent,
   DiscordEnrichMessageEvent,
@@ -14,7 +15,7 @@ import { Emitter, logger } from '../../../services';
 import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE } from '../../../config/constants';
 import { DISCORD_CHAT_HISTORY_CACHE, DISCORD_CHAT_HISTORY_CACHE_TTL } from '../../../config/env';
 import { DiscordCommands } from './helpers/commands';
-import { buildUserPrompt, getUserTypes, handleInteractionReply, handleResponseLoading, handleSendMessage } from './helpers/discord';
+import { buildUserPrompt, getInteractionContent, getMessageContent, getUserTypes, handleInteractionReply, handleResponseLoading, handleSendMessage } from './helpers/discord';
 
 const handleConnectionError = async (discord: Discord) => {
   logger.log(`Reinitializing Discord in ${FIVE_MINUTES_MS / 5}ms`);
@@ -103,7 +104,7 @@ const handleCreatedMessage = async ({ response, responseMetadata }: DiscordCreat
   }
 };
 
-const handleInteractionProcessed = async ({ response, responseMetadata, processMetadata }: DiscordInteractionResponseEvent) => {
+const handleInteractionProcessed = async ({ response, responseMetadata, processMetadata }: DiscordInteractionResponseEvent, discord: Discord) => {
   const { interaction, user, query, isEdit } = responseMetadata;
   const { loadingInterval } = processMetadata;
 
@@ -114,7 +115,28 @@ const handleInteractionProcessed = async ({ response, responseMetadata, processM
       clearInterval(loadingInterval);
     }
 
-    await handleInteractionReply(interaction, user, query, response, !isEdit);
+    if (interaction.eventType === 'interaction') {
+      await handleInteractionReply(interaction, user, query, response, !isEdit);
+    }
+
+    if (interaction.eventType === 'message') {
+      const discordClient = discord.client;
+      const channel = discordClient?.channels.cache.get(interaction.channelId);
+
+      if (!discordClient) {
+        logger.error('Error creating Discord Message: Discord client not available.', { targetId: interaction.user.id, response });
+        return;
+      }
+
+      let sendFn;
+      if (channel) {
+        sendFn = (message: string) => (channel as TextChannel).send(message);
+      } else {
+        sendFn = (message: string) => discordClient?.users.send(interaction.user.id, { content: message });
+      }
+
+      await handleSendMessage(sendFn, response);
+    }
   } catch (error: unknown) {
     logger.error('Error replying to interaction', { ...interaction.__metadata__, query, response });
 
@@ -122,19 +144,34 @@ const handleInteractionProcessed = async ({ response, responseMetadata, processM
   }
 };
 
-const handleInteractionCreated = async ({ interaction }: { interaction: DiscordInteraction }) => {
-  const { isOwner, isAdmin, isBot } = getUserTypes(interaction.user, interaction.member);
+const handleInteractionCreated = async ({ interaction, type }: { interaction: DiscordInteraction | DiscordMessage; type: 'message' | 'interaction' }) => {
+  if (type === 'message') {
+    interaction.eventType = type;
+    interaction.user = (interaction as DiscordMessage).author;
+  }
+
+  if (type === 'interaction') {
+    interaction.eventType = type;
+  }
+
+  const { isOwner, isAdmin, isBot } = getUserTypes(
+    interaction.user,
+    interaction.member,
+  );
 
   if (isBot) return;
-  const command = interaction.commandName;
-  const content = interaction.options.getString('input') || '';
-  const image = interaction.options.getAttachment('image');
-  const txtFile = interaction.options.getAttachment('txt');
-  const user = (interaction.member as GuildMember)?.nickname ?? interaction.user.displayName;
-  const isDM = !interaction.guildId;
-  const userId = interaction.user?.id;
-  const guildId = interaction.guildId || interaction.user?.id;
-  const guild = interaction?.guild?.name || null;
+
+  const {
+    command,
+    content,
+    image,
+    txtFile,
+    user,
+    isDM,
+    userId,
+    guildId,
+    guild,
+  } = interaction.eventType === 'interaction' ? getInteractionContent(interaction) : getMessageContent(interaction);
 
   interaction.__metadata__ = {
     user,
@@ -150,11 +187,13 @@ const handleInteractionCreated = async ({ interaction }: { interaction: DiscordI
 
   try {
     logger.log('Processing Interaction by User:', interaction.__metadata__);
+    let isValidImage = true;
 
     if (image) {
       const isImage = image.contentType?.startsWith('image/');
+      isValidImage = !!isImage;
 
-      if (!isImage) {
+      if (!isImage && interaction.eventType === 'interaction') {
         await interaction.reply('Interaction not allowed');
         return;
       }
@@ -163,7 +202,7 @@ const handleInteractionCreated = async ({ interaction }: { interaction: DiscordI
     if (txtFile) {
       const isTxtFile = txtFile.contentType?.startsWith('text/');
 
-      if (!isTxtFile) {
+      if (!isTxtFile && interaction.eventType === 'interaction') {
         await interaction.reply('Interaction not allowed');
         return;
       }
@@ -177,7 +216,7 @@ const handleInteractionCreated = async ({ interaction }: { interaction: DiscordI
     }
 
     interaction.content = content;
-    interaction.img = image?.url;
+    interaction.img = isValidImage ? image?.url : undefined;
     interaction.txt = txtFile?.url;
 
     Emitter.emit(EVENTS.DISCORD_INTERACTION_VALIDATED, { eventType, interaction, content, image, user, userId, guildId, isDM });
@@ -197,7 +236,7 @@ const handleInteractionValidated = async ({
   isDM,
 }: {
   eventType: string;
-  interaction: DiscordInteraction;
+  interaction: DiscordInteraction | DiscordMessage;
   user: string;
   userId: string;
   guildId: string;
@@ -206,10 +245,12 @@ const handleInteractionValidated = async ({
   let loadingInterval: NodeJS.Timeout | undefined;
 
   try {
-    loadingInterval = await handleResponseLoading(interaction, user, interaction.content, {
-      image: interaction.img,
-      txt: interaction.txt,
-    });
+    if (interaction.eventType === 'interaction') {
+      loadingInterval = await handleResponseLoading(interaction, user, interaction.content, {
+        image: interaction.img,
+        txt: interaction.txt,
+      });
+    }
 
     Emitter.emit(eventType, {
       data: {

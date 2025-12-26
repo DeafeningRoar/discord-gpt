@@ -1,10 +1,11 @@
 import type { User, GuildMember, APIInteractionGuildMember, InteractionResponse, Message } from 'discord.js';
-import type { DiscordInteraction } from '../../../../../@types';
+import type { DiscordInteraction, DiscordMessage } from '../../../../../@types';
 
 import { hideLinkEmbed, PermissionsBitField, PermissionFlagsBits, EmbedType } from 'discord.js';
 
 import { DISCORD_ADMIN_ID, THEME } from '../../../../config/env';
 import { LOADING_PHRASES } from '../../../../config/phrases';
+import { COMMANDS_LIST } from '../../../../config/role-commands';
 import { sleep } from '../../../../utils';
 import { splitText } from './split-text';
 
@@ -244,6 +245,30 @@ ${prompt}
 `;
 };
 
+const getInteractionContent = (event: DiscordInteraction) => ({
+  command: event.commandName,
+  content: event.options.getString('input') || '',
+  image: event.options.getAttachment('image'),
+  txtFile: event.options.getAttachment('txt'),
+  user: (event.member as GuildMember)?.nickname ?? event.user.displayName,
+  isDM: !event.guildId,
+  userId: event.user?.id,
+  guildId: event.guildId || event.user?.id,
+  guild: event?.guild?.name || null,
+});
+
+const getMessageContent = (event: DiscordMessage) => ({
+  command: COMMANDS_LIST.GPT,
+  content: event.content,
+  image: event.attachments.find(att => att.contentType?.includes('image')),
+  txtFile: null,
+  user: event.author.username,
+  isDM: !event.guildId,
+  userId: event.author.id,
+  guildId: event.guildId || event.author.id,
+  guild: event.guild?.name,
+});
+
 export {
   DISCORD_MAX_LENGTH,
   getUserTypes,
@@ -253,4 +278,6 @@ export {
   handleInteractionReply,
   handleSendMessage,
   buildUserPrompt,
+  getInteractionContent,
+  getMessageContent,
 };

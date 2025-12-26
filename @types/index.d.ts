@@ -1,4 +1,4 @@
-import type { ChatInputCommandInteraction } from 'discord.js';
+import type { ChatInputCommandInteraction, OmitPartialGroupDMChannel, Message } from 'discord.js';
 import type { ChatCompletion } from 'openai/resources/chat';
 import type { EVENT_SOURCE } from '../src/config/constants';
 
@@ -6,8 +6,17 @@ export type DiscordInteraction = ChatInputCommandInteraction & {
   content: string;
   img?: string;
   txt?: string;
+  eventType: 'interaction';
   __metadata__: Record<string, unknown>;
 };
+
+export type DiscordMessage = OmitPartialGroupDMChannel<Message<boolean>> & {
+  user: Message["author"];
+  img?: string;
+  txt?: string;
+  eventType: 'message';
+  __metadata__: Record<string, unknown>;
+}
 export interface PerplexityResponse extends ChatCompletion {
   citations: string[];
 }
@@ -15,7 +24,7 @@ export interface PerplexityResponse extends ChatCompletion {
 export type DiscordInteractionResponseMetadata = {
   query: string;
   isEdit: boolean;
-  interaction: DiscordInteraction;
+  interaction: DiscordInteraction | DiscordMessage;
   user: string;
 };
 
