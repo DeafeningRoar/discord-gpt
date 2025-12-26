@@ -1,15 +1,12 @@
 import { Emitter } from '../../../../services';
-import { placeholderController } from '../controllers';
+import { PIPELINE_EVENTS } from '../../../../config/constants';
 
-const EVENTS_PREFIX = 'speak';
-const EVENTS = {
-  PLACEHOLDER: `${EVENTS_PREFIX}:placeholder`,
-};
+import { handleProcessInputEvent } from '../controllers';
 
 const start = () => {
   Emitter.on(
-    EVENTS.PLACEHOLDER,
-    placeholderController,
+    PIPELINE_EVENTS.SPEAK_INPUT_PROCESSED,
+    handleProcessInputEvent,
   );
 };
 
