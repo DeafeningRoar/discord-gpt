@@ -12,7 +12,7 @@ import type {
 
 import { sleep } from '../../../utils';
 import { Emitter, logger } from '../../../services';
-import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE } from '../../../config/constants';
+import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE, PIPELINE_EVENTS } from '../../../config/constants';
 import { DISCORD_CHAT_HISTORY_CACHE, DISCORD_CHAT_HISTORY_CACHE_TTL } from '../../../config/env';
 import { DiscordCommands } from './helpers/commands';
 import { buildUserPrompt, getInteractionContent, getMessageContent, getUserTypes, handleInteractionReply, handleResponseLoading, handleSendMessage } from './helpers/discord';
@@ -208,7 +208,7 @@ const handleInteractionCreated = async ({ interaction, type }: { interaction: Di
       }
     }
 
-    const eventType = DiscordCommands.getDiscordEventType(command, { isOwner, isAdmin });
+    const eventType = interaction.eventType === 'message' ? PIPELINE_EVENTS.DECISION_INPUT_PROCESSED : DiscordCommands.getDiscordEventType(command, { isOwner, isAdmin });
 
     if (!eventType) {
       await interaction.reply('Interaction not allowed');
