@@ -1,12 +1,14 @@
 import type { Discord } from '../integrations';
 
-import StartDiscordListeners from './discord/listeners';
-import StartOpenAIListeners from './openai/listeners';
+import DiscordListeners from './discord/listeners';
+import OpenAIListeners from './openai/listeners';
+import ProcessingPipelineListeners from './processing-pipeline';
 
 export default ({ discord }: { discord?: Discord }) => {
-  if (discord) {
-    StartDiscordListeners({ discord });
-  }
+  OpenAIListeners();
+  ProcessingPipelineListeners();
 
-  StartOpenAIListeners();
+  if (discord) {
+    DiscordListeners({ discord });
+  }
 };
