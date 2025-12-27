@@ -1,50 +1,59 @@
 import type { AIPipelineEvent } from '../../../../../@types';
+import type { Conversation } from '../../../../database/schemas/conversation';
 
 import { PIPELINE_EVENTS } from '../../../../config/constants';
-import { Emitter } from '../../../../services';
-// import { AICacheStrategy } from "../../../../strategies/ai-cache-strategy";
+import { Emitter, logger } from '../../../../services';
+import { conversation } from '../../../../database';
 
-// type MessageQueue = {
-//   lastUpdatedAt: number;
-//   messages: Array<string>;
-// };
+const handleProcessInputEvent = async (event: AIPipelineEvent) => {
+  const { data: { id, input }, context } = event;
 
-// const batchMessages = (input: string, messages: Array<string>) => {
-//   const batch = [...messages, input].join('\n---\n');
+  const model = conversation.getModel();
 
-//   return batch;
-// }
+  const ts = Date.now();
 
-// const sendBatchedEvent = (event: AIPipelineEvent, input: string, messages: Array<string>) => {
-//   const batchedInput = batchMessages(input, messages);
-//   Emitter.emit(PIPELINE_EVENTS.DECISION_INPUT_PROCESSED, { ...event, data: { ...event.data, input: batchedInput } });
-// }
+  const document = (await model.findOneAndUpdate(
+    { channelId: id, 'state.active': true, source: context?.source },
+    {
+      $setOnInsert: {
+        channelId: id,
+        source: context?.source,
+        'state.active': true,
+        summary: {},
+        liveBuffer: [],
+      },
+      $set: {
+        updatedAt: ts,
+      },
+      $inc: {
+        version: 1,
+      },
+      $push: {
+        pending: { role: 'user', content: input },
+      },
+    },
+    { upsert: true, new: true },
+  )) as Conversation;
 
-const handleProcessInputEvent = (event: AIPipelineEvent) => {
-  Emitter.emit(PIPELINE_EVENTS.DECISION_INPUT_PROCESSED, event);
-  // const { data: { id, input }, cacheStrategy } = event;
+  const hasRecentMessages = (Date.now() - document.state.lastUserMessageAt.getTime()) < 10_000;
+  const hasExceededPendingSize = document.pending.length >= 10;
 
-  // const cacheService = new AICacheStrategy({ baseCacheKey: cacheStrategy?.baseCacheKey });
-  // const cacheKey = cacheService.getCacheKey(id) + ':queue';
-  // const cached = cacheService.getCache(cacheKey) as string;
+  logger.info('Checking pending queue', {
+    hasRecentMessages,
+    pendingSize: document.pending.length,
+  });
 
-  // const queue = cached ? JSON.parse(cached) : { messages: [], lastUpdatedAt: -1 };
-  // const hasRecentMessages = (new Date().getTime() - Number(queue.lastUpdatedAt)) < 5000;
+  if (!hasRecentMessages) {
+    logger.info('No recent messages, sending pending queue to decision processing');
+    return Emitter.emit(PIPELINE_EVENTS.DECISION_INPUT_PROCESSED, event);
+  }
 
-  // if (!hasRecentMessages && queue.messages.length < 10) {
-  //   console.log('Sending batched messages 1', { hasRecentMessages, queueLength: queue.messages.length });
-  //   sendBatchedEvent(event, input, queue.messages);
-  // } else {
-  //   if (hasRecentMessages) {
-  //     queue.messages.push(input);
-  //     queue.lastUpdatedAt = new Date().getTime();
-  //   }
+  if (hasExceededPendingSize) {
+    logger.info('Exceeded pending size, sending messages to decision processing');
+    return Emitter.emit(PIPELINE_EVENTS.DECISION_INPUT_PROCESSED, event);
+  }
 
-  //   if (queue.messages.length >= 10) {
-  //     console.log('Sending batched messages 2', { hasRecentMessages, queueLength: queue.messages.length });
-  //     sendBatchedEvent(event, input, queue.messages);
-  //   }
-  // }
+  logger.info('Silently updated pending queue');
 };
 
 export { handleProcessInputEvent };
