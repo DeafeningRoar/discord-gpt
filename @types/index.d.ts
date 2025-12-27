@@ -37,6 +37,7 @@ export type DiscordCreateMessageMetadata = {
 };
 
 export type BusinessLogicEvent = {
+  id: string;
   data: {
     id: string;
     userId: string;
@@ -74,12 +75,6 @@ export interface AIPipelineEvent extends BusinessLogicEvent {
 }
 
 export interface AIDecisionPipelineEvent extends AIPipelineEvent {
-  decisionMetadata: {
-    action: 'IGNORE' | 'THINK' | 'SUMMARIZE' | 'SPEAK';
-    confidence: number;
-    conversationActive: boolean;
-    reason: string;
-  };
   processedInput?: {
     input: Array<{ role: string; content: string }>;
   };

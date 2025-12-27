@@ -22,6 +22,7 @@ router.post('/alexa/prompt', (req, res) => {
   const id = (deviceId as string) || crypto.randomUUID().toString();
 
   const event: AIProcessInputEvent = {
+    id: crypto.randomUUID().toString(),
     data: {
       id,
       userId: id,
@@ -77,6 +78,7 @@ router.post('/reminders', (req, res) => {
   ${description}`;
 
       const event: AIProcessInputEvent = {
+        id: crypto.randomUUID().toString(),
         data: {
           id: targetId,
           userId: targetId,
@@ -121,6 +123,7 @@ router.post('/message', (req, res) => {
   ${message}`;
 
     const event: AIProcessInputEvent = {
+      id: crypto.randomUUID().toString(),
       data: {
         id: targetId,
         userId: targetId,

@@ -10,6 +10,8 @@ import type {
   BusinessLogicEvent,
 } from '../../../../@types';
 
+import crypto from 'crypto';
+
 import { sleep } from '../../../utils';
 import { Emitter, logger } from '../../../services';
 import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE, PIPELINE_EVENTS } from '../../../config/constants';
@@ -253,6 +255,7 @@ const handleInteractionValidated = async ({
     }
 
     Emitter.emit(eventType, {
+      id: crypto.randomUUID().toString(),
       data: {
         id: guildId,
         userId: userId,
