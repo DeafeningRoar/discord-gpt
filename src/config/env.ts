@@ -31,6 +31,8 @@ const {
   INTERNAL_BASE_URL,
   INTERNAL_API_KEY,
   THEME,
+
+  MONGODB_CONNECTION_URL,
 } = process.env;
 
 export {
@@ -59,4 +61,6 @@ export {
   INTERNAL_BASE_URL,
   INTERNAL_API_KEY,
   THEME,
+
+  MONGODB_CONNECTION_URL,
 };
