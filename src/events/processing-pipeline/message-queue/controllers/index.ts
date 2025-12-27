@@ -12,13 +12,15 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
 
   const ts = Date.now();
 
-  const document = (await model.findOneAndUpdate(
+  const document = await model.findOneAndUpdate<Conversation>(
     { channelId: id, 'state.active': true, source: context?.source },
     {
       $setOnInsert: {
         channelId: id,
         source: context?.source,
-        'state.active': true,
+        state: {
+          active: true,
+        },
         summary: {},
         liveBuffer: [],
       },
@@ -33,9 +35,10 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
       },
     },
     { upsert: true, new: true },
-  )) as Conversation;
+  );
 
-  const hasRecentMessages = (Date.now() - document.state.lastUserMessageAt.getTime()) < 10_000;
+  const lastUserMessage = document.state.lastUserMessageAt?.getTime() || 0;
+  const hasRecentMessages = (Date.now() - lastUserMessage) < 10_000;
   const hasExceededPendingSize = document.pending.length >= 10;
 
   logger.info('Checking pending queue', {

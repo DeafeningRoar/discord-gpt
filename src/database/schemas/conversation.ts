@@ -81,7 +81,7 @@ export default new Schema({
       action: { type: String, required: true },
       confidence: { type: Number },
       reason: { type: String, required: true },
-      ts: { type: String, required: true },
+      ts: { type: Date, required: true },
     },
     required: false,
   },

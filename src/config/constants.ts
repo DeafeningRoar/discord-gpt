@@ -61,6 +61,7 @@ const IGNORE_EVENTS = {
 
 const CONTEXT_COMPOSER_EVENTS = {
   CONTEXT_COMPOSER_INPUT_PROCESSED: 'ContextComposerInputProcessed',
+  CONTEXT_COMPOSER_AGENT_RESPONSE_PROCESSED: 'ContextComposerAgentResponseProcessed',
 };
 
 const MESSAGE_QUEUE_EVENTS = {
@@ -68,6 +69,7 @@ const MESSAGE_QUEUE_EVENTS = {
 };
 
 const PIPELINE_ENTRY_POINT = 'EventsPipelineEntryPoint';
+const PROCESS_AGENT_RESPONSE = 'EventsPipelineProcessAgentResponse';
 
 const PIPELINE_EVENTS = {
   ...DECISION_EVENTS,
@@ -78,6 +80,7 @@ const PIPELINE_EVENTS = {
   ...CONTEXT_COMPOSER_EVENTS,
   ...MESSAGE_QUEUE_EVENTS,
   PIPELINE_ENTRY_POINT,
+  PROCESS_AGENT_RESPONSE,
 };
 
 const DECISION_ACTIONS = {

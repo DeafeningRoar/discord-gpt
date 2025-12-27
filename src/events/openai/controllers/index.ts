@@ -1,10 +1,16 @@
-import type { BusinessLogicEvent, AIProcessInputEvent } from '../../../../@types';
+import type { BusinessLogicEvent, AIProcessInputEvent, AIDecisionPipelineEvent } from '../../../../@types';
 
 import { Emitter, logger } from '../../../services';
 import { OPENAI_EVENTS } from '../../../config/constants';
 
 import { AIStrategyFactory } from '../../../strategies/ai-strategy-factory';
 import { AIStrategyName } from '../../../strategies/ai-strategy';
+import OpenAIService from '../../../services/ai-services/openai-generic';
+import { OPENAI_TEXT_MODEL } from '../../../config/env';
+
+const simpleAgent = new OpenAIService({
+  model: OPENAI_TEXT_MODEL as string,
+});
 
 const handleOpenAITextQuery = async (event: BusinessLogicEvent) => {
   const aiProcessInputEvent: AIProcessInputEvent = {
@@ -87,8 +93,55 @@ const handleOpenAIInput = async ({
   }
 };
 
+const handleOpenAIPipelineInput = async ({
+  data,
+  context,
+  responseEvent,
+  errorEvent,
+  responseMetadata,
+  processMetadata,
+  processedInput,
+}: AIDecisionPipelineEvent) => {
+  const { id } = data;
+  const { input } = processedInput || { input: [] };
+
+  try {
+    const { output_text: response } = await simpleAgent.query(input);
+
+    logger.log('OpenAI Response:', {
+      id,
+      responseLength: response.length,
+    });
+
+    Emitter.emit(responseEvent, {
+      data,
+      context,
+      response,
+      responseMetadata,
+      processMetadata,
+    });
+  } catch (err) {
+    logger.error('Error processing Agent request', {
+      id,
+    });
+
+    if (errorEvent) {
+      Emitter.emit(errorEvent, { processMetadata });
+    }
+
+    Emitter.emit(responseEvent, {
+      response: 'Error 💀',
+      responseMetadata,
+      processMetadata,
+    });
+
+    throw err;
+  }
+};
+
 export default {
   handleOpenAIInput,
   handleOpenAITextQuery,
   handleOpenAIWebQuery,
+  handleOpenAIPipelineInput,
 };

@@ -5,7 +5,7 @@ import logger from '../logger';
 import { countTokens } from '../../utils';
 
 export interface TextQueryConfig {
-  format: ResponseFormatTextConfig;
+  format?: ResponseFormatTextConfig;
 }
 
 class OpenAIService {
@@ -21,7 +21,7 @@ class OpenAIService {
     this.model = model;
   }
 
-  async query(input: { role: string; content: string }[], { format }: TextQueryConfig) {
+  async query(input: { role: string; content: string }[], { format }: TextQueryConfig = {}) {
     logger.log('Processing message with model:', this.model);
 
     const aiInput = input as ResponseInput;
@@ -30,7 +30,7 @@ class OpenAIService {
       tools: this.tools,
       model: this.model,
       input: aiInput,
-      text: { format },
+      text: format ? { format } : undefined,
     });
 
     logger.log('Metadata from model response', this.logUsageMetrics(response, aiInput));

@@ -80,6 +80,13 @@ export interface AIDecisionPipelineEvent extends AIPipelineEvent {
     conversationActive: boolean;
     reason: string;
   };
+  processedInput?: {
+    input: Array<{ role: string; content: string }>;
+  };
+}
+
+export interface AIDecisionPipelineResponseEvent extends AIDecisionPipelineEvent {
+  response: string;
 }
 
 export type ResponseEvent<T = Record<string, unknown>, R = string> = {

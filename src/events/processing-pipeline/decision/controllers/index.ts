@@ -21,7 +21,11 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
     const model = conversation.getModel();
     const findCondition = { channelId: id, 'state.active': true, source: context?.source };
 
-    const document = (await model.findOne(findCondition)) as Conversation;
+    const document = await model.findOne<Conversation>(findCondition);
+
+    if (!document) {
+      throw new Error(`Could not find active conversation with id ${id}`);
+    }
 
     const input = [
       { role: 'system', content: DECISION_AI_AGENT_SYSTEM_PROMPT as string },
