@@ -10,6 +10,7 @@ export interface Conversation {
     confidence: number;
     lastUserMessageAt: Date;
     lastBotMessageAt: Date;
+    secondsSinceLastSpeak: number;
   };
   summary?: {
     factual: string;
@@ -36,6 +37,11 @@ export interface Conversation {
     summarizing: boolean;
     thinking: boolean;
   };
+  metadata: {
+    pendingSpeak: boolean;
+    thinkCount: number;
+    ignoreCount: number;
+  };
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -50,6 +56,7 @@ export default new Schema({
     confidence: { type: Number },
     lastUserMessageAt: { type: Date },
     lastBotMessageAt: { type: Date },
+    secondsSinceLastSpeak: { type: Number, default: 0 },
   },
   summary: {
     factual: { type: String },
@@ -88,6 +95,14 @@ export default new Schema({
   locks: {
     summarizing: { type: Boolean, default: false },
     thinking: { type: Boolean, default: false },
+  },
+  metadata: {
+    type: {
+      pendingSpeak: { type: Boolean, default: false },
+      thinkCount: { type: Number, default: 0 },
+      ignoreCount: { type: Number, default: 0 },
+    },
+    default: {},
   },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date },

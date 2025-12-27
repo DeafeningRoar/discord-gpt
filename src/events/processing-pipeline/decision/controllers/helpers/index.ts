@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { DECISION_ACTIONS, PIPELINE_EVENTS } from '../../../../../config/constants';
 
 const decisionMakingSchema = z.object({
-  action: z.enum([DECISION_ACTIONS.IGNORE, DECISION_ACTIONS.THINK, DECISION_ACTIONS.SUMMARIZE, DECISION_ACTIONS.SPEAK]),
+  action: z.enum([DECISION_ACTIONS.IGNORE, DECISION_ACTIONS.THINK, DECISION_ACTIONS.SPEAK]),
   confidence: z.number().max(1.0).min(0.0),
   reason: z.string().describe('Short justification (max 15 words)'),
 });
@@ -48,25 +48,27 @@ const getActionPromotion = (decision: Decision) => {
 const getNextAction = (action: string) => {
   switch (action) {
     case DECISION_ACTIONS.IGNORE:
-      return PIPELINE_EVENTS.IGNORE_INPUT_PROCESSED;
+      return { action: DECISION_ACTIONS.IGNORE, event: PIPELINE_EVENTS.IGNORE_INPUT_PROCESSED };
     case DECISION_ACTIONS.SUMMARIZE:
-      return PIPELINE_EVENTS.SUMMARIZE_INPUT_PROCESSED;
+      return { action: DECISION_ACTIONS.SUMMARIZE, event: PIPELINE_EVENTS.SUMMARIZE_INPUT_PROCESSED };
     case DECISION_ACTIONS.THINK:
-      return PIPELINE_EVENTS.THINK_INPUT_PROCESSED;
+      return { action: DECISION_ACTIONS.THINK, event: PIPELINE_EVENTS.THINK_INPUT_PROCESSED };
 
     case DECISION_ACTIONS.SPEAK:
-      return PIPELINE_EVENTS.SPEAK_INPUT_PROCESSED;
+      return { action: DECISION_ACTIONS.SPEAK, event: PIPELINE_EVENTS.SPEAK_INPUT_PROCESSED };
 
     default:
-      return DECISION_ACTIONS.THINK;
+      return { action: DECISION_ACTIONS.THINK, event: PIPELINE_EVENTS.THINK_INPUT_PROCESSED };
   }
 };
 
-const getProcessedDecision = (decision: Decision) => {
-  const actionPromotion = getActionPromotion(decision);
+const getProcessedDecision = (decision: Decision, canPromote?: boolean) => {
+  if (canPromote) {
+    const actionPromotion = getActionPromotion(decision);
 
-  if (actionPromotion.promoted && actionPromotion.action) {
-    return getNextAction(actionPromotion.action);
+    if (actionPromotion.promoted && actionPromotion.action) {
+      return getNextAction(actionPromotion.action);
+    }
   }
 
   return getNextAction(decision.action);
