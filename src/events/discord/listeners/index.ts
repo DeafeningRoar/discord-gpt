@@ -5,10 +5,11 @@ import type {
   DiscordCreateMessageEvent,
   DiscordEnrichMessageEvent,
   DiscordProcessingErrorEvent,
+  AIResponseInProgressEvent,
 } from '../../../../@types';
 
 import { Emitter } from '../../../services';
-import { EVENTS } from '../../../config/constants';
+import { DISCORD_EVENTS, EVENTS } from '../../../config/constants';
 
 import DiscordControllers from '../controllers';
 
@@ -50,6 +51,11 @@ const startListeners = ({ discord }: { discord: Discord }) => {
     EVENTS.DISCORD_PROCESSING_ERROR,
     (event: DiscordProcessingErrorEvent) =>
       DiscordControllers.handleProcessingError(event),
+  );
+
+  Emitter.on(
+    DISCORD_EVENTS.RESPONSE_IN_PROGRESS,
+    (event: AIResponseInProgressEvent) => DiscordControllers.handleResponseInProgress(event, discord),
   );
 };
 

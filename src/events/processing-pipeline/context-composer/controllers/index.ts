@@ -3,7 +3,7 @@ import type { Conversation } from '../../../../database/schemas/conversation';
 import type { SpeakQueue } from '../../../../database/schemas/speak-queue';
 
 import { Emitter, eventLogger } from '../../../../services';
-import { PIPELINE_EVENTS, SPEAK_QUEUE_STATE } from '../../../../config/constants';
+import { PIPELINE_EVENTS, SOURCE_EVENTS, SPEAK_QUEUE_STATE } from '../../../../config/constants';
 import { conversation, speakQueue } from '../../../../database';
 import { OPENAI_DISCORD_SYSTEM_PROMPT } from '../../../../config/env';
 
@@ -69,6 +69,12 @@ const handleProcessInputEvent = async (event: AISchedulerEvent) => {
         conversationId: document._id,
       });
       return;
+    }
+
+    const inProgressEvent = SOURCE_EVENTS[source]?.RESPONSE_IN_PROGRESS;
+
+    if (inProgressEvent) {
+      Emitter.emit(SOURCE_EVENTS[source].RESPONSE_IN_PROGRESS, { data: { channelId: document.channelId } });
     }
 
     Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, {

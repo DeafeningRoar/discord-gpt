@@ -8,6 +8,7 @@ import type {
   DiscordEnrichMessageEvent,
   DiscordProcessingErrorEvent,
   BusinessLogicEvent,
+  AIResponseInProgressEvent,
 } from '../../../../@types';
 
 import crypto from 'crypto';
@@ -254,10 +255,16 @@ const handleInteractionValidated = async ({
       });
     }
 
+    let targetId = guildId;
+
+    if (interaction.eventType === 'message' && !isDM) {
+      targetId = interaction.channelId;
+    }
+
     Emitter.emit(eventType, {
       id: crypto.randomUUID().toString(),
       data: {
-        id: guildId,
+        id: targetId,
         userId: userId,
         name: user,
         input: buildUserPrompt(interaction.user, user, interaction.content, interaction.channelId, isDM),
@@ -295,6 +302,35 @@ const handleInteractionValidated = async ({
   }
 };
 
+const handleResponseInProgress = async (event: AIResponseInProgressEvent, discord: Discord) => {
+  try {
+    const { data: { channelId } } = event;
+
+    const discordClient = discord.client;
+    const channel = discordClient?.channels.cache.get(channelId);
+
+    if (!discordClient) {
+      logger.error('Error creating Discord typing state: Discord client not available.', { targetId: channelId });
+      return;
+    }
+
+    if (channel) {
+      await (channel as TextChannel).sendTyping();
+    } else {
+      const dmChannel = await discordClient.users.createDM(channelId);
+      await dmChannel.sendTyping();
+    }
+  } catch (error: unknown) {
+    const err = error as Error;
+
+    logger.error('Error marking discord interaction in progress', {
+      message: err.message,
+      cause: err.cause,
+      stack: err.stack,
+    });
+  }
+};
+
 export default {
   handleConnectionError,
   handleDiscordReady,
@@ -304,4 +340,5 @@ export default {
   handleInteractionProcessed,
   handleInteractionCreated,
   handleInteractionValidated,
+  handleResponseInProgress,
 };

@@ -87,6 +87,12 @@ export interface AISchedulerEvent {
   responseEvent: string;
 }
 
+export interface AIResponseInProgressEvent {
+  data: {
+    channelId: string;
+  };
+}
+
 export interface AISchedulerEventInput extends AISchedulerEvent {
   processedInput: { input: Array<{ role: string; content: string }> };
   responseMetadata: Record<string, unknown>;
