@@ -11,4 +11,18 @@ const logger = {
   },
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const eventLogger = (event: any) => ({
+  log: (...args: unknown[]) => {
+    console.log(`[${event.id}] ${new Date().toISOString()}`, '-', ...args);
+  },
+  info: (...args: unknown[]) => {
+    console.info(`[${event.id}] ${new Date().toISOString()}`, '-', ...args);
+  },
+  error: (...args: unknown[]) => {
+    console.error(`[${event.id}] ${new Date().toISOString()}`, '-', ...args);
+  },
+});
+
+export { eventLogger };
 export default logger;
