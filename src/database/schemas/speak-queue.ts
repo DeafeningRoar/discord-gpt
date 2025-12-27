@@ -1,0 +1,20 @@
+import { type ObjectId, Schema } from 'mongoose';
+
+export interface SpeakQueue {
+  _id: ObjectId;
+  status: 'PENDING' | 'DONE' | 'CLAIMED';
+  conversationId: string;
+  scheduledAt: Date;
+  version: number;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+export default new Schema({
+  status: { type: String, required: true },
+  conversationId: { type: Schema.ObjectId, required: true },
+  scheduledAt: { type: Date, required: true },
+  version: { type: Number, default: 1 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date },
+});

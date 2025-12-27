@@ -1,6 +1,7 @@
-import { Schema } from 'mongoose';
+import { type ObjectId, Schema } from 'mongoose';
 
 export interface Conversation {
+  _id: ObjectId;
   source: string;
   channelId: string;
   version: number;

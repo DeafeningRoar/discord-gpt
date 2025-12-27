@@ -1,38 +1,21 @@
 import type { AIDecisionPipelineEvent } from '../../../../../@types';
-import type { Conversation } from '../../../../database/schemas/conversation';
 
-import { Emitter, logger } from '../../../../services';
-import { PIPELINE_EVENTS } from '../../../../config/constants';
-import { conversation } from '../../../../database';
+import { eventLogger } from '../../../../services';
+import { SPEAK_QUEUE_STATE, SPEAK_DELAY_MS } from '../../../../config/constants';
+import { conversation, speakQueue } from '../../../../database';
 
 const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
+  const logger = eventLogger(event);
   try {
     const {
       data: { id },
       context,
     } = event;
 
-    const model = conversation.getModel();
+    const conversationModel = conversation.getModel();
+    const speakQueueModel = speakQueue.getModel();
 
-    const document = await model.findOne<Conversation>({
-      channelId: id,
-      'state.active': true,
-      source: context?.source,
-    });
-
-    if (!document) {
-      throw new Error(`Could not find active conversation with id ${id}`);
-    }
-
-    const { state } = document;
-    const lastBotMessage = state.lastBotMessageAt?.getTime() || 0;
-
-    if (Date.now() - lastBotMessage <= 5_000) {
-      logger.info('Promoted event to THINK due to last reply being less than 5 seconds ago');
-      return Emitter.emit(PIPELINE_EVENTS.THINK_INPUT_PROCESSED, event);
-    }
-
-    await model.updateOne(
+    const document = await conversationModel.findOneAndUpdate(
       {
         channelId: id,
         'state.active': true,
@@ -45,7 +28,6 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
               $concatArrays: ['$liveBuffer', '$pending'],
             },
             pending: [],
-            'state.active': true,
             updatedAt: '$$NOW',
             version: { $add: ['$version', 1] },
           },
@@ -54,9 +36,25 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
       { updatePipeline: true },
     );
 
-    logger.info('Updated current conversation document');
+    if (!document) {
+      throw new Error(`Could not find active conversation with id ${id}`);
+    }
 
-    Emitter.emit(PIPELINE_EVENTS.CONTEXT_COMPOSER_INPUT_PROCESSED, event);
+    await speakQueueModel.findOneAndUpdate(
+      { conversationId: document._id, status: SPEAK_QUEUE_STATE.PENDING },
+      {
+        $setOnInsert: {
+          conversationId: document._id,
+        },
+        $set: {
+          scheduledAt: Date.now() + SPEAK_DELAY_MS,
+          status: SPEAK_QUEUE_STATE.PENDING,
+        },
+      },
+      { upsert: true, new: true },
+    );
+
+    logger.info('Updated conversation & speak queue with new live buffer', { conversationId: document._id });
   } catch (error: unknown) {
     const err = error as Error;
 

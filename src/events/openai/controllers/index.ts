@@ -106,6 +106,7 @@ const handleOpenAIPipelineInput = async ({
   const { input } = processedInput || { input: [] };
 
   try {
+    const ts = Date.now();
     const { output_text: response } = await simpleAgent.query(input);
 
     logger.log('OpenAI Response:', {
@@ -117,7 +118,10 @@ const handleOpenAIPipelineInput = async ({
       data,
       context,
       response,
-      responseMetadata,
+      responseMetadata: {
+        ...responseMetadata,
+        initiateTime: ts,
+      },
       processMetadata,
     });
   } catch (err) {
