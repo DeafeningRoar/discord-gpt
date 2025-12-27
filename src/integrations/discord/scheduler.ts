@@ -1,10 +1,10 @@
 import { CronJob } from 'cron';
 
-import { mongoose, schemas } from '../../database';
+// import { mongoose, schemas } from '../../database';
 
 const autoStart = false;
 
-const SOURCE = 'discord';
+// const SOURCE = 'discord';
 
 const job = new CronJob(
   '*/15 * * * * *',
