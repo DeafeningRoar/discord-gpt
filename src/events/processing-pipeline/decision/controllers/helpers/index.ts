@@ -5,7 +5,6 @@ import { DECISION_ACTIONS, PIPELINE_EVENTS } from '../../../../../config/constan
 const decisionMakingSchema = z.object({
   action: z.enum([DECISION_ACTIONS.IGNORE, DECISION_ACTIONS.THINK, DECISION_ACTIONS.SUMMARIZE, DECISION_ACTIONS.SPEAK]),
   confidence: z.number().max(1.0).min(0.0),
-  conversationActive: z.boolean(),
   reason: z.string().describe('Short justification (max 15 words)'),
 });
 

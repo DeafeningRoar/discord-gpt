@@ -5,7 +5,7 @@ import { handleProcessInputEvent } from '../controllers';
 
 const start = () => {
   Emitter.on(
-    PIPELINE_EVENTS.IGNORE_INPUT_PROCESSED,
+    PIPELINE_EVENTS.PIPELINE_ENTRY_POINT,
     handleProcessInputEvent,
   );
 };

@@ -1,14 +1,10 @@
-import type { ResponseInputMessageContentList, ResponseInput, Response, ResponseFormatTextConfig } from 'openai/resources/responses/responses';
-import type { ChatCompletionMessageParam } from 'openai/resources/chat';
+import type { ResponseInput, Response, ResponseFormatTextConfig } from 'openai/resources/responses/responses';
 
 import OpenAI from 'openai';
 import logger from '../logger';
 import { countTokens } from '../../utils';
 
 export interface TextQueryConfig {
-  image?: string;
-  chatHistory?: ChatCompletionMessageParam[];
-  systemPrompt: string;
   format: ResponseFormatTextConfig;
 }
 
@@ -25,24 +21,10 @@ class OpenAIService {
     this.model = model;
   }
 
-  async query(input: string, { chatHistory, systemPrompt, format }: TextQueryConfig) {
+  async query(input: { role: string; content: string }[], { format }: TextQueryConfig) {
     logger.log('Processing message with model:', this.model);
 
-    const userContent: ResponseInputMessageContentList = [
-      { type: 'input_text', text: input },
-    ];
-
-    const aiInput: ResponseInput = [
-      {
-        role: 'system',
-        content: systemPrompt,
-      },
-      ...((chatHistory || []) as ResponseInput),
-      {
-        role: 'user',
-        content: userContent,
-      },
-    ];
+    const aiInput = input as ResponseInput;
 
     const response = await this.client.responses.create({
       tools: this.tools,
@@ -51,18 +33,18 @@ class OpenAIService {
       text: { format },
     });
 
-    logger.log('Metadata from model response', this.logUsageMetrics(response, aiInput, systemPrompt));
+    logger.log('Metadata from model response', this.logUsageMetrics(response, aiInput));
 
     return response;
   }
 
-  private logUsageMetrics(response: Response, input: unknown, systemPrompt: string) {
+  private logUsageMetrics(response: Response, input: ResponseInput) {
     return {
       model: response.model,
       usage: response.usage,
       internalUsageBreakdown: {
         internalCount: countTokens({ model: this.model, input: response.output }),
-        systemPrompt: countTokens({ model: this.model, input: systemPrompt }),
+        systemPrompt: countTokens({ model: this.model, input: [input[0]] }),
         toolsList: countTokens({
           model: this.model,
           input: response.output.find(o => o.type === 'mcp_list_tools'),
