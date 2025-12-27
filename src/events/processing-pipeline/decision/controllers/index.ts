@@ -3,25 +3,45 @@ import type { Conversation } from '../../../../database/schemas/conversation';
 
 import { zodTextFormat } from 'openai/helpers/zod';
 
-import { Emitter, logger } from '../../../../services';
+import { Emitter, eventLogger } from '../../../../services';
 import { DECISION_AI_AGENT, DECISION_AI_AGENT_SYSTEM_PROMPT } from '../../../../config/env';
 import OpenAI from '../../../../services/ai-services/openai-generic';
 import { conversation } from '../../../../database';
+import { DECISION_ACTIONS } from '../../../../config/constants';
 
 import { decisionMakingSchema, getProcessedDecision } from './helpers';
 
 const decisionAgent = new OpenAI({ model: DECISION_AI_AGENT as string });
 
+const buildDecisionInput = (document: Conversation) => ({
+  event: {
+    type: 'NEW_MESSAGES',
+    messages: document.pending,
+  },
+  conversationState: {
+    secondsSinceLastSpeak: document.state.secondsSinceLastSpeak,
+    thinkCount: document.metadata.thinkCount,
+    ignoreCount: document.metadata.ignoreCount,
+    pendingSpeak: document.metadata.pendingSpeak,
+  },
+  batchStats: {
+    messageCount: document.pending.length,
+  },
+});
+
 const handleProcessInputEvent = async (event: AIPipelineEvent) => {
+  const logger = eventLogger(event);
   try {
     const {
       data: { id },
       context,
     } = event;
     const model = conversation.getModel();
-    const findCondition = { channelId: id, 'state.active': true, source: context?.source };
-
-    const document = await model.findOne<Conversation>(findCondition);
+    const document = await model.findOne<Conversation>({
+      channelId: id,
+      'state.active': true,
+      source: context?.source,
+    });
 
     if (!document) {
       throw new Error(`Could not find active conversation with id ${id}`);
@@ -29,7 +49,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
 
     const input = [
       { role: 'system', content: DECISION_AI_AGENT_SYSTEM_PROMPT as string },
-      ...document.pending.map(({ role, content }) => ({ role, content })),
+      { role: 'user', content: JSON.stringify(buildDecisionInput(document)) },
     ];
 
     const { output_text: output } = await decisionAgent.query(input, {
@@ -38,13 +58,34 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
 
     const parsedOutput = JSON.parse(output);
 
-    const nextStep = getProcessedDecision(parsedOutput);
+    const { action, event: nextEvent } = getProcessedDecision(parsedOutput);
 
-    logger.info('Decision taken with current input', { ...parsedOutput, nextStep });
+    logger.info('Decision taken with current input', {
+      agentDecision: parsedOutput,
+      nextStep: { action, event: nextEvent },
+    });
 
-    await model.updateOne(findCondition, { $set: { lastDecision: { ...parsedOutput, ts: Date.now() } } });
+    const { matchedCount } = await model.updateOne(
+      { channelId: id, 'state.active': true, source: context?.source, version: document.version },
+      {
+        $set: {
+          lastDecision: { ...parsedOutput, ts: Date.now() },
+          'metadata.pendingSpeak': action === DECISION_ACTIONS.SPEAK,
+        },
+        $inc: {
+          'metadata.thinkCount': action === DECISION_ACTIONS.THINK ? 1 : 0,
+          'metadata.ignoreCount': action === DECISION_ACTIONS.IGNORE ? 1 : 0,
+          version: 1,
+        },
+      },
+    );
 
-    Emitter.emit(nextStep, { ...event, decisionMetadata: parsedOutput });
+    if (matchedCount === 0) {
+      logger.info('Document has been previously updated, discarding changes');
+      return;
+    }
+
+    Emitter.emit(nextEvent, event);
   } catch (error: unknown) {
     const err = error as Error;
 

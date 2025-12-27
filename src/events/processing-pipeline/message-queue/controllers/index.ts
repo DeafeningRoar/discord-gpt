@@ -2,10 +2,11 @@ import type { AIPipelineEvent } from '../../../../../@types';
 import type { Conversation } from '../../../../database/schemas/conversation';
 
 import { PIPELINE_EVENTS } from '../../../../config/constants';
-import { Emitter, logger } from '../../../../services';
+import { Emitter, eventLogger } from '../../../../services';
 import { conversation } from '../../../../database';
 
 const handleProcessInputEvent = async (event: AIPipelineEvent) => {
+  const logger = eventLogger(event);
   const { data: { id, input }, context } = event;
 
   const model = conversation.getModel();
