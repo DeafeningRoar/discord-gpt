@@ -1,4 +1,4 @@
-import type { BusinessLogicEvent, AIProcessInputEvent, AIDecisionPipelineEvent } from '../../../../@types';
+import type { BusinessLogicEvent, AIProcessInputEvent, AISchedulerEventInput } from '../../../../@types';
 
 import { Emitter } from '../../../services';
 import { OPENAI_EVENTS, PIPELINE_EVENTS } from '../../../config/constants';
@@ -23,7 +23,7 @@ const startListeners = () => {
 
   Emitter.on(
     PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE,
-    async (event: AIDecisionPipelineEvent) => await OpenAIControllers.handleOpenAIPipelineInput(event),
+    async (event: AISchedulerEventInput) => await OpenAIControllers.handleOpenAIPipelineInput(event),
   );
 };
 

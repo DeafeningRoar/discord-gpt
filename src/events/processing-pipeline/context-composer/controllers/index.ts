@@ -1,4 +1,4 @@
-import type { AIDecisionPipelineEvent, AIDecisionPipelineResponseEvent } from '../../../../../@types';
+import type { AISchedulerEvent, AISchedulerResponseEvent } from '../../../../../@types';
 import type { Conversation } from '../../../../database/schemas/conversation';
 import type { SpeakQueue } from '../../../../database/schemas/speak-queue';
 
@@ -27,29 +27,36 @@ ${document.summary.factual}
     .map(({ role, content }) => ({ role, content })),
 ];
 
-const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
+const handleProcessInputEvent = async (event: AISchedulerEvent) => {
   const logger = eventLogger(event);
   try {
     const {
-      data: { id },
-      context,
+      data: { conversationId },
+      context: { source },
     } = event;
     const conversationModel = conversation.getModel();
     const speakQueueModel = speakQueue.getModel();
 
-    const document = await conversationModel.findOne<Conversation>({
-      channelId: id,
-      'state.active': true,
-      source: context?.source,
-    });
+    const document = await conversationModel.findOneAndUpdate<Conversation>(
+      {
+        _id: conversationId,
+        source,
+        'metadata.pendingSpeak': true,
+      },
+      {
+        $set: {
+          'metadata.pendingSpeak': false,
+        },
+      },
+    );
 
     if (!document) {
-      throw new Error(`Could not find document with id ${id}`);
+      throw new Error(`Could not find document with id ${conversationId}`);
     }
 
     const speakQueueDoc = await speakQueueModel.findOneAndUpdate<SpeakQueue>(
       {
-        conversationId: document._id,
+        conversationId,
         status: SPEAK_QUEUE_STATE.CLAIMED,
       },
       {
@@ -67,9 +74,9 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
     Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, {
       ...event,
       processedInput: { input: buildContext(document) },
-      responseMetadata: { ...event.responseMetadata, responseEvent: event.responseEvent },
+      responseMetadata: { responseEvent: event.responseEvent },
       responseEvent: PIPELINE_EVENTS.CONTEXT_COMPOSER_AGENT_RESPONSE_PROCESSED,
-    } as AIDecisionPipelineEvent);
+    });
   } catch (error: unknown) {
     const err = error as Error;
 
@@ -83,21 +90,20 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
   }
 };
 
-const handleAgentResponseProcessed = async (event: AIDecisionPipelineResponseEvent) => {
+const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent) => {
   const logger = eventLogger(event);
   try {
     const {
-      data: { id },
+      data: { conversationId },
       response,
       context,
       responseMetadata,
     } = event;
-    const model = conversation.getModel();
+    const conversationModel = conversation.getModel();
 
-    await model.updateOne(
+    const document = await conversationModel.findOneAndUpdate<Conversation>(
       {
-        channelId: id,
-        'state.active': true,
+        _id: conversationId,
         source: context?.source,
       },
       {
@@ -112,9 +118,23 @@ const handleAgentResponseProcessed = async (event: AIDecisionPipelineResponseEve
       },
     );
 
+    if (!document) {
+      throw new Error('Could not find any document to update with id ' + conversationId);
+    }
+
     const responseEvent = responseMetadata.responseEvent as string;
 
-    Emitter.emit(responseEvent, event);
+    Emitter.emit(responseEvent, {
+      ...event,
+      responseMetadata: {
+        ...event.responseMetadata,
+        interaction: {
+          eventType: 'message',
+          channelId: document?.channelId,
+          user: { id: 'internal' },
+        },
+      },
+    });
   } catch (error: unknown) {
     const err = error as Error;
 

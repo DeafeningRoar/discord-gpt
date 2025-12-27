@@ -1,4 +1,4 @@
-import type { BusinessLogicEvent, AIProcessInputEvent, AIDecisionPipelineEvent } from '../../../../@types';
+import type { BusinessLogicEvent, AIProcessInputEvent, AISchedulerEventInput } from '../../../../@types';
 
 import { Emitter, logger } from '../../../services';
 import { OPENAI_EVENTS } from '../../../config/constants';
@@ -97,12 +97,10 @@ const handleOpenAIPipelineInput = async ({
   data,
   context,
   responseEvent,
-  errorEvent,
   responseMetadata,
-  processMetadata,
   processedInput,
-}: AIDecisionPipelineEvent) => {
-  const { id } = data;
+}: AISchedulerEventInput) => {
+  const { conversationId } = data;
   const { input } = processedInput || { input: [] };
 
   try {
@@ -110,7 +108,7 @@ const handleOpenAIPipelineInput = async ({
     const { output_text: response } = await simpleAgent.query(input);
 
     logger.log('OpenAI Response:', {
-      id,
+      conversationId,
       responseLength: response.length,
     });
 
@@ -122,21 +120,15 @@ const handleOpenAIPipelineInput = async ({
         ...responseMetadata,
         initiateTime: ts,
       },
-      processMetadata,
     });
   } catch (err) {
     logger.error('Error processing Agent request', {
-      id,
+      conversationId,
     });
-
-    if (errorEvent) {
-      Emitter.emit(errorEvent, { processMetadata });
-    }
 
     Emitter.emit(responseEvent, {
       response: 'Error 💀',
       responseMetadata,
-      processMetadata,
     });
 
     throw err;

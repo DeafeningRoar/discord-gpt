@@ -108,10 +108,10 @@ const handleCreatedMessage = async ({ response, responseMetadata }: DiscordCreat
 
 const handleInteractionProcessed = async ({ response, responseMetadata, processMetadata }: DiscordInteractionResponseEvent, discord: Discord) => {
   const { interaction, user, query, isEdit } = responseMetadata;
-  const { loadingInterval } = processMetadata;
+  const { loadingInterval } = processMetadata || {};
 
   try {
-    logger.info('Interaction processed', { user });
+    logger.info('Interaction processed', { user: user || interaction.user });
 
     if (loadingInterval) {
       clearInterval(loadingInterval);
@@ -126,7 +126,7 @@ const handleInteractionProcessed = async ({ response, responseMetadata, processM
       const channel = discordClient?.channels.cache.get(interaction.channelId);
 
       if (!discordClient) {
-        logger.error('Error creating Discord Message: Discord client not available.', { targetId: interaction.user.id, response });
+        logger.error('Error creating Discord Message: Discord client not available.', { targetId: interaction.channelId, response });
         return;
       }
 
@@ -134,7 +134,7 @@ const handleInteractionProcessed = async ({ response, responseMetadata, processM
       if (channel) {
         sendFn = (message: string) => (channel as TextChannel).send(message);
       } else {
-        sendFn = (message: string) => discordClient?.users.send(interaction.user.id, { content: message });
+        sendFn = (message: string) => discordClient?.users.send(interaction.channelId, { content: message });
       }
 
       await handleSendMessage(sendFn, response);

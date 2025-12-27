@@ -1,8 +1,9 @@
 import type { AIDecisionPipelineEvent } from '../../../../../@types';
 
 import { eventLogger } from '../../../../services';
-import { SPEAK_QUEUE_STATE, SPEAK_DELAY_MS } from '../../../../config/constants';
+import { SPEAK_QUEUE_STATE } from '../../../../config/constants';
 import { conversation, speakQueue } from '../../../../database';
+import { SPEAK_DELAY_MS } from '../../../../config/env';
 
 const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
   const logger = eventLogger(event);
@@ -47,7 +48,7 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
           conversationId: document._id,
         },
         $set: {
-          scheduledAt: Date.now() + SPEAK_DELAY_MS,
+          scheduledAt: Date.now() + Number(SPEAK_DELAY_MS),
           status: SPEAK_QUEUE_STATE.PENDING,
         },
       },

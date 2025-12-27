@@ -80,6 +80,30 @@ export interface AIDecisionPipelineEvent extends AIPipelineEvent {
   };
 }
 
+export interface AISchedulerEvent {
+  id: string;
+  data: { conversationId: string };
+  context: { source: string };
+  responseEvent: string;
+}
+
+export interface AISchedulerEventInput extends AISchedulerEvent {
+  processedInput: { input: Array<{ role: string; content: string }> };
+  responseMetadata: Record<string, unknown>;
+}
+
+export interface AISchedulerResponseEvent {
+  id: string;
+  data: { conversationId: string };
+  context: { source: string };
+  responseEvent: string;
+  response: string;
+  responseMetadata: {
+    responseEvent: string;
+    initiateTime: number;
+  };
+}
+
 export interface AIDecisionPipelineResponseEvent extends AIDecisionPipelineEvent {
   response: string;
 }

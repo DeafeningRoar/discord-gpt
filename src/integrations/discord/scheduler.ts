@@ -1,27 +1,75 @@
-import { CronJob } from 'cron';
+import type { SpeakQueue } from '../../database/schemas/speak-queue';
 
-// import { mongoose, schemas } from '../../database';
+import { CronJob } from 'cron';
+import { Emitter, logger } from '../../services';
+
+import { speakQueue } from '../../database';
+import { EVENT_SOURCE, EVENTS, PIPELINE_EVENTS, SPEAK_QUEUE_STATE } from '../../config/constants';
 
 const autoStart = false;
 
-// const SOURCE = 'discord';
-
-const job = new CronJob(
-  '*/15 * * * * *',
+const speakQueueWorker = new CronJob(
+  '*/1 * * * * *',
   async function () {
-    // const model = mongoose.getModel(schemas.models.conversation, schemas.conversation);
+    try {
+      const speakQueueModel = speakQueue.getModel();
 
-    // if (!model) return;
+      const documents = await speakQueueModel.find<SpeakQueue>({
+        status: SPEAK_QUEUE_STATE.PENDING,
+        scheduledAt: { $lte: Date.now() },
+      });
 
-    // const activeConversations = await model.find({
-    //   source: SOURCE,
-    //   'state.active': true,
-    // });
+      if (!documents.length) {
+        return;
+      }
 
-    // console.log(activeConversations);
+      const updatedDocuments = (
+        await Promise.all(
+          documents.map(async (doc) => {
+            const { matchedCount } = await speakQueueModel.updateOne(
+              { _id: doc._id, status: SPEAK_QUEUE_STATE.PENDING },
+              {
+                $set: { status: SPEAK_QUEUE_STATE.CLAIMED },
+              },
+            );
+
+            if (matchedCount === 0) {
+              return null;
+            }
+
+            return doc;
+          }),
+        )
+      ).filter(i => !!i);
+
+      logger.info('Updated speak queue documents, sending to process', {
+        count: updatedDocuments.length,
+      });
+
+      updatedDocuments.forEach((doc) => {
+        Emitter.emit(PIPELINE_EVENTS.CONTEXT_COMPOSER_INPUT_PROCESSED, {
+          id: doc.conversationId,
+          data: { conversationId: doc.conversationId },
+          context: { source: EVENT_SOURCE.DISCORD },
+          responseEvent: EVENTS.DISCORD_INTERACTION_PROCESSED,
+        });
+      });
+    } catch (error: unknown) {
+      const err = error as Error;
+
+      logger.error('Error while processing speak queue', {
+        message: err.message,
+        cause: err.cause,
+        stack: err.stack,
+      });
+    }
   },
   null,
   autoStart,
 );
 
-export default job;
+export default {
+  start: () => {
+    speakQueueWorker.start();
+  },
+};

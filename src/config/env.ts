@@ -33,6 +33,8 @@ const {
   THEME,
 
   MONGODB_CONNECTION_URL,
+
+  SPEAK_DELAY_MS,
 } = process.env;
 
 export {
@@ -61,6 +63,6 @@ export {
   INTERNAL_BASE_URL,
   INTERNAL_API_KEY,
   THEME,
-
   MONGODB_CONNECTION_URL,
+  SPEAK_DELAY_MS,
 };
