@@ -1,5 +1,5 @@
 import type { AIPipelineEvent } from '../../../../../@types';
-import type { Conversation } from '../../../../database/schemas/conversation';
+import type { Conversation } from '../../../../database/schemas';
 
 import { zodTextFormat } from 'openai/helpers/zod';
 

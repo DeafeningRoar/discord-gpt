@@ -1,5 +1,5 @@
 import type { AIPipelineEvent } from '../../../../../@types';
-import type { Configuration } from '../../../../database/schemas/configuration';
+import type { Configuration } from '../../../../database/schemas';
 
 import { PIPELINE_EVENTS } from '../../../../config/constants';
 import { configuration } from '../../../../database';

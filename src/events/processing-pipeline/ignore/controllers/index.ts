@@ -1,5 +1,5 @@
 import type { AIPipelineEvent } from '../../../../../@types';
-import type { Conversation } from '../../../../database/schemas/conversation';
+import type { Conversation } from '../../../../database/schemas';
 
 import { conversation } from '../../../../database';
 import { eventLogger } from '../../../../services';

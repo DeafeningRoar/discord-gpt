@@ -1,5 +1,5 @@
 import type { AIPipelineEvent } from '../../../../../@types';
-import type { Conversation } from '../../../../database/schemas/conversation';
+import type { Conversation } from '../../../../database/schemas';
 
 import { PIPELINE_EVENTS } from '../../../../config/constants';
 import { Emitter, eventLogger } from '../../../../services';

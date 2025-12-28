@@ -1,6 +1,5 @@
 import type { AISchedulerEvent } from '../../../../../@types';
-import type { Conversation } from '../../../../database/schemas/conversation';
-import type { SpeakQueue } from '../../../../database/schemas/speak-queue';
+import type { Conversation, SpeakQueue } from '../../../../database/schemas';
 
 import { Emitter, eventLogger } from '../../../../services';
 import { PIPELINE_EVENTS, SOURCE_EVENTS, SPEAK_QUEUE_STATE } from '../../../../config/constants';

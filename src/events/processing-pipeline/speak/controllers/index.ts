@@ -1,5 +1,5 @@
 import type { AIDecisionPipelineEvent } from '../../../../../@types';
-import type { Conversation } from '../../../../database/schemas/conversation';
+import type { Conversation } from '../../../../database/schemas';
 
 import { eventLogger } from '../../../../services';
 import { SPEAK_QUEUE_STATE } from '../../../../config/constants';
