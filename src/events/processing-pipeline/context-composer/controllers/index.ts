@@ -37,19 +37,11 @@ const handleProcessInputEvent = async (event: AISchedulerEvent) => {
     const conversationModel = conversation.getModel();
     const speakQueueModel = speakQueue.getModel();
 
-    const document = await conversationModel.findOneAndUpdate<Conversation>(
-      {
-        _id: conversationId,
-        source,
-        'metadata.pendingSpeak': true,
-      },
-      {
-        $set: {
-          'metadata.pendingSpeak': false,
-        },
-        $inc: { version: 1 },
-      },
-    );
+    const document = await conversationModel.findOne<Conversation>({
+      _id: conversationId,
+      source,
+      'metadata.pendingSpeak': true,
+    });
 
     if (!document) {
       throw new Error(`Could not find document with id ${conversationId}`);
@@ -107,6 +99,7 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent) => 
       responseMetadata,
     } = event;
     const conversationModel = conversation.getModel();
+    const speakQueueModel = speakQueue.getModel();
 
     const document = await conversationModel.findOneAndUpdate<Conversation>(
       {
@@ -118,16 +111,20 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent) => 
           liveBuffer: { role: 'assistant', content: response, ts: responseMetadata.initiateTime },
         },
         $set: {
+          'metadata.pendingSpeak': false,
           'state.lastBotMessageAt': Date.now(),
           updatedAt: Date.now(),
         },
         $inc: { version: 1 },
       },
+      { new: true },
     );
 
     if (!document) {
       throw new Error('Could not find any document to update with id ' + conversationId);
     }
+
+    await speakQueueModel.deleteMany({ conversationId, status: SPEAK_QUEUE_STATE.DONE });
 
     const responseEvent = responseMetadata.responseEvent as string;
 

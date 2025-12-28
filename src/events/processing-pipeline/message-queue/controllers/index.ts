@@ -24,12 +24,10 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
         },
         summary: {},
         liveBuffer: [],
+        version: 1,
       },
       $set: {
         updatedAt: ts,
-      },
-      $inc: {
-        version: 1,
       },
       $push: {
         pending: { role: 'user', content: input },

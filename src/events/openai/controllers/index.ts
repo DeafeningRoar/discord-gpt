@@ -103,8 +103,8 @@ const handleOpenAIPipelineInput = async ({
   const { conversationId } = data;
   const { input } = processedInput || { input: [] };
 
+  const ts = Date.now();
   try {
-    const ts = Date.now();
     const { output_text: response } = await simpleAgent.query(input);
 
     logger.log('OpenAI Response:', {
@@ -127,8 +127,13 @@ const handleOpenAIPipelineInput = async ({
     });
 
     Emitter.emit(responseEvent, {
+      data,
       response: 'Error 💀',
-      responseMetadata,
+      context,
+      responseMetadata: {
+        ...responseMetadata,
+        initiateTime: ts,
+      },
     });
 
     throw err;

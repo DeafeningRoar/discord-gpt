@@ -6,6 +6,7 @@ export interface SpeakQueue {
   conversationId: string;
   scheduledAt: Date;
   version: number;
+  claimedAt?: Date;
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -15,6 +16,7 @@ export default new Schema({
   conversationId: { type: Schema.ObjectId, required: true },
   scheduledAt: { type: Date, required: true },
   version: { type: Number, default: 1 },
+  claimedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date },
 });

@@ -29,7 +29,10 @@ const speakQueueWorker = new CronJob(
             const { matchedCount } = await speakQueueModel.updateOne(
               { _id: doc._id, status: SPEAK_QUEUE_STATE.PENDING },
               {
-                $set: { status: SPEAK_QUEUE_STATE.CLAIMED },
+                $set: {
+                  status: SPEAK_QUEUE_STATE.CLAIMED,
+                  claimedAt: Date.now(),
+                },
               },
             );
 

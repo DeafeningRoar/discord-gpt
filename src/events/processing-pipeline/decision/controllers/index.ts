@@ -70,7 +70,6 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
         $set: {
           lastDecision: { ...parsedOutput, ts: Date.now() },
         },
-        $inc: { version: 1 },
       },
     );
 

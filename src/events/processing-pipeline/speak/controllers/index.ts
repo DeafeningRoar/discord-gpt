@@ -21,6 +21,7 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
         channelId: id,
         'state.active': true,
         source: context?.source,
+        'metadata.pendingSpeak': false,
       },
       [
         {
