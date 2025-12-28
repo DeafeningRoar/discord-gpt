@@ -7,7 +7,7 @@ import { conversation } from '../../../../database';
 
 const handleProcessInputEvent = async (event: AIPipelineEvent) => {
   const logger = eventLogger(event);
-  const { data: { id, input }, context } = event;
+  const { data: { id, input, files }, context } = event;
 
   const model = conversation.getModel();
 
@@ -31,7 +31,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
         updatedAt: ts,
       },
       $push: {
-        pending: { role: 'user', content: input, ts },
+        pending: { role: 'user', content: input, files, ts },
       },
     },
     { upsert: true, new: true },

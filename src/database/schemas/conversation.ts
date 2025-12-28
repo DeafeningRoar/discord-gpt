@@ -21,11 +21,13 @@ export interface Conversation {
   liveBuffer: {
     role: string;
     content: string;
+    files: { image?: string };
     ts: Date;
   }[];
   pending: {
     role: string;
     content: string;
+    files: { image?: string };
     ts: Date;
   }[];
   lastDecision?: {
@@ -69,6 +71,7 @@ export default new Schema({
       {
         role: { type: String, required: true },
         content: { type: String, required: true },
+        files: { type: { image: { type: String } }, default: {} },
         ts: { type: Date, default: Date.now },
       },
     ],
@@ -79,6 +82,7 @@ export default new Schema({
       {
         role: { type: String, required: true },
         content: { type: String, required: true },
+        files: { type: { image: { type: String } }, default: {} },
         ts: { type: Date, default: Date.now },
       },
     ],

@@ -23,7 +23,7 @@ ${document.summary.factual}
     : []),
   ...document.liveBuffer
     .toSorted((a, b) => a.ts.getTime() - b.ts.getTime())
-    .map(({ role, content }) => ({ role, content })),
+    .map(({ role, content, files }) => ({ role, content, files })),
 ];
 
 const handleProcessInputEvent = async (event: AISchedulerEvent) => {

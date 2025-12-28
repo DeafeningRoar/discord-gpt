@@ -25,7 +25,7 @@ class OpenAIService {
   async query(input: { role: string; content: string }[], { format, logMetrics }: TextQueryConfig = {}) {
     logger.log('Processing message with model:', this.model);
 
-    const aiInput = input as ResponseInput;
+    const aiInput = this.processUserInput(input) as ResponseInput;
 
     const response = await this.client.responses.create({
       tools: this.tools,
@@ -37,6 +37,24 @@ class OpenAIService {
     if (logMetrics) logger.log('Metadata from model response', this.logUsageMetrics(response, aiInput));
 
     return response;
+  }
+
+  private processUserInput(input: { role: string; content: string; files?: { image: string } }[]) {
+    return input.map((userInput) => {
+      const { role, content, files } = userInput;
+
+      if (files?.image) {
+        return {
+          role,
+          content: [
+            { type: 'input_text', text: content },
+            { type: 'input_image', image_url: files.image, detail: 'auto' },
+          ],
+        };
+      }
+
+      return { role, content };
+    });
   }
 
   private logUsageMetrics(response: Response, input: ResponseInput) {

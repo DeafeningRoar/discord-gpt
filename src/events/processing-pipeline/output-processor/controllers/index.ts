@@ -50,7 +50,7 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent) => 
 
     logger.info('Emitted response event for conversation', {
       conversationId,
-      response: response.slice(0, 300) + '...',
+      response: response.slice(0, 100) + '...',
     });
 
     Emitter.emit(responseEvent, {
