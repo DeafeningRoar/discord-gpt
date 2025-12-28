@@ -10,19 +10,20 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
   try {
     const configsModel = configuration.getModel();
 
-    const allowedChannels = await configsModel.findOne<Configuration>(
+    const document = await configsModel.findOne<Configuration>(
       { name: 'allowed_channels' },
     );
 
-    if (allowedChannels) {
-      const channelIds = allowedChannels.config.channelIds as string[];
+    if (document) {
+      const channelIds = document.config.channelIds as string[];
 
       if (channelIds.includes(event.data.id)) {
         Emitter.emit(PIPELINE_EVENTS.MESSAGE_QUEUE_INPUT_RECEIVED, event);
       } else {
         logger.info('Channel not allowed', { channelId: event.data.id });
-        return;
       }
+
+      return;
     }
 
     Emitter.emit(PIPELINE_EVENTS.MESSAGE_QUEUE_INPUT_RECEIVED, event);

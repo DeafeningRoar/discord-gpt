@@ -9,8 +9,8 @@ export interface Configuration {
 }
 
 export default new Schema({
-  feature: { type: String, required: true, index: true },
-  name: { type: Object, required: true },
+  name: { type: String, required: true, index: true },
+  config: { type: Object, required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date },
 });
