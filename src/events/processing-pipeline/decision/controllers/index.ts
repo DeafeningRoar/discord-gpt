@@ -15,17 +15,26 @@ const decisionAgent = new OpenAI({ model: DECISION_AI_AGENT as string });
 
 const buildDecisionInput = (document: Conversation) => ({
   event: {
-    type: 'NEW_MESSAGES',
+    type: 'PENDING_BATCH',
     messages: document.pending,
   },
   conversationState: {
-    secondsSinceLastSpeak: document.state.lastBotMessageAt ? (Date.now() - document.state.lastBotMessageAt.getTime()) * 60 : null,
+    secondsSinceLastSpeak: document.state.lastBotMessageAt
+      ? Math.floor((Date.now() - document.state.lastBotMessageAt.getTime()) / 1000)
+      : null,
     thinkCount: document.metadata.thinkCount || 0,
     ignoreCount: document.metadata.ignoreCount || 0,
-    pendingSpeak: !!document.metadata.pendingSpeak,
+    pendingSpeak: document.metadata.pendingSpeak === true,
   },
   batchStats: {
     messageCount: document.pending.length,
+  },
+});
+
+const buildPreviousInputsSnippet = (document: Conversation) => ({
+  event: {
+    type: 'RECENT_CONTEXT',
+    messages: document.liveBuffer.slice(0, 20),
   },
 });
 
@@ -54,6 +63,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
 
     const input = [
       { role: 'system', content: DECISION_AI_AGENT_SYSTEM_PROMPT as string },
+      { role: 'user', content: JSON.stringify(buildPreviousInputsSnippet(document)) },
       { role: 'user', content: JSON.stringify(buildDecisionInput(document)) },
     ];
 
