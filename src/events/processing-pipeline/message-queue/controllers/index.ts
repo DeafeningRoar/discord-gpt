@@ -30,7 +30,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
         updatedAt: ts,
       },
       $push: {
-        pending: { role: 'user', content: input },
+        pending: { role: 'user', content: input, ts },
       },
     },
     { upsert: true, new: true },

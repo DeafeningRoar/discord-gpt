@@ -17,7 +17,7 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
     const document = await conversationModel.findOne<Conversation>({
       channelId: id,
       'state.active': true,
-      context: context.source,
+      source: context.source,
     });
 
     if (!document) {
