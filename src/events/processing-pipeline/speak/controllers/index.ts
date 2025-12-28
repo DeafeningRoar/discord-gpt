@@ -1,10 +1,9 @@
 import type { AIDecisionPipelineEvent } from '../../../../../@types';
-import type { Conversation } from '../../../../database/schemas';
+import type { Conversation, Configuration } from '../../../../database/schemas';
 
 import { eventLogger } from '../../../../services';
 import { SPEAK_QUEUE_STATE } from '../../../../config/constants';
-import { conversation, speakQueue } from '../../../../database';
-import { MAX_SPEAK_DELAY_MS, SPEAK_DELAY_MS } from '../../../../config/env';
+import { configuration, conversation, speakQueue } from '../../../../database';
 
 const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
   const logger = eventLogger(event);
@@ -16,6 +15,7 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
 
     const conversationModel = conversation.getModel();
     const speakQueueModel = speakQueue.getModel();
+    const configsModel = configuration.getModel();
 
     const document = await conversationModel.findOneAndUpdate(
       {
@@ -43,6 +43,10 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
       { updatePipeline: true },
     );
 
+    const speakConfigs = await configsModel.findOne<Configuration>({ name: 'conversation_settings' });
+
+    const { maxSpeakDelay = 5000, softSpeakDelay = 1500 } = speakConfigs?.config || {};
+
     const ts = Date.now();
     if (!document) {
       logger.info('Could not find conversation ready for speak', {
@@ -67,8 +71,8 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
             $set: {
               scheduledAt: {
                 $min: [
-                  { $add: ['$createdAt', Number(MAX_SPEAK_DELAY_MS)] },
-                  { $add: ['$$NOW', Number(SPEAK_DELAY_MS)] },
+                  { $add: ['$createdAt', Number(maxSpeakDelay)] },
+                  { $add: ['$$NOW', Number(softSpeakDelay)] },
                 ],
               },
             },
@@ -88,7 +92,7 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
             conversationId: document._id,
           },
           $set: {
-            scheduledAt: ts + Number(SPEAK_DELAY_MS),
+            scheduledAt: ts + Number(softSpeakDelay),
             status: SPEAK_QUEUE_STATE.PENDING,
           },
         },

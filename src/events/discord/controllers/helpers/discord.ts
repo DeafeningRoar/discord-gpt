@@ -242,7 +242,7 @@ ChannelId: ${isDM ? user.id : channelId}
 
 [MESSAGE]
 ${prompt}
-`;
+`.trim();
 };
 
 const getInteractionContent = (event: DiscordInteraction) => ({

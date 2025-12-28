@@ -2,7 +2,7 @@ import type { Mongoose, Schema } from 'mongoose';
 
 import { connect } from 'mongoose';
 
-import { MONGODB_CONNECTION_URL } from '../config/env';
+import { MONGODB_CONNECTION_URL, MONGODB_DB_NAME } from '../config/env';
 
 class MongoDB {
   #client?: Mongoose;
@@ -10,7 +10,9 @@ class MongoDB {
   private static instance?: MongoDB;
 
   private async init() {
-    this.#client = await connect(MONGODB_CONNECTION_URL as string);
+    this.#client = await connect(MONGODB_CONNECTION_URL as string, {
+      dbName: MONGODB_DB_NAME as string,
+    });
   }
 
   static getInstance() {

@@ -19,10 +19,10 @@ const buildDecisionInput = (document: Conversation) => ({
     messages: document.pending,
   },
   conversationState: {
-    secondsSinceLastSpeak: (Date.now() - document.state.lastBotMessageAt.getTime()) * 60,
-    thinkCount: document.metadata.thinkCount,
-    ignoreCount: document.metadata.ignoreCount,
-    pendingSpeak: document.metadata.pendingSpeak,
+    secondsSinceLastSpeak: document.state.lastBotMessageAt ? (Date.now() - document.state.lastBotMessageAt.getTime()) * 60 : null,
+    thinkCount: document.metadata.thinkCount || 0,
+    ignoreCount: document.metadata.ignoreCount || 0,
+    pendingSpeak: !!document.metadata.pendingSpeak,
   },
   batchStats: {
     messageCount: document.pending.length,
