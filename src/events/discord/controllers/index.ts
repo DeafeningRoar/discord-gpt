@@ -9,6 +9,7 @@ import type {
   DiscordProcessingErrorEvent,
   BusinessLogicEvent,
   AIResponseInProgressEvent,
+  AgentResponseEvent,
 } from '../../../../@types';
 
 import crypto from 'crypto';
@@ -107,7 +108,7 @@ const handleCreatedMessage = async ({ response, responseMetadata }: DiscordCreat
   }
 };
 
-const handleInteractionProcessed = async ({ response, responseMetadata, processMetadata }: DiscordInteractionResponseEvent, discord: Discord) => {
+const handleInteractionProcessed = async ({ response, responseMetadata, processMetadata }: DiscordInteractionResponseEvent) => {
   const { interaction, user, query, isEdit } = responseMetadata;
   const { loadingInterval } = processMetadata || {};
 
@@ -118,28 +119,7 @@ const handleInteractionProcessed = async ({ response, responseMetadata, processM
       clearInterval(loadingInterval);
     }
 
-    if (interaction.eventType === 'interaction') {
-      await handleInteractionReply(interaction, user, query, response, !isEdit);
-    }
-
-    if (interaction.eventType === 'message') {
-      const discordClient = discord.client;
-      const channel = discordClient?.channels.cache.get(interaction.channelId);
-
-      if (!discordClient) {
-        logger.error('Error creating Discord Message: Discord client not available.', { targetId: interaction.channelId, response });
-        return;
-      }
-
-      let sendFn;
-      if (channel) {
-        sendFn = (message: string) => (channel as TextChannel).send(message);
-      } else {
-        sendFn = (message: string) => discordClient?.users.send(interaction.channelId, { content: message });
-      }
-
-      await handleSendMessage(sendFn, response);
-    }
+    await handleInteractionReply(interaction, user, query, response, !isEdit);
   } catch (error: unknown) {
     logger.error('Error replying to interaction', { ...interaction.__metadata__, query, response });
 
@@ -147,14 +127,37 @@ const handleInteractionProcessed = async ({ response, responseMetadata, processM
   }
 };
 
-const handleInteractionCreated = async ({ interaction, type }: { interaction: DiscordInteraction | DiscordMessage; type: 'message' | 'interaction' }) => {
-  if (type === 'message') {
-    interaction.eventType = type;
-    interaction.user = (interaction as DiscordMessage).author;
-  }
+const handleMessageProcessed = async ({ data, response }: AgentResponseEvent, discord: Discord) => {
+  try {
+    logger.info('Discord message processed', { id: data.id });
 
-  if (type === 'interaction') {
-    interaction.eventType = type;
+    const discordClient = discord.client;
+    const channel = discordClient?.channels.cache.get(data.id);
+
+    if (!discordClient) {
+      logger.error('Error creating Discord Message: Discord client not available.', { channelId: data.id });
+      return;
+    }
+
+    let sendFn;
+    if (channel) {
+      sendFn = (message: string) => (channel as TextChannel).send(message);
+    } else {
+      sendFn = (message: string) => discordClient?.users.send(data.id, { content: message });
+    }
+
+    await handleSendMessage(sendFn, response);
+  } catch (error: unknown) {
+    logger.error('Error creating message response', { channelId: data.id });
+
+    throw error;
+  }
+};
+
+const handleInteractionCreated = async ({ interaction, type }: { interaction: DiscordInteraction | DiscordMessage; type: 'message' | 'interaction' }) => {
+  interaction.eventType = type;
+  if (type === 'message') {
+    interaction.user = (interaction as DiscordMessage).author;
   }
 
   const { isOwner, isAdmin, isBot } = getUserTypes(
@@ -248,7 +251,8 @@ const handleInteractionValidated = async ({
   let loadingInterval: NodeJS.Timeout | undefined;
 
   try {
-    if (interaction.eventType === 'interaction') {
+    const isInteraction = interaction.eventType === 'interaction';
+    if (isInteraction) {
       loadingInterval = await handleResponseLoading(interaction, user, interaction.content, {
         image: interaction.img,
         txt: interaction.txt,
@@ -257,7 +261,7 @@ const handleInteractionValidated = async ({
 
     let targetId = guildId;
 
-    if (interaction.eventType === 'message' && !isDM) {
+    if (!isInteraction && !isDM) {
       targetId = interaction.channelId;
     }
 
@@ -340,5 +344,6 @@ export default {
   handleInteractionProcessed,
   handleInteractionCreated,
   handleInteractionValidated,
+  handleMessageProcessed,
   handleResponseInProgress,
 };

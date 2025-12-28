@@ -220,7 +220,7 @@ const handleInteractionReply = async (
 };
 
 const handleSendMessage = async (sendFn: (msg: string) => Promise<unknown>, message: string) => {
-  const maxResponseLength = 1500;
+  const maxResponseLength = 1900;
   const formattedResponse = formatResponse(message, maxResponseLength);
 
   await sendFn(formattedResponse[0]);

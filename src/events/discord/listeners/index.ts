@@ -6,6 +6,8 @@ import type {
   DiscordEnrichMessageEvent,
   DiscordProcessingErrorEvent,
   AIResponseInProgressEvent,
+  AgentResponseEvent,
+  DiscordMessage,
 } from '../../../../@types';
 
 import { Emitter } from '../../../services';
@@ -33,12 +35,17 @@ const startListeners = ({ discord }: { discord: Discord }) => {
 
   Emitter.on(
     EVENTS.DISCORD_INTERACTION_PROCESSED,
-    async (event: DiscordInteractionResponseEvent) => await DiscordControllers.handleInteractionProcessed(event, discord),
+    async (event: DiscordInteractionResponseEvent) => await DiscordControllers.handleInteractionProcessed(event),
+  );
+
+  Emitter.on(
+    EVENTS.DISCORD_MESSAGE_PROCESSED,
+    async (event: AgentResponseEvent) => await DiscordControllers.handleMessageProcessed(event, discord),
   );
 
   Emitter.on(
     EVENTS.DISCORD_INTERACTION_CREATED,
-    async (event: { interaction: DiscordInteraction; type: 'message' | 'interaction' }) => await DiscordControllers.handleInteractionCreated(event),
+    async (event: { interaction: DiscordInteraction | DiscordMessage; type: 'message' | 'interaction' }) => await DiscordControllers.handleInteractionCreated(event),
   );
 
   Emitter.on(

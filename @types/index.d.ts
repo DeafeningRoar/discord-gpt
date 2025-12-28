@@ -25,7 +25,7 @@ export interface PerplexityResponse extends ChatCompletion {
 export type DiscordInteractionResponseMetadata = {
   query: string;
   isEdit: boolean;
-  interaction: DiscordInteraction | DiscordMessage;
+  interaction: DiscordInteraction;
   user: string;
 };
 
@@ -128,6 +128,14 @@ export type ResponseEvent<T = Record<string, unknown>, R = string> = {
   response: R;
   responseMetadata: T;
   processMetadata: DiscordProcessMetadata;
+};
+
+export type AgentResponseEvent = {
+  data: {
+    id: string;
+  };
+  response: string;
+  responseMetadata: Record<string, unknown>;
 };
 
 export type ErrorEvent<R> = {

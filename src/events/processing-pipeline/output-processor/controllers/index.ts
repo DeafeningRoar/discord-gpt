@@ -50,14 +50,7 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent) => 
 
     Emitter.emit(responseEvent, {
       ...event,
-      responseMetadata: {
-        ...event.responseMetadata,
-        interaction: {
-          eventType: 'message',
-          channelId: document?.channelId,
-          user: { id: 'internal' },
-        },
-      },
+      data: { id: document?.channelId },
     });
   } catch (error: unknown) {
     const err = error as Error;

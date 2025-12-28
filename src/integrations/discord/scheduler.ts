@@ -54,7 +54,7 @@ const speakQueueWorker = new CronJob(
           id: doc.conversationId,
           data: { conversationId: doc.conversationId },
           context: { source: EVENT_SOURCE.DISCORD },
-          responseEvent: EVENTS.DISCORD_INTERACTION_PROCESSED,
+          responseEvent: EVENTS.DISCORD_MESSAGE_PROCESSED,
         });
       });
     } catch (error: unknown) {
