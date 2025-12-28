@@ -7,7 +7,6 @@ import { Emitter, eventLogger } from '../../../../services';
 import { DECISION_AI_AGENT, DECISION_AI_AGENT_SYSTEM_PROMPT } from '../../../../config/env';
 import OpenAI from '../../../../services/ai-services/openai-generic';
 import { conversation } from '../../../../database';
-import { DECISION_ACTIONS } from '../../../../config/constants';
 
 import { decisionMakingSchema, getProcessedDecision } from './helpers';
 
@@ -66,22 +65,17 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
     });
 
     const { matchedCount } = await model.updateOne(
-      { channelId: id, 'state.active': true, source: context?.source, version: document.version },
+      { _id: document._id, version: document.version },
       {
         $set: {
           lastDecision: { ...parsedOutput, ts: Date.now() },
-          'metadata.pendingSpeak': action === DECISION_ACTIONS.SPEAK,
         },
-        $inc: {
-          'metadata.thinkCount': action === DECISION_ACTIONS.THINK ? 1 : 0,
-          'metadata.ignoreCount': action === DECISION_ACTIONS.IGNORE ? 1 : 0,
-          version: 1,
-        },
+        $inc: { version: 1 },
       },
     );
 
     if (matchedCount === 0) {
-      logger.info('Document has been previously updated, discarding changes');
+      logger.info('Document has been previously updated, discarding changes in DECISION');
       return;
     }
 

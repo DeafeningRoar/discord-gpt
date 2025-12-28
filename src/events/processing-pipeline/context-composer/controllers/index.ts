@@ -47,6 +47,7 @@ const handleProcessInputEvent = async (event: AISchedulerEvent) => {
         $set: {
           'metadata.pendingSpeak': false,
         },
+        $inc: { version: 1 },
       },
     );
 

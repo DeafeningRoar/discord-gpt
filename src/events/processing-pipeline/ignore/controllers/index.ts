@@ -1,24 +1,45 @@
 import type { AIPipelineEvent } from '../../../../../@types';
+import type { Conversation } from '../../../../database/schemas/conversation';
 
 import { conversation } from '../../../../database';
-import { logger } from '../../../../services';
+import { eventLogger } from '../../../../services';
 
 const handleProcessInputEvent = async (event: AIPipelineEvent) => {
+  const logger = eventLogger(event);
   try {
-    const { data: { id }, context } = event;
+    const {
+      data: { id },
+      context,
+    } = event;
 
     const model = conversation.getModel();
-    const condition = { channelId: id, 'state.active': true, source: context?.source };
 
-    const document = await model.updateOne(condition, {
-      $set: {
-        pending: [],
-        updatedAt: Date.now(),
+    const document = await model.findOne<Conversation>({ channelId: id, 'state.active': true, source: context.source });
+
+    if (!document) {
+      throw new Error('Could not find document with channelId ' + id);
+    }
+
+    const { matchedCount } = await model.updateOne(
+      { _id: document._id, version: document.version },
+      {
+        $set: {
+          pending: [],
+          updatedAt: Date.now(),
+        },
+        $inc: {
+          version: 1,
+          'metadata.ignoreCount': 1,
+        },
       },
-      $inc: { version: 1 },
-    });
+    );
 
-    logger.info('Discarded all pending messages', { channelId: id, context, document });
+    if (matchedCount === 0) {
+      logger.info('Document was previously modified, discarding changes in IGNORE');
+      return;
+    }
+
+    logger.info('Discarded all pending messages', { id: document._id });
   } catch (error: unknown) {
     const err = error as Error;
 

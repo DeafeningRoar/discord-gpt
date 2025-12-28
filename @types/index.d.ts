@@ -56,6 +56,21 @@ export type BusinessLogicEvent = {
   cacheStrategy?: CacheStrategy;
 };
 
+export type StandardAIEvent = {
+  id: string;
+  data: {
+    id: string;
+    input: string;
+    files?: {
+      image?: string;
+      txt?: string;
+    };
+  };
+  context: { source: EVENT_SOURCE };
+  responseEvent: string;
+  responseMetadata?: Record<string, unknown>;
+};
+
 export type CacheStrategy = {
   cacheTTL?: number;
   baseCacheKey?: string;
@@ -67,7 +82,7 @@ export interface AIProcessInputEvent extends BusinessLogicEvent {
   };
 }
 
-export interface AIPipelineEvent extends BusinessLogicEvent {
+export interface AIPipelineEvent extends StandardAIEvent {
   aiProcessMetadata: {
     strategyName: string;
   };
