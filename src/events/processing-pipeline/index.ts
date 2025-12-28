@@ -6,6 +6,7 @@ import Think from './think';
 import Speak from './speak';
 import Ignore from './ignore';
 import ContextComposer from './context-composer';
+import OutputProcessor from './output-processor';
 
 export default () => {
   EntryPoint();
@@ -16,4 +17,5 @@ export default () => {
   Speak();
   Ignore();
   ContextComposer();
+  OutputProcessor();
 };
