@@ -82,12 +82,7 @@ export interface AIProcessInputEvent extends BusinessLogicEvent {
   };
 }
 
-export interface AIPipelineEvent extends StandardAIEvent {
-  aiProcessMetadata: {
-    strategyName: string;
-  };
-  eventType: string;
-}
+export interface AIPipelineEvent extends StandardAIEvent {}
 
 export interface AIDecisionPipelineEvent extends AIPipelineEvent {
   processedInput?: {
