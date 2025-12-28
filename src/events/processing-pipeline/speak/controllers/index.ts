@@ -28,6 +28,9 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
         {
           $set: {
             'metadata.pendingSpeak': true,
+            'metadata.thinkCount': 0,
+            'metadata.ignoreCount': 0,
+            'state.lastUserMessageAt': '$$NOW',
             liveBuffer: {
               $concatArrays: ['$liveBuffer', '$pending'],
             },

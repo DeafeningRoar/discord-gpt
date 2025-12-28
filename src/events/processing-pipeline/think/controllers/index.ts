@@ -41,6 +41,7 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
             updatedAt: '$$NOW',
             version: { $add: ['$version', 1] },
             'metadata.thinkCount': { $add: ['$metadata.thinkCount', 1] },
+            'state.lastUserMessageAt': '$$NOW',
           },
         },
       ],

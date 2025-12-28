@@ -19,7 +19,7 @@ const buildDecisionInput = (document: Conversation) => ({
     messages: document.pending,
   },
   conversationState: {
-    secondsSinceLastSpeak: document.state.secondsSinceLastSpeak,
+    secondsSinceLastSpeak: (Date.now() - document.state.lastBotMessageAt.getTime()) * 60,
     thinkCount: document.metadata.thinkCount,
     ignoreCount: document.metadata.ignoreCount,
     pendingSpeak: document.metadata.pendingSpeak,

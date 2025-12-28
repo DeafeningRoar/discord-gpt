@@ -21,6 +21,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
         source: context?.source,
         state: {
           active: true,
+          lastUserMessageAt: Date.now(),
         },
         summary: {},
         liveBuffer: [],
@@ -36,26 +37,16 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
     { upsert: true, new: true },
   );
 
-  const lastUserMessage = document.state.lastUserMessageAt?.getTime() || 0;
-  const hasRecentMessages = (Date.now() - lastUserMessage) < 10_000;
   const hasExceededPendingSize = document.pending.length >= 10;
 
-  logger.info('Checking pending queue', {
-    hasRecentMessages,
-    pendingSize: document.pending.length,
-  });
-
-  if (!hasRecentMessages) {
-    logger.info('No recent messages, sending pending queue to decision processing');
-    return Emitter.emit(PIPELINE_EVENTS.DECISION_INPUT_PROCESSED, event);
-  }
+  logger.info('Checking pending queue', { pendingSize: document.pending.length });
 
   if (hasExceededPendingSize) {
     logger.info('Exceeded pending size, sending messages to decision processing');
     return Emitter.emit(PIPELINE_EVENTS.DECISION_INPUT_PROCESSED, event);
   }
 
-  logger.info('Silently updated pending queue');
+  return Emitter.emit(PIPELINE_EVENTS.DECISION_INPUT_PROCESSED, event);
 };
 
 export { handleProcessInputEvent };
