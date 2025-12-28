@@ -48,6 +48,11 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent) => 
 
     const responseEvent = responseMetadata.responseEvent as string;
 
+    logger.info('Emitted response event for conversation', {
+      conversationId,
+      response: response.slice(0, 300) + '...',
+    });
+
     Emitter.emit(responseEvent, {
       ...event,
       data: { id: document?.channelId },
