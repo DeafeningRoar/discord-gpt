@@ -7,6 +7,7 @@ import { Emitter, eventLogger } from '../../../../services';
 import { DECISION_AI_AGENT, DECISION_AI_AGENT_SYSTEM_PROMPT } from '../../../../config/env';
 import OpenAI from '../../../../services/ai-services/openai-generic';
 import { conversation } from '../../../../database';
+import { DECISION_ACTIONS } from '../../../../config/constants';
 
 import { decisionMakingSchema, getProcessedDecision } from './helpers';
 
@@ -43,7 +44,12 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
     });
 
     if (!document) {
-      throw new Error(`Could not find active conversation with id ${id}`);
+      logger.info('Could not find document to decide with', {
+        channelId: id,
+        'state.active': true,
+        source: context?.source,
+      });
+      return;
     }
 
     const input = [
@@ -73,7 +79,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
       },
     );
 
-    if (matchedCount === 0) {
+    if (matchedCount === 0 && action !== DECISION_ACTIONS.SPEAK) {
       logger.info('Document has been previously updated, discarding changes in DECISION');
       return;
     }

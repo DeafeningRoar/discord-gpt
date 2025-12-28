@@ -35,6 +35,7 @@ const {
   MONGODB_CONNECTION_URL,
 
   SPEAK_DELAY_MS,
+  MAX_SPEAK_DELAY_MS,
 } = process.env;
 
 export {
@@ -65,4 +66,5 @@ export {
   THEME,
   MONGODB_CONNECTION_URL,
   SPEAK_DELAY_MS,
+  MAX_SPEAK_DELAY_MS,
 };

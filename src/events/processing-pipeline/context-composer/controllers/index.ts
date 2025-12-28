@@ -44,7 +44,12 @@ const handleProcessInputEvent = async (event: AISchedulerEvent) => {
     });
 
     if (!document) {
-      throw new Error(`Could not find document with id ${conversationId}`);
+      logger.info('Could not find document to prepare for agent', {
+        _id: conversationId,
+        source,
+        'metadata.pendingSpeak': true,
+      });
+      return;
     }
 
     const speakQueueDoc = await speakQueueModel.findOneAndUpdate<SpeakQueue>(
@@ -121,7 +126,11 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent) => 
     );
 
     if (!document) {
-      throw new Error('Could not find any document to update with id ' + conversationId);
+      logger.info('Could not find any document to update with assistant response', {
+        _id: conversationId,
+        source: context?.source,
+      });
+      return;
     }
 
     await speakQueueModel.deleteMany({ conversationId, status: SPEAK_QUEUE_STATE.DONE });

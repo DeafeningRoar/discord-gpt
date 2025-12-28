@@ -17,7 +17,12 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
     const document = await model.findOne<Conversation>({ channelId: id, 'state.active': true, source: context.source });
 
     if (!document) {
-      throw new Error('Could not find document with channelId ' + id);
+      logger.info('Could not find document to ignore pendings', {
+        channelId: id,
+        'state.active': true,
+        source: context.source,
+      });
+      return;
     }
 
     const { matchedCount } = await model.updateOne(
