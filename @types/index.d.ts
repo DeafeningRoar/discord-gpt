@@ -104,7 +104,7 @@ export interface AIResponseInProgressEvent {
 }
 
 export interface AISchedulerEventInput extends AISchedulerEvent {
-  processedInput: { input: Array<{ role: string; content: string }> };
+  processedInput: { input: Array<{ role: string; content: string; files?: { image?: string } }>; model: string };
   responseMetadata: Record<string, unknown>;
 }
 

@@ -22,7 +22,10 @@ class OpenAIService {
     this.model = model;
   }
 
-  async query(input: { role: string; content: string }[], { format, logMetrics }: TextQueryConfig = {}) {
+  async query(
+    input: { role: string; content: string; files?: { image?: string } }[],
+    { format, logMetrics }: TextQueryConfig = {},
+  ) {
     logger.log('Processing message with model:', this.model);
 
     const aiInput = this.processUserInput(input) as ResponseInput;
@@ -39,7 +42,7 @@ class OpenAIService {
     return response;
   }
 
-  private processUserInput(input: { role: string; content: string; files?: { image: string } }[]) {
+  private processUserInput(input: { role: string; content: string; files?: { image?: string } }[]) {
     return input.map((userInput) => {
       const { role, content, files } = userInput;
 
