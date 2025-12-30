@@ -94,6 +94,7 @@ const handleOpenAIPipelineInput = async ({
   responseEvent,
   responseMetadata,
   processedInput,
+  ...event
 }: AISchedulerEventInput) => {
   const { conversationId } = data;
   const { input, model } = processedInput || { input: [] };
@@ -110,6 +111,7 @@ const handleOpenAIPipelineInput = async ({
     });
 
     Emitter.emit(responseEvent, {
+      ...event,
       data,
       context,
       response,
@@ -124,6 +126,7 @@ const handleOpenAIPipelineInput = async ({
     });
 
     Emitter.emit(responseEvent, {
+      ...event,
       data,
       response: 'Error 💀',
       context,
