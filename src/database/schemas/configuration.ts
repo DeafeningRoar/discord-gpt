@@ -1,9 +1,9 @@
 import { type ObjectId, Schema } from 'mongoose';
 
-export interface Configuration {
+export interface Configuration<T = Record<string, unknown>> {
   _id: ObjectId;
   name: string;
-  config: Record<string, unknown>;
+  config: T;
   createdAt: Date;
   updatedAt?: Date;
 }

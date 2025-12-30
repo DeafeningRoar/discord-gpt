@@ -39,11 +39,14 @@ export interface Conversation {
   locks: {
     summarizing: boolean;
     thinking: boolean;
+    pending: boolean;
   };
   metadata: {
     pendingSpeak: boolean;
     thinkCount: number;
     ignoreCount: number;
+    responseEvent: string;
+    pendingStartAt: Date | null;
   };
   createdAt: Date;
   updatedAt?: Date;
@@ -109,12 +112,15 @@ export default new Schema({
   locks: {
     summarizing: { type: Boolean, default: false },
     thinking: { type: Boolean, default: false },
+    pending: { type: Boolean, default: false },
   },
   metadata: {
     type: {
       pendingSpeak: { type: Boolean, default: false },
       thinkCount: { type: Number, default: 0 },
       ignoreCount: { type: Number, default: 0 },
+      responseEvent: { type: String, required: true },
+      pendingStartAt: { type: Date },
     },
     default: {},
   },
