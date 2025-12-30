@@ -4,19 +4,17 @@ import type { Conversation } from '../../../../database/schemas';
 import { zodTextFormat } from 'openai/helpers/zod';
 
 import { Emitter, eventLogger } from '../../../../services';
-import { DECISION_AI_AGENT, DECISION_AI_AGENT_SYSTEM_PROMPT } from '../../../../config/env';
 import OpenAI from '../../../../services/ai-services/openai-generic';
 import { conversation } from '../../../../database';
 import { DECISION_ACTIONS } from '../../../../config/constants';
+import { AGENT_TYPES, getAgentConfig } from '../../helpers';
 
 import { decisionMakingSchema, getProcessedDecision } from './helpers';
-
-const decisionAgent = new OpenAI({ model: DECISION_AI_AGENT as string });
 
 const buildDecisionInput = (document: Conversation) => ({
   event: {
     type: 'PENDING_BATCH',
-    messages: document.pending,
+    messages: document.pending.toSorted((a, b) => a.ts.getTime() - b.ts.getTime()),
   },
   conversationState: {
     secondsSinceLastSpeak: document.state.lastBotMessageAt
@@ -34,7 +32,7 @@ const buildDecisionInput = (document: Conversation) => ({
 const buildPreviousInputsSnippet = (document: Conversation) => ({
   event: {
     type: 'RECENT_CONTEXT',
-    messages: document.liveBuffer.slice(0, 20),
+    messages: document.liveBuffer.toSorted((a, b) => a.ts.getTime() - b.ts.getTime()).slice(-20),
   },
 });
 
@@ -61,8 +59,11 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
       return;
     }
 
+    const agentConfig = await getAgentConfig(AGENT_TYPES.DECISION);
+    const decisionAgent = new OpenAI({ model: agentConfig.model });
+
     const input = [
-      { role: 'system', content: DECISION_AI_AGENT_SYSTEM_PROMPT as string },
+      { role: 'system', content: agentConfig.prompt },
       { role: 'user', content: JSON.stringify(buildPreviousInputsSnippet(document)) },
       { role: 'user', content: JSON.stringify(buildDecisionInput(document)) },
     ];

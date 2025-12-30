@@ -21,13 +21,13 @@ export interface Conversation {
   liveBuffer: {
     role: string;
     content: string;
-    files: { image?: string };
+    files: { image?: { url: string; expiresAt: Date } };
     ts: Date;
   }[];
   pending: {
     role: string;
     content: string;
-    files: { image?: string };
+    files: { image?: { url: string; expiresAt: Date } };
     ts: Date;
   }[];
   lastDecision?: {
@@ -48,6 +48,15 @@ export interface Conversation {
   createdAt: Date;
   updatedAt?: Date;
 }
+
+const fileSchema = {
+  image: {
+    type: {
+      url: { type: String, required: true },
+      expiresAt: { type: Date },
+    },
+  },
+};
 
 export default new Schema({
   source: { type: String, required: true },
@@ -71,7 +80,7 @@ export default new Schema({
       {
         role: { type: String, required: true },
         content: { type: String, required: true },
-        files: { type: { image: { type: String } }, default: {} },
+        files: { type: fileSchema, default: {} },
         ts: { type: Date, default: Date.now },
       },
     ],
@@ -82,7 +91,7 @@ export default new Schema({
       {
         role: { type: String, required: true },
         content: { type: String, required: true },
-        files: { type: { image: { type: String } }, default: {} },
+        files: { type: fileSchema, default: {} },
         ts: { type: Date, default: Date.now },
       },
     ],

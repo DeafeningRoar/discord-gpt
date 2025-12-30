@@ -4,10 +4,10 @@ import type { Conversation, SpeakQueue } from '../../../../database/schemas';
 import { Emitter, eventLogger } from '../../../../services';
 import { PIPELINE_EVENTS, SOURCE_EVENTS, SPEAK_QUEUE_STATE } from '../../../../config/constants';
 import { conversation, speakQueue } from '../../../../database';
-import { OPENAI_DISCORD_SYSTEM_PROMPT } from '../../../../config/env';
+import { getAgentConfig, AGENT_TYPES } from '../../helpers';
 
-const buildContext = (document: Conversation) => [
-  { role: 'system', content: OPENAI_DISCORD_SYSTEM_PROMPT as string },
+const buildContext = (document: Conversation, systemPrompt: string) => [
+  { role: 'system', content: systemPrompt },
   ...(document.summary?.factual
     ? [
         {
@@ -23,7 +23,15 @@ ${document.summary.factual}
     : []),
   ...document.liveBuffer
     .toSorted((a, b) => a.ts.getTime() - b.ts.getTime())
-    .map(({ role, content, files }) => ({ role, content, files })),
+    .map(({ role, content, files }) => {
+      const { url, expiresAt } = files.image || {};
+
+      if (Date.now() >= (expiresAt?.getTime() ?? 0)) {
+        return { role, content: `${content}\n\n**Expired Image URL <${url}>**`, files: {} };
+      }
+
+      return { role, content, files: { image: url } };
+    }),
 ];
 
 const handleProcessInputEvent = async (event: AISchedulerEvent) => {
@@ -70,13 +78,15 @@ const handleProcessInputEvent = async (event: AISchedulerEvent) => {
 
     const inProgressEvent = SOURCE_EVENTS[source]?.RESPONSE_IN_PROGRESS;
 
+    const agentConfig = await getAgentConfig(AGENT_TYPES.CHAT);
+
     if (inProgressEvent) {
       Emitter.emit(SOURCE_EVENTS[source].RESPONSE_IN_PROGRESS, { data: { channelId: document.channelId } });
     }
 
     Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, {
       ...event,
-      processedInput: { input: buildContext(document) },
+      processedInput: { input: buildContext(document, agentConfig.prompt), model: agentConfig.model },
       responseMetadata: { responseEvent: event.responseEvent },
       responseEvent: PIPELINE_EVENTS.OUTPUT_PROCESSOR_RESPONSE_PROCESSED,
     });

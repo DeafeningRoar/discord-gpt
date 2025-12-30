@@ -274,6 +274,7 @@ const handleInteractionValidated = async ({
         input: buildUserPrompt(interaction.user, user, interaction.content, interaction.channelId, isDM),
         files: {
           image: interaction.img,
+          imageExpiresAt: new Date(Date.now() + 43200000),
           txt: interaction.txt,
         },
       },

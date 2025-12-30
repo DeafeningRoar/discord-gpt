@@ -6,11 +6,6 @@ import { OPENAI_EVENTS } from '../../../config/constants';
 import { AIStrategyFactory } from '../../../strategies/ai-strategy-factory';
 import { AIStrategyName } from '../../../strategies/ai-strategy';
 import OpenAIService from '../../../services/ai-services/openai-generic';
-import { OPENAI_TEXT_MODEL } from '../../../config/env';
-
-const simpleAgent = new OpenAIService({
-  model: OPENAI_TEXT_MODEL as string,
-});
 
 const handleOpenAITextQuery = async (event: BusinessLogicEvent) => {
   const aiProcessInputEvent: AIProcessInputEvent = {
@@ -101,11 +96,13 @@ const handleOpenAIPipelineInput = async ({
   processedInput,
 }: AISchedulerEventInput) => {
   const { conversationId } = data;
-  const { input } = processedInput || { input: [] };
+  const { input, model } = processedInput || { input: [] };
 
   const ts = Date.now();
   try {
-    const { output_text: response } = await simpleAgent.query(input);
+    const agent = new OpenAIService({ model });
+
+    const { output_text: response } = await agent.query(input);
 
     logger.log('OpenAI Response:', {
       conversationId,

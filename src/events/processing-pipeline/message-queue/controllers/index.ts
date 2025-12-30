@@ -7,11 +7,18 @@ import { conversation } from '../../../../database';
 
 const handleProcessInputEvent = async (event: AIPipelineEvent) => {
   const logger = eventLogger(event);
-  const { data: { id, input, files }, context } = event;
+  const {
+    data: { id, input, files },
+    context,
+  } = event;
 
   const model = conversation.getModel();
 
   const ts = Date.now();
+
+  const parsedFiles = {
+    image: files?.image ? { url: files.image, expiresAt: files.imageExpiresAt } : undefined,
+  };
 
   const document = await model.findOneAndUpdate<Conversation>(
     { channelId: id, 'state.active': true, source: context?.source },
@@ -31,7 +38,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
         updatedAt: ts,
       },
       $push: {
-        pending: { role: 'user', content: input, files, ts },
+        pending: { role: 'user', content: input, files: parsedFiles, ts },
       },
     },
     { upsert: true, new: true },

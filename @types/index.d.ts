@@ -63,6 +63,7 @@ export type StandardAIEvent = {
     input: string;
     files?: {
       image?: string;
+      imageExpiresAt?: Date;
       txt?: string;
     };
   };
