@@ -19,10 +19,7 @@ const speakQueueWorker = new CronJob(
 
       const speakQueueModel = speakQueue.getModel();
 
-      const documents = await speakQueueModel.find<SpeakQueue>({
-        status: SPEAK_QUEUE_STATE.PENDING,
-        scheduledAt: { $lte: Date.now() },
-      });
+      const documents = await speakQueueModel.find<SpeakQueue>({ status: SPEAK_QUEUE_STATE.PENDING });
 
       if (!documents.length) {
         return;
