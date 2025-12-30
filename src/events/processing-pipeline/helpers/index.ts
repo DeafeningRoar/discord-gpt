@@ -50,4 +50,74 @@ const getAgentConfig = async (agent: AGENT_TYPES): Promise<AgentConfig> => {
   }
 };
 
-export { AGENT_TYPES, getAgentConfig };
+const getConversationConfig = async <T = Record<string, unknown>>(): Promise<Configuration<T>['config']> => {
+  try {
+    const configsModel = configuration.getModel();
+
+    const cached = Cache.getCache<string>('conversation-config');
+
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
+    const conversationConfig = await configsModel.findOne<Configuration<T>>({ name: 'conversation_settings' });
+
+    const config = conversationConfig?.config;
+
+    if (!config) {
+      logger.warn('No conversation config found in database');
+      return {} as T;
+    }
+
+    Cache.setCache('conversation-config', JSON.stringify(conversationConfig?.config), 60);
+
+    return config;
+  } catch (err: unknown) {
+    const error = err as Error;
+
+    logger.error('Error fetching conversation config', {
+      message: error.message,
+      cause: error.cause,
+      stack: error.stack,
+    });
+
+    return {} as T;
+  }
+};
+
+const getAllowedChannels = async <T = Record<string, unknown>>(): Promise<Configuration<T>['config']> => {
+  try {
+    const configsModel = configuration.getModel();
+
+    const cached = Cache.getCache<string>('channels-config');
+
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
+    const channelsConfig = await configsModel.findOne<Configuration<T>>({ name: 'allowed_channels' });
+
+    const config = channelsConfig?.config;
+
+    if (!config) {
+      logger.warn('No channel config found in database');
+      return {} as T;
+    }
+
+    Cache.setCache('channels-config', JSON.stringify(channelsConfig?.config), 60);
+
+    return config;
+  } catch (err: unknown) {
+    const error = err as Error;
+
+    logger.error('Error fetching channel config', {
+      message: error.message,
+      cause: error.cause,
+      stack: error.stack,
+    });
+
+    return {} as T;
+  }
+};
+
+export { AGENT_TYPES, getAgentConfig, getConversationConfig, getAllowedChannels };

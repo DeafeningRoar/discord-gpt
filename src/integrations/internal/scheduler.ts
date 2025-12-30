@@ -1,10 +1,11 @@
-import type { Conversation, Configuration } from '../../database/schemas';
+import type { Conversation } from '../../database/schemas';
 
 import { CronJob } from 'cron';
 import { Emitter, logger } from '../../services';
 
-import { mongoose, conversation, configuration } from '../../database';
+import { mongoose, conversation } from '../../database';
 import { PIPELINE_EVENTS } from '../../config/constants';
+import { getConversationConfig } from '../../events/processing-pipeline/helpers';
 
 const autoStart = false;
 
@@ -18,14 +19,9 @@ const pendingQueueWorker = new CronJob(
       }
 
       const conversationModel = conversation.getModel();
-      const configsModel = configuration.getModel();
 
-      const speakConfigs = await configsModel.findOne<
-        Configuration<{ processingDelay: number; maxProcessingDelay: number }>
-      >({
-        name: 'conversation_settings',
-      });
-      const { processingDelay = 1000, maxProcessingDelay = 15000 } = speakConfigs?.config || {};
+      const speakConfigs = await getConversationConfig<{ processingDelay: number; maxProcessingDelay: number }>();
+      const { processingDelay = 1000, maxProcessingDelay = 15000 } = speakConfigs || {};
 
       const ts = Date.now();
       const documents = await conversationModel.find<Conversation>({

@@ -1,21 +1,16 @@
 import type { AIPipelineEvent } from '../../../../../@types';
-import type { Configuration } from '../../../../database/schemas';
 
 import { PIPELINE_EVENTS } from '../../../../config/constants';
-import { configuration } from '../../../../database';
 import { Emitter, eventLogger } from '../../../../services';
+import { getAllowedChannels } from '../../helpers';
 
 const handleProcessInputEvent = async (event: AIPipelineEvent) => {
   const logger = eventLogger(event);
   try {
-    const configsModel = configuration.getModel();
+    const config = await getAllowedChannels<{ channelIds?: string[] }>();
 
-    const document = await configsModel.findOne<Configuration>(
-      { name: 'allowed_channels' },
-    );
-
-    if (document) {
-      const channelIds = document.config.channelIds as string[];
+    if (config.channelIds) {
+      const { channelIds } = config;
 
       if (channelIds.includes(event.data.id)) {
         Emitter.emit(PIPELINE_EVENTS.MESSAGE_QUEUE_INPUT_RECEIVED, event);

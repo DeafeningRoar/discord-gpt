@@ -1,9 +1,10 @@
 import type { AIPipelineEvent } from '../../../../../@types';
-import type { Configuration, Conversation } from '../../../../database/schemas';
+import type { Conversation } from '../../../../database/schemas';
 
 import { PIPELINE_EVENTS } from '../../../../config/constants';
 import { Emitter, eventLogger } from '../../../../services';
-import { configuration, conversation } from '../../../../database';
+import { conversation } from '../../../../database';
+import { getConversationConfig } from '../../helpers';
 
 const releasePendingLock = async (_id: unknown) => {
   const model = conversation.getModel();
@@ -21,7 +22,6 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
   } = event;
 
   const model = conversation.getModel();
-  const configsModel = configuration.getModel();
 
   const ts = Date.now();
 
@@ -29,10 +29,8 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
     image: files?.image ? { url: files.image, expiresAt: files.imageExpiresAt } : undefined,
   };
 
-  const speakConfigs = await configsModel.findOne<Configuration<{ maxPendingQueueSize: number }>>({
-    name: 'conversation_settings',
-  });
-  const { maxPendingQueueSize = 10 } = speakConfigs?.config || {};
+  const speakConfigs = await getConversationConfig<{ maxPendingQueueSize: number }>();
+  const { maxPendingQueueSize = 10 } = speakConfigs || {};
 
   const document = await model.findOneAndUpdate<Conversation>(
     { channelId: id, 'state.active': true, source: context?.source },

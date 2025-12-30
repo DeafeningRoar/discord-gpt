@@ -3,6 +3,9 @@ const logger = {
   log: (...args: unknown[]) => {
     console.log(new Date().toISOString(), '-', ...args);
   },
+  warn: (...args: unknown[]) => {
+    console.log(new Date().toISOString(), '-', ...args);
+  },
   info: (...args: unknown[]) => {
     console.info(new Date().toISOString(), '-', ...args);
   },
@@ -15,6 +18,9 @@ const logger = {
 const eventLogger = (event: any) => ({
   log: (...args: unknown[]) => {
     console.log(`[${event.id}] ${new Date().toISOString()}`, '-', ...args);
+  },
+  warn: (...args: unknown[]) => {
+    console.warn(`[${event.id}] ${new Date().toISOString()}`, '-', ...args);
   },
   info: (...args: unknown[]) => {
     console.info(`[${event.id}] ${new Date().toISOString()}`, '-', ...args);

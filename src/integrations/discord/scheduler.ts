@@ -1,10 +1,11 @@
-import type { SpeakQueue, Configuration } from '../../database/schemas';
+import type { SpeakQueue } from '../../database/schemas';
 
 import { CronJob } from 'cron';
 import { Emitter, logger } from '../../services';
 
-import { mongoose, speakQueue, conversation, configuration } from '../../database';
+import { mongoose, speakQueue, conversation } from '../../database';
 import { EVENT_SOURCE, EVENTS, PIPELINE_EVENTS, SPEAK_QUEUE_STATE } from '../../config/constants';
+import { getConversationConfig } from '../../events/processing-pipeline/helpers';
 
 const autoStart = false;
 
@@ -120,15 +121,14 @@ const conversationStateWorker = new CronJob(
 
       const DEFAULT_TTL = 60 * 60 * 1000; // 1 hour
       const conversationModel = conversation.getModel();
-      const configModel = configuration.getModel();
 
-      const conversationConfig = await configModel.findOne<Configuration>({ name: 'conversation_settings' });
+      const conversationConfig = await getConversationConfig<{ ttl: number }>();
 
       if (!conversationConfig) {
         logger.info('No configuration found for conversations, using default values', { TTL: DEFAULT_TTL });
       }
 
-      const conversationTTL = (conversationConfig?.config?.ttl || DEFAULT_TTL) as number;
+      const conversationTTL = (conversationConfig.ttl || DEFAULT_TTL) as number;
 
       const { matchedCount } = await conversationModel.updateMany(
         {
