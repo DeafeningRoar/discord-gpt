@@ -174,7 +174,7 @@ const handleMessageProcessedStream = async ({ data, response }: AgentStreamRespo
       sendFn = (message: string) => discordClient?.users.send(data.id, { content: message });
     }
 
-    await handleSendStreamMessage(sendFn, response);
+    await handleSendStreamMessage(sendFn, response, 850);
     logger.info('Finished processing Discord stream message', { id: data.id });
   } catch (error: unknown) {
     logger.error('Error creating message response', { channelId: data.id });
