@@ -1,6 +1,7 @@
 import type { ChatInputCommandInteraction, OmitPartialGroupDMChannel, Message } from 'discord.js';
 import type { ChatCompletion } from 'openai/resources/chat';
 import type { EVENT_SOURCE } from '../src/config/constants';
+import type { ResponseStream } from 'openai/lib/responses/ResponseStream';
 
 export type DiscordInteraction = ChatInputCommandInteraction & {
   content: string;
@@ -63,7 +64,7 @@ export type StandardAIEvent = {
     input: string;
     files?: {
       image?: string;
-      imageExpiresAt?: Date;
+      imageExpiresAt?: number;
       txt?: string;
     };
   };
@@ -109,12 +110,12 @@ export interface AISchedulerEventInput extends AISchedulerEvent {
   responseMetadata: Record<string, unknown>;
 }
 
-export interface AISchedulerResponseEvent {
+export interface AISchedulerResponseEvent<T = string> {
   id: string;
   data: { conversationId: string };
   context: { source: string };
   responseEvent: string;
-  response: string;
+  response: T;
   responseMetadata: {
     responseEvent: string;
     initiateTime: number;
@@ -136,6 +137,14 @@ export type AgentResponseEvent = {
     id: string;
   };
   response: string;
+  responseMetadata: Record<string, unknown>;
+};
+
+export type AgentStreamResponseEvent = {
+  data: {
+    id: string;
+  };
+  response: ResponseStream;
   responseMetadata: Record<string, unknown>;
 };
 

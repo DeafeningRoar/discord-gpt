@@ -1,5 +1,6 @@
 import type { AIPipelineEvent } from '../../../../../@types';
 import type { Conversation } from '../../../../database/schemas';
+import type { Response } from 'openai/resources/responses/responses';
 
 import { zodTextFormat } from 'openai/helpers/zod';
 
@@ -68,9 +69,9 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
       { role: 'user', content: JSON.stringify(buildDecisionInput(document)) },
     ];
 
-    const { output_text: output } = await decisionAgent.query(input, {
+    const { output_text: output } = (await decisionAgent.query(input, {
       format: zodTextFormat(decisionMakingSchema, 'decision'),
-    });
+    })) as Response;
 
     const parsedOutput = JSON.parse(output);
 

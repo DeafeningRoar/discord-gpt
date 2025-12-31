@@ -26,7 +26,7 @@ ${document.summary.factual}
     .map(({ role, content, files }) => {
       const { url, expiresAt } = files.image || {};
 
-      if (Date.now() >= (expiresAt?.getTime() ?? 0)) {
+      if (typeof expiresAt !== 'undefined' && Date.now() >= expiresAt?.getTime()) {
         return { role, content: `${content}\n\n**Expired Image URL <${url}>**`, files: {} };
       }
 
@@ -87,7 +87,7 @@ const handleProcessInputEvent = async (event: AISchedulerEvent) => {
     Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, {
       ...event,
       processedInput: { input: buildContext(document, agentConfig.prompt), model: agentConfig.model },
-      responseMetadata: { responseEvent: event.responseEvent },
+      responseMetadata: { responseEvent: event.responseEvent, stream: true },
       responseEvent: PIPELINE_EVENTS.OUTPUT_PROCESSOR_RESPONSE_PROCESSED,
     });
   } catch (error: unknown) {

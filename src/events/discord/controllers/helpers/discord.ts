@@ -1,5 +1,6 @@
 import type { User, GuildMember, APIInteractionGuildMember, InteractionResponse, Message } from 'discord.js';
 import type { DiscordInteraction, DiscordMessage } from '../../../../../@types';
+import type { ResponseStream } from 'openai/lib/responses/ResponseStream';
 
 import { hideLinkEmbed, PermissionsBitField, PermissionFlagsBits, EmbedType } from 'discord.js';
 
@@ -233,6 +234,48 @@ const handleSendMessage = async (sendFn: (msg: string) => Promise<unknown>, mess
   }
 };
 
+const handleSendStreamMessage = async (sendFn: (msg: string) => Promise<Message>, stream: ResponseStream, editRate = 1000) => {
+  let buffer = '';
+  let lastIndex = -1;
+  let lastEdit = 0;
+  const maxResponseLength = 1900;
+  let currentMessageRef: Message | null = null;
+
+  for await (const event of stream) {
+    const isNewDelta = event.type === 'response.output_text.delta';
+    const isTextCompleted = event.type === 'response.output_text.done';
+
+    if (isNewDelta) {
+      buffer += event.delta;
+    }
+
+    if (isTextCompleted) {
+      buffer = event.text;
+    }
+
+    if (buffer.length && (isNewDelta || isTextCompleted)) {
+      if (isTextCompleted || Date.now() - lastEdit >= editRate) {
+        const formattedResponse = formatResponse(buffer, maxResponseLength);
+        const currentIndex = formattedResponse.length - 1;
+
+        if (!currentMessageRef) {
+          currentMessageRef = await sendFn(formattedResponse[0]);
+          lastIndex = Math.max(currentIndex, 0);
+        }
+
+        if (currentIndex === lastIndex) {
+          await currentMessageRef.edit(formattedResponse[lastIndex]);
+        } else {
+          currentMessageRef = await sendFn(formattedResponse[currentIndex]);
+          lastIndex = currentIndex;
+        }
+
+        lastEdit = Date.now();
+      }
+    }
+  }
+};
+
 const buildUserPrompt = (user: User, userName: string, prompt: string, channelId: string, isDM: boolean): string => {
   return `
 [USER]
@@ -277,6 +320,7 @@ export {
   handleResponseLoading,
   handleInteractionReply,
   handleSendMessage,
+  handleSendStreamMessage,
   buildUserPrompt,
   getInteractionContent,
   getMessageContent,

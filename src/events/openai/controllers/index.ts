@@ -1,3 +1,4 @@
+import type { Response } from 'openai/resources/responses/responses';
 import type { BusinessLogicEvent, AIProcessInputEvent, AISchedulerEventInput } from '../../../../@types';
 
 import { Emitter, logger } from '../../../services';
@@ -98,17 +99,30 @@ const handleOpenAIPipelineInput = async ({
 }: AISchedulerEventInput) => {
   const { conversationId } = data;
   const { input, model } = processedInput || { input: [] };
+  const { stream } = responseMetadata as { stream?: boolean };
 
   const ts = Date.now();
   try {
     const agent = new OpenAIService({ model });
 
-    const { output_text: response } = await agent.query(input);
+    const response = await agent.query(input, { stream });
 
-    logger.log('OpenAI Response:', {
-      conversationId,
-      responseLength: response.length,
-    });
+    logger.log('Processing OpenAI Response', { conversationId, stream });
+
+    if (!stream) {
+      const { output_text: output } = response as Response;
+
+      return Emitter.emit(responseEvent, {
+        ...event,
+        data,
+        context,
+        response: output,
+        responseMetadata: {
+          ...responseMetadata,
+          initiateTime: ts,
+        },
+      });
+    }
 
     Emitter.emit(responseEvent, {
       ...event,

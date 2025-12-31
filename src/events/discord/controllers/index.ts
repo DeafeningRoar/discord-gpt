@@ -10,6 +10,7 @@ import type {
   BusinessLogicEvent,
   AIResponseInProgressEvent,
   AgentResponseEvent,
+  AgentStreamResponseEvent,
 } from '../../../../@types';
 
 import crypto from 'crypto';
@@ -19,7 +20,7 @@ import { Emitter, logger } from '../../../services';
 import { EVENTS, FIVE_MINUTES_MS, EVENT_SOURCE, PIPELINE_EVENTS } from '../../../config/constants';
 import { DISCORD_CHAT_HISTORY_CACHE, DISCORD_CHAT_HISTORY_CACHE_TTL } from '../../../config/env';
 import { DiscordCommands } from './helpers/commands';
-import { buildUserPrompt, getInteractionContent, getMessageContent, getUserTypes, handleInteractionReply, handleResponseLoading, handleSendMessage } from './helpers/discord';
+import { buildUserPrompt, getInteractionContent, getMessageContent, getUserTypes, handleInteractionReply, handleResponseLoading, handleSendMessage, handleSendStreamMessage } from './helpers/discord';
 
 const handleConnectionError = async (discord: Discord) => {
   logger.log(`Reinitializing Discord in ${FIVE_MINUTES_MS / 5}ms`);
@@ -154,6 +155,34 @@ const handleMessageProcessed = async ({ data, response }: AgentResponseEvent, di
   }
 };
 
+const handleMessageProcessedStream = async ({ data, response }: AgentStreamResponseEvent, discord: Discord) => {
+  try {
+    logger.info('Processing Discord stream message', { id: data.id });
+
+    const discordClient = discord.client;
+    const channel = discordClient?.channels.cache.get(data.id);
+
+    if (!discordClient) {
+      logger.error('Error creating Discord Message: Discord client not available.', { channelId: data.id });
+      return;
+    }
+
+    let sendFn;
+    if (channel) {
+      sendFn = (message: string) => (channel as TextChannel).send(message);
+    } else {
+      sendFn = (message: string) => discordClient?.users.send(data.id, { content: message });
+    }
+
+    await handleSendStreamMessage(sendFn, response);
+    logger.info('Finished processing Discord stream message', { id: data.id });
+  } catch (error: unknown) {
+    logger.error('Error creating message response', { channelId: data.id });
+
+    throw error;
+  }
+};
+
 const handleInteractionCreated = async ({ interaction, type }: { interaction: DiscordInteraction | DiscordMessage; type: 'message' | 'interaction' }) => {
   interaction.eventType = type;
   if (type === 'message') {
@@ -274,7 +303,7 @@ const handleInteractionValidated = async ({
         input: buildUserPrompt(interaction.user, user, interaction.content, interaction.channelId, isDM),
         files: {
           image: interaction.img,
-          imageExpiresAt: new Date(Date.now() + 43200000),
+          imageExpiresAt: Date.now() + 43200000,
           txt: interaction.txt,
         },
       },
@@ -346,5 +375,6 @@ export default {
   handleInteractionCreated,
   handleInteractionValidated,
   handleMessageProcessed,
+  handleMessageProcessedStream,
   handleResponseInProgress,
 };

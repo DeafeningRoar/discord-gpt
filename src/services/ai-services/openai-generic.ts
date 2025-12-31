@@ -7,6 +7,7 @@ import { countTokens } from '../../utils';
 export interface TextQueryConfig {
   format?: ResponseFormatTextConfig;
   logMetrics?: boolean;
+  stream?: boolean;
 }
 
 class OpenAIService {
@@ -24,11 +25,20 @@ class OpenAIService {
 
   async query(
     input: { role: string; content: string; files?: { image?: string } }[],
-    { format, logMetrics }: TextQueryConfig = {},
+    { format, logMetrics, stream = false }: TextQueryConfig = {},
   ) {
     logger.log('Processing message with model:', this.model);
 
     const aiInput = this.processUserInput(input) as ResponseInput;
+
+    if (stream) {
+      return await this.client.responses.stream({
+        tools: this.tools,
+        model: this.model,
+        input: aiInput,
+        text: format ? { format } : undefined,
+      });
+    }
 
     const response = await this.client.responses.create({
       tools: this.tools,

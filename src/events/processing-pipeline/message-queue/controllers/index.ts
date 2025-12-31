@@ -77,11 +77,11 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
         },
       },
     );
-  }
 
-  logger.info(`Updated pendingScheduledAt for conversation`, {
-    id: document._id,
-  });
+    logger.info(`Updated pending lock & pendingStartAt for conversation`, {
+      id: document._id,
+    });
+  }
 };
 
 export { handleProcessInputEvent };

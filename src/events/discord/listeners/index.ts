@@ -8,6 +8,7 @@ import type {
   AIResponseInProgressEvent,
   AgentResponseEvent,
   DiscordMessage,
+  AgentStreamResponseEvent,
 } from '../../../../@types';
 
 import { Emitter } from '../../../services';
@@ -41,6 +42,11 @@ const startListeners = ({ discord }: { discord: Discord }) => {
   Emitter.on(
     EVENTS.DISCORD_MESSAGE_PROCESSED,
     async (event: AgentResponseEvent) => await DiscordControllers.handleMessageProcessed(event, discord),
+  );
+
+  Emitter.on(
+    EVENTS.DISCORD_MESSAGE_PROCESSED_STREAM,
+    async (event: AgentStreamResponseEvent) => await DiscordControllers.handleMessageProcessedStream(event, discord),
   );
 
   Emitter.on(

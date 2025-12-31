@@ -2,6 +2,7 @@ import type { Configuration } from '../../../database/schemas';
 
 import { Cache, logger } from '../../../services';
 import { configuration } from '../../../database';
+import { ResponseStream } from 'openai/lib/responses/ResponseStream';
 
 enum AGENT_TYPES {
   DECISION = 'decisionAgent',
@@ -120,4 +121,18 @@ const getAllowedChannels = async <T = Record<string, unknown>>(): Promise<Config
   }
 };
 
-export { AGENT_TYPES, getAgentConfig, getConversationConfig, getAllowedChannels };
+const promisifyAgentStream = (stream: ResponseStream) => {
+  return new Promise((resolve, reject) => {
+    stream.on('response.completed', (event) => {
+      if (event.response.status === 'failed' || event.response.status === 'cancelled') {
+        reject(event.response.error);
+      }
+    });
+
+    stream.on('response.output_text.done', event => resolve(event.text));
+
+    stream.on('error', reject);
+  });
+};
+
+export { AGENT_TYPES, getAgentConfig, getConversationConfig, getAllowedChannels, promisifyAgentStream };
