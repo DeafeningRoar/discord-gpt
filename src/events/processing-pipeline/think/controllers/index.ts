@@ -2,54 +2,56 @@ import type { AIDecisionPipelineEvent } from '../../../../../@types';
 import type { Conversation } from '../../../../database/schemas';
 
 import { conversation } from '../../../../database';
-import { eventLogger } from '../../../../services';
+import { Emitter, eventLogger } from '../../../../services';
+import { PIPELINE_EVENTS } from '../../../../config/constants';
+import { AGENT_TYPES, getAgentConfig } from '../../helpers';
+import { buildContext } from '../../helpers/composeContext';
+
+const step = 'speculative-think';
 
 const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
   const logger = eventLogger(event);
   try {
     const {
-      data: { id },
+      data: { conversationId },
       context,
     } = event;
 
     const conversationModel = conversation.getModel();
 
     const document = await conversationModel.findOne<Conversation>({
-      channelId: id,
+      _id: conversationId,
       'state.active': true,
       source: context.source,
     });
 
     if (!document) {
-      logger.info('Could not find document to update liveBuffer with', {
-        channelId: id,
-        'state.active': true,
+      logger.info('Could not find active conversation', {
+        step,
+        conversationId,
         source: context.source,
       });
       return;
     }
 
-    const { matchedCount } = await conversationModel.updateOne(
-      { _id: document._id, version: document.version },
-      [
-        {
-          $set: {
-            liveBuffer: {
-              $concatArrays: ['$liveBuffer', '$pending'],
-            },
-            pending: [],
-            updatedAt: '$$NOW',
-            version: { $add: ['$version', 1] },
-            'metadata.thinkCount': { $add: ['$metadata.thinkCount', 1] },
-          },
-        },
-      ],
-      { updatePipeline: true },
-    );
+    const agentConfig = await getAgentConfig(AGENT_TYPES.CHAT);
 
-    if (matchedCount === 0) {
-      logger.info('Document has been previously updated, discarding changes in THINK');
-    }
+    logger.info('Sending conversation state for agent processing', {
+      step,
+      conversationId,
+      version: document.version,
+    });
+
+    Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, {
+      ...event,
+      data: {
+        ...event.data,
+        version: document.version,
+      },
+      processedInput: { input: buildContext(document, agentConfig.prompt), model: agentConfig.model },
+      responseMetadata: { responseEvent: event.responseEvent, stream: true },
+      responseEvent: PIPELINE_EVENTS.COMMIT_GATE_AGENT_THINKING_PROCESSED,
+    });
   } catch (error: unknown) {
     const err = error as Error;
 

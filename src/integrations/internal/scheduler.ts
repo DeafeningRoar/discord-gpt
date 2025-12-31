@@ -1,7 +1,7 @@
 import type { Conversation } from '../../database/schemas';
 
 import { CronJob } from 'cron';
-import { Emitter, logger } from '../../services';
+import { Emitter, eventLogger } from '../../services';
 
 import { mongoose, conversation } from '../../database';
 import { PIPELINE_EVENTS } from '../../config/constants';
@@ -9,9 +9,10 @@ import { getConversationConfig } from '../../events/processing-pipeline/helpers'
 
 const autoStart = false;
 
-const pendingQueueWorker = new CronJob(
-  '*/1 * * * * *',
+const conversationStateWorker = new CronJob(
+  '*/2 * * * * *',
   async function () {
+    const logger = eventLogger({ id: 'conversationStateWorker' });
     try {
       if (mongoose.client?.connection?.readyState !== 1) {
         logger.info('Mongoose client not started, skipping pending queue check');
@@ -19,54 +20,56 @@ const pendingQueueWorker = new CronJob(
       }
 
       const conversationModel = conversation.getModel();
+      const speakConfigs = await getConversationConfig<{ timeout: number; userSilenceTime: number }>();
+      const { timeout = 15000, userSilenceTime = 2000 } = speakConfigs || {};
 
-      const speakConfigs = await getConversationConfig<{ processingDelay: number; maxProcessingDelay: number }>();
-      const { processingDelay = 1000, maxProcessingDelay = 15000 } = speakConfigs || {};
+      const filterCondition = {
+        'state.active': true,
+        'locks.thinking': false,
+        $expr: {
+          $and: [
+            {
+              $or: [
+                { $lt: ['state.lastBotMessageAt', '$state.lastUserMessageAt'] },
+                {
+                  $expr: {
+                    $gte: [
+                      {
+                        $subtract: ['$$NOW', '$state.lastUserMessageAt'],
+                      },
+                      userSilenceTime,
+                    ],
+                  },
+                },
+              ],
+            },
+            {
+              $lte: [{ $subtract: ['$$NOW', '$state.lastUserMessageAt'] }, timeout],
+            },
+          ],
+        },
+      };
 
-      const ts = Date.now();
-      const documents = await conversationModel.find<Conversation>({
-        $and: [
-          { 'state.active': true },
-          { 'locks.pending': true },
-          {
-            $or: [
-              { 'state.lastUserMessageAt': { $lte: ts - processingDelay } },
-              { 'metadata.pendingStartAt': { $lte: ts - maxProcessingDelay } },
-            ],
-          },
-        ],
-      });
+      const documents = await conversationModel.find<Conversation>(filterCondition);
 
       if (!documents.length) {
         return;
       }
 
-      logger.info(`Processing ${documents.length} conversations with pending messages`);
+      logger.info(`Attempting to update ${documents.length} conversations state`);
 
       await Promise.all(
         documents.map(async (doc) => {
           const updatedDoc = await conversationModel.findOneAndUpdate(
-            {
-              _id: doc._id,
-              'locks.pending': true,
-              $or: [
-                { 'state.lastUserMessageAt': { $lte: ts - processingDelay } },
-                { 'metadata.pendingStartAt': { $lte: ts - maxProcessingDelay } },
-              ],
-            },
-            {
-              $set: {
-                'locks.pending': false,
-                'metadata.pendingStartAt': null,
-              },
-            },
+            filterCondition,
+            { $set: { 'locks.thinking': true } },
             { new: true },
           );
 
           if (updatedDoc) {
-            Emitter.emit(PIPELINE_EVENTS.DECISION_INPUT_PROCESSED, {
+            Emitter.emit(PIPELINE_EVENTS.THINK_INPUT_PROCESSED, {
               id: doc._id,
-              data: { id: doc.channelId },
+              data: { id: doc.channelId, conversationId: doc._id },
               context: { source: doc.source },
               responseEvent: doc.metadata.responseEvent,
             });
@@ -76,7 +79,7 @@ const pendingQueueWorker = new CronJob(
     } catch (error: unknown) {
       const err = error as Error;
 
-      logger.error('Error while processing pending queues', {
+      logger.error('Error updating conversations state', {
         message: err.message,
         cause: err.cause,
         stack: err.stack,
@@ -89,6 +92,6 @@ const pendingQueueWorker = new CronJob(
 
 export default {
   start: () => {
-    pendingQueueWorker.start();
+    conversationStateWorker.start();
   },
 };

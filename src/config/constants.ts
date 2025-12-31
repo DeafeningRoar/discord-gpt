@@ -78,6 +78,10 @@ const OUTPUT_PROCESSOR = {
   OUTPUT_PROCESSOR_RESPONSE_PROCESSED: 'OutputProcessorResponseProcessed',
 };
 
+const COMMIT_GATE = {
+  COMMIT_GATE_AGENT_THINKING_PROCESSED: 'CommitGateAgentTthinkingProcessed',
+};
+
 const PIPELINE_ENTRY_POINT = 'EventsPipelineEntryPoint';
 const PROCESS_AGENT_RESPONSE = 'EventsPipelineProcessAgentResponse';
 
@@ -90,6 +94,7 @@ const PIPELINE_EVENTS = {
   ...CONTEXT_COMPOSER_EVENTS,
   ...MESSAGE_QUEUE_EVENTS,
   ...OUTPUT_PROCESSOR,
+  ...COMMIT_GATE,
   PIPELINE_ENTRY_POINT,
   PROCESS_AGENT_RESPONSE,
 };

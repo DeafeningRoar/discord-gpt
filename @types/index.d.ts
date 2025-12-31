@@ -61,6 +61,7 @@ export type StandardAIEvent = {
   id: string;
   data: {
     id: string;
+    conversationId?: string;
     input: string;
     files?: {
       image?: string;
@@ -112,7 +113,7 @@ export interface AISchedulerEventInput extends AISchedulerEvent {
 
 export interface AISchedulerResponseEvent<T = string> {
   id: string;
-  data: { conversationId: string };
+  data: { conversationId: string; version: number };
   context: { source: string };
   responseEvent: string;
   response: T;

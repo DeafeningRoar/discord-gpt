@@ -3,9 +3,10 @@ import type { Conversation } from '../../../../database/schemas';
 import type { ResponseStream } from 'openai/lib/responses/ResponseStream';
 
 import { Emitter, eventLogger } from '../../../../services';
-import { SPEAK_QUEUE_STATE } from '../../../../config/constants';
-import { conversation, speakQueue } from '../../../../database';
+import { conversation } from '../../../../database';
 import { promisifyAgentStream } from '../../helpers';
+
+const step = 'output-processor';
 
 const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<ResponseStream>) => {
   const logger = eventLogger(event);
@@ -17,25 +18,28 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
       responseMetadata,
     } = event;
     const conversationModel = conversation.getModel();
-    const speakQueueModel = speakQueue.getModel();
 
     const document = await conversationModel.findById(conversationId);
 
     promisifyAgentStream(streamResponse)
       .then(async (response) => {
+        const ts = Date.now();
         const document = await conversationModel.findOneAndUpdate<Conversation>(
           {
             _id: conversationId,
             source: context?.source,
+            'state.active': true,
           },
           {
             $push: {
-              liveBuffer: { role: 'assistant', content: response || '', ts: responseMetadata.initiateTime },
+              liveBuffer: {
+                $each: [{ role: 'assistant', content: response || '', ts: responseMetadata.initiateTime }],
+                $sort: { ts: 1 },
+              },
             },
             $set: {
-              'metadata.pendingSpeak': false,
-              'state.lastBotMessageAt': Date.now(),
-              updatedAt: Date.now(),
+              'state.lastBotMessageAt': ts,
+              updatedAt: ts,
             },
             $inc: { version: 1 },
           },
@@ -44,18 +48,18 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
 
         if (!document) {
           logger.info('Could not find any document to update with assistant response', {
+            step,
             _id: conversationId,
             source: context?.source,
           });
           return;
         }
-
-        await speakQueueModel.deleteMany({ conversationId, status: SPEAK_QUEUE_STATE.DONE });
       })
       .catch((error) => {
         const err = error as Error;
 
         logger.error('Error handling streamed agent output', {
+          step,
           message: err.message,
           cause: err.cause,
           stack: err.stack,
@@ -64,7 +68,7 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
 
     const responseEvent = responseMetadata.responseEvent as string;
 
-    logger.info('Emitted response event for conversation', { conversationId });
+    logger.info('Emitted response event for conversation', { step, conversationId });
 
     Emitter.emit(responseEvent, {
       ...event,
@@ -74,6 +78,7 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
     const err = error as Error;
 
     logger.error('Error handling agent output', {
+      step,
       message: err.message,
       cause: err.cause,
       stack: err.stack,

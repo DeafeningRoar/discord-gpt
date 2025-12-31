@@ -5,34 +5,7 @@ import { Emitter, eventLogger } from '../../../../services';
 import { PIPELINE_EVENTS, SOURCE_EVENTS, SPEAK_QUEUE_STATE } from '../../../../config/constants';
 import { conversation, speakQueue } from '../../../../database';
 import { getAgentConfig, AGENT_TYPES } from '../../helpers';
-
-const buildContext = (document: Conversation, systemPrompt: string) => [
-  { role: 'system', content: systemPrompt },
-  ...(document.summary?.factual
-    ? [
-        {
-          role: 'system',
-          content: `
-[SUMMARY]
-The following is a summary of the conversation so far
----
-${document.summary.factual}
-`.trim(),
-        },
-      ]
-    : []),
-  ...document.liveBuffer
-    .toSorted((a, b) => a.ts.getTime() - b.ts.getTime())
-    .map(({ role, content, files }) => {
-      const { url, expiresAt } = files.image || {};
-
-      if (typeof expiresAt !== 'undefined' && Date.now() >= expiresAt?.getTime()) {
-        return { role, content: `${content}\n\n**Expired Image URL <${url}>**`, files: {} };
-      }
-
-      return { role, content, files: { image: url } };
-    }),
-];
+import { buildContext } from '../../helpers/composeContext';
 
 const handleProcessInputEvent = async (event: AISchedulerEvent) => {
   const logger = eventLogger(event);

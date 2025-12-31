@@ -37,7 +37,7 @@ export interface Conversation {
     ts: string;
   };
   locks: {
-    summarizing: boolean;
+    speaking: boolean;
     thinking: boolean;
     pending: boolean;
   };
@@ -110,7 +110,7 @@ export default new Schema({
     required: false,
   },
   locks: {
-    summarizing: { type: Boolean, default: false },
+    speaking: { type: Boolean, default: false },
     thinking: { type: Boolean, default: false },
     pending: { type: Boolean, default: false },
   },

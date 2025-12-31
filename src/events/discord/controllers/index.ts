@@ -225,7 +225,7 @@ const handleInteractionCreated = async ({ interaction, type }: { interaction: Di
   };
 
   try {
-    logger.log('Processing Interaction by User:', interaction.__metadata__);
+    logger.log('Processing Interaction by User', { step: 'discord-input', user });
     let isValidImage = true;
 
     if (image) {
@@ -312,7 +312,7 @@ const handleInteractionValidated = async ({
         },
       },
       context: { source: EVENT_SOURCE.DISCORD },
-      responseEvent: EVENTS.DISCORD_INTERACTION_PROCESSED,
+      responseEvent: isInteraction ? EVENTS.DISCORD_INTERACTION_PROCESSED : EVENTS.DISCORD_MESSAGE_PROCESSED_STREAM,
       errorEvent: EVENTS.DISCORD_PROCESSING_ERROR,
       responseMetadata: {
         query: interaction.content,
