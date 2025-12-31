@@ -170,8 +170,12 @@ const handleMessageProcessedStream = async ({ data, response }: AgentStreamRespo
     let sendFn;
     if (channel) {
       sendFn = (message: string) => (channel as TextChannel).send(message);
+      await (channel as TextChannel).sendTyping();
     } else {
       sendFn = (message: string) => discordClient?.users.send(data.id, { content: message });
+      const usr = await discordClient?.users.fetch(data.id);
+      const dmChannel = await usr.createDM();
+      await dmChannel.sendTyping();
     }
 
     await handleSendStreamMessage(sendFn, response, 850);
