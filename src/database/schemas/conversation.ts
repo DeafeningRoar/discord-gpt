@@ -29,6 +29,7 @@ export interface Conversation {
   locks: {
     thinking: boolean;
     pending: boolean;
+    speakInFlight: boolean;
   };
   metadata: {
     responseEvent: string;
@@ -82,6 +83,7 @@ export default new Schema({
   locks: {
     thinking: { type: Boolean, default: false },
     pending: { type: Boolean, default: false },
+    speakInFlight: { type: Boolean, default: false },
   },
   metadata: {
     type: {

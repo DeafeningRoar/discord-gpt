@@ -12,7 +12,10 @@ const step = 'speculative-think';
 
 const updateLastBotMessageAt = async (conversationId: unknown) => {
   const model = conversation.getModel();
-  await model.updateOne({ _id: conversationId }, { $set: { 'state.lastBotMessageAt': Date.now() } });
+  await model.updateOne(
+    { _id: conversationId },
+    { $set: { 'state.lastBotMessageAt': Date.now(), 'locks.speakInFlight': true } },
+  );
 };
 
 const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
@@ -40,6 +43,35 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
       return;
     }
 
+    const ts = Date.now();
+    const {
+      version: conversationVersion,
+      state: { lastBotMessageAt, lastUserMessageAt },
+      locks: { speakInFlight },
+    } = document;
+
+    if (speakInFlight && conversationVersion === version) {
+      const retries = (event.responseMetadata?.thinkAttempts as number) || 1;
+      if (retries % 2 !== 0) {
+        logger.info('Awaiting speak in flight', {
+          step,
+          conversationId,
+          version,
+          conversationVersion,
+          retries,
+        });
+      }
+
+      await sleep(Math.min(2000, 600 * retries));
+      return Emitter.emit(PIPELINE_EVENTS.THINK_INPUT_PROCESSED, {
+        ...event,
+        responseMetadata: {
+          ...event.responseMetadata,
+          thinkAttempts: retries + 1,
+        },
+      });
+    }
+
     const {
       userSilenceTime = 2000,
       maxWaitTime = 10000,
@@ -49,12 +81,6 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
       maxWaitTime: number;
       timeout: number;
     }>();
-
-    const ts = Date.now();
-    const {
-      version: conversationVersion,
-      state: { lastBotMessageAt, lastUserMessageAt },
-    } = document;
 
     const hasRecentUserMessage = ts - lastUserMessageAt.getTime() < userSilenceTime;
     const reachedMaxWaitTime = ts - lastBotMessageAt.getTime() >= maxWaitTime;

@@ -40,8 +40,8 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
             $set: {
               'state.lastBotMessageAt': ts,
               updatedAt: ts,
+              'locks.speakInFlight': false,
             },
-            $inc: { version: 1 },
           },
           { new: true },
         );
