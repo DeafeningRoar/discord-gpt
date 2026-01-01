@@ -1,7 +1,9 @@
 import type { AIPipelineEvent } from '../../../../../@types';
+import type { Conversation } from '../../../../database/schemas';
 
-import { eventLogger } from '../../../../services';
+import { Emitter, eventLogger } from '../../../../services';
 import { conversation } from '../../../../database';
+import { PIPELINE_EVENTS } from '../../../../config/constants';
 
 const step = 'message-queue';
 
@@ -20,7 +22,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
     };
     const ts = Date.now();
 
-    const { matchedCount, modifiedCount, upsertedCount } = await model.updateOne(
+    const doc = await model.findOneAndUpdate<Conversation>(
       { channelId: id, 'state.active': true, source: context?.source },
       {
         $setOnInsert: {
@@ -33,7 +35,6 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
           updatedAt: ts,
           'state.lastUserMessageAt': Date.now(),
           'state.active': true,
-          'locks.thinking': false,
           'metadata.responseEvent': event.responseEvent,
         },
         $inc: { version: 1 },
@@ -44,14 +45,19 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
           },
         },
       },
-      { upsert: true },
+      { upsert: true, new: true },
     );
 
     logger.info('Appended new user input into live buffer', {
       step,
-      matchedCount,
-      modifiedCount,
-      upsertedCount,
+      conversationId: doc._id,
+    });
+
+    Emitter.emit(PIPELINE_EVENTS.THINK_INPUT_PROCESSED, {
+      id: doc._id,
+      data: { id: doc.channelId, conversationId: doc._id, version: doc.version },
+      context: { source: doc.source },
+      responseEvent: doc.metadata.responseEvent,
     });
   } catch (err: unknown) {
     const error = err as Error;

@@ -82,6 +82,10 @@ const COMMIT_GATE = {
   COMMIT_GATE_AGENT_THINKING_PROCESSED: 'CommitGateAgentTthinkingProcessed',
 };
 
+const CANDIDATE_RESPONSE = {
+  CANDIDATE_RESPONSE_AGENT_RESPONSE: 'CandidateResponseAgentResponse',
+};
+
 const PIPELINE_ENTRY_POINT = 'EventsPipelineEntryPoint';
 const PROCESS_AGENT_RESPONSE = 'EventsPipelineProcessAgentResponse';
 
@@ -95,6 +99,7 @@ const PIPELINE_EVENTS = {
   ...MESSAGE_QUEUE_EVENTS,
   ...OUTPUT_PROCESSOR,
   ...COMMIT_GATE,
+  ...CANDIDATE_RESPONSE,
   PIPELINE_ENTRY_POINT,
   PROCESS_AGENT_RESPONSE,
 };

@@ -4,7 +4,6 @@ import type { Conversation } from '../../../../database/schemas';
 
 import { conversation } from '../../../../database';
 import { Emitter, eventLogger } from '../../../../services';
-import { getConversationConfig } from '../../helpers';
 import { PIPELINE_EVENTS } from '../../../../config/constants';
 
 const step = 'commit-gate';
@@ -14,59 +13,16 @@ const handleAgentThinkingProcessedEvent = async (event: AISchedulerResponseEvent
   try {
     const {
       data: { conversationId, version },
-      responseMetadata,
       context,
     } = event;
     const conversationModel = conversation.getModel();
 
-    const {
-      userSilenceTime = 2000,
-      maxWaitTime = 10000,
-      timeout = 15000,
-    } = await getConversationConfig<{
-      userSilenceTime: number;
-      maxWaitTime: number;
-      timeout: number;
-    }>();
-
-    const document = await conversationModel.findOneAndUpdate<Conversation>(
-      {
-        $and: [
-          { _id: conversationId },
-          { 'state.active': true },
-          { source: context.source },
-          {
-            $expr: {
-              $gte: [
-                {
-                  $subtract: ['$$NOW', '$state.lastUserMessageAt'],
-                },
-                userSilenceTime,
-              ],
-            },
-          },
-          {
-            $or: [
-              { version },
-              {
-                $expr: {
-                  $gte: [
-                    {
-                      $subtract: ['$$NOW', '$state.lastBotMessageAt'],
-                    },
-                    maxWaitTime,
-                  ],
-                },
-              },
-            ],
-          },
-        ],
-      },
-      {
-        $set: { 'state.lastBotMessageAt': responseMetadata.initiateTime },
-        $inc: { version: 1 },
-      },
-    );
+    const document = await conversationModel.findOne<Conversation>({
+      _id: conversationId,
+      'state.active': true,
+      source: context.source,
+      version,
+    });
 
     if (!document) {
       logger.info('Conversation discarded', {
@@ -74,21 +30,17 @@ const handleAgentThinkingProcessedEvent = async (event: AISchedulerResponseEvent
         conversationId,
       });
 
-      await conversationModel.updateOne({ _id: conversationId }, { $set: { 'locks.thinking': false } });
       return;
     }
 
-    logger.info('Using current conversation state for response', {
+    logger.info('Using current conversation state for response candidate', {
       step,
       conversationId,
       version,
-      docVersion: document.version,
-      maxWaitTime,
-      timeout,
-      userSilenceTime,
+      conversationVersion: document.version,
     });
 
-    Emitter.emit(PIPELINE_EVENTS.OUTPUT_PROCESSOR_RESPONSE_PROCESSED, event);
+    Emitter.emit(PIPELINE_EVENTS.CANDIDATE_RESPONSE_AGENT_RESPONSE, event);
   } catch (error: unknown) {
     const err = error as Error;
 

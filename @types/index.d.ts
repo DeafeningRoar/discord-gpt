@@ -62,6 +62,7 @@ export type StandardAIEvent = {
   data: {
     id: string;
     conversationId?: string;
+    version?: number;
     input: string;
     files?: {
       image?: string;

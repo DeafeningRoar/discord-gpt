@@ -8,6 +8,7 @@ import Think from './think';
 // import ContextComposer from './context-composer';
 import OutputProcessor from './output-processor';
 import CommitGate from './commit-gate';
+import CandidateResponse from './candidate-response';
 
 export default () => {
   EntryPoint();
@@ -19,5 +20,6 @@ export default () => {
   // Ignore();
   // ContextComposer();
   CommitGate();
+  CandidateResponse();
   OutputProcessor();
 };
