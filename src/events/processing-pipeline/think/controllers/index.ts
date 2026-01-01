@@ -4,16 +4,22 @@ import type { Conversation } from '../../../../database/schemas';
 import { conversation } from '../../../../database';
 import { Emitter, eventLogger } from '../../../../services';
 import { PIPELINE_EVENTS } from '../../../../config/constants';
-import { AGENT_TYPES, getAgentConfig } from '../../helpers';
+import { AGENT_TYPES, getAgentConfig, getConversationConfig } from '../../helpers';
 import { buildContext } from '../../helpers/composeContext';
+import { sleep } from '../../../../utils';
 
 const step = 'speculative-think';
+
+const updateLastBotMessageAt = async (conversationId: unknown) => {
+  const model = conversation.getModel();
+  await model.updateOne({ _id: conversationId }, { $set: { 'state.lastBotMessageAt': Date.now() } });
+};
 
 const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
   const logger = eventLogger(event);
   try {
     const {
-      data: { conversationId },
+      data: { conversationId, version },
       context,
     } = event;
 
@@ -34,15 +40,31 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
       return;
     }
 
+    const {
+      userSilenceTime = 2000,
+      maxWaitTime = 10000,
+      timeout = 15000,
+    } = await getConversationConfig<{
+      userSilenceTime: number;
+      maxWaitTime: number;
+      timeout: number;
+    }>();
+
+    const ts = Date.now();
+    const {
+      version: conversationVersion,
+      state: { lastBotMessageAt, lastUserMessageAt },
+    } = document;
+
+    const hasRecentUserMessage = ts - lastUserMessageAt.getTime() < userSilenceTime;
+    const reachedMaxWaitTime = ts - lastBotMessageAt.getTime() >= maxWaitTime;
+    const isReactivation
+      = lastBotMessageAt.getTime() < lastUserMessageAt.getTime()
+        && lastUserMessageAt.getTime() - lastBotMessageAt.getTime() > timeout;
+
     const agentConfig = await getAgentConfig(AGENT_TYPES.CHAT);
 
-    logger.info('Sending conversation state for agent processing', {
-      step,
-      conversationId,
-      version: document.version,
-    });
-
-    Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, {
+    const agentEventPayload = {
       ...event,
       data: {
         ...event.data,
@@ -50,8 +72,49 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
       },
       processedInput: { input: buildContext(document, agentConfig.prompt), model: agentConfig.model },
       responseMetadata: { responseEvent: event.responseEvent, stream: true },
-      responseEvent: PIPELINE_EVENTS.COMMIT_GATE_AGENT_THINKING_PROCESSED,
-    });
+      responseEvent: PIPELINE_EVENTS.OUTPUT_PROCESSOR_RESPONSE_PROCESSED,
+    };
+
+    if (reachedMaxWaitTime && !isReactivation) {
+      logger.info('Reached max wait time, processing think event', {
+        step,
+        conversationId,
+        version,
+        conversationVersion,
+        lastUserMessageAt,
+        lastBotMessageAt,
+      });
+
+      await updateLastBotMessageAt(conversationId);
+      return Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, agentEventPayload);
+    }
+
+    if (conversationVersion !== version) {
+      logger.info('Version mismatch, think event discarded', {
+        step,
+        snapshotVersion: version,
+        conversationVersion,
+      });
+
+      return;
+    }
+
+    if (!hasRecentUserMessage && version === conversationVersion) {
+      logger.info('User silence reached, processing candidate response', {
+        step,
+        conversationId,
+        version,
+        conversationVersion,
+        lastUserMessageAt,
+        lastBotMessageAt,
+      });
+
+      await updateLastBotMessageAt(conversationId);
+      return Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, agentEventPayload);
+    }
+
+    await sleep(100);
+    Emitter.emit(PIPELINE_EVENTS.THINK_INPUT_PROCESSED, event);
   } catch (error: unknown) {
     const err = error as Error;
 

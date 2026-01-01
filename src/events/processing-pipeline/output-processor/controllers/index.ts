@@ -33,7 +33,7 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
           {
             $push: {
               liveBuffer: {
-                $each: [{ role: 'assistant', content: response || '', ts: responseMetadata.initiateTime }],
+                $each: [{ role: 'assistant', content: response || 'Error generating response', ts: responseMetadata.initiateTime }],
                 $sort: { ts: 1 },
               },
             },
