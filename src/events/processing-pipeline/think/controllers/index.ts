@@ -100,13 +100,13 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
     }
 
     if (!hasRecentUserMessage && version === conversationVersion) {
-      logger.info('User silence reached, processing candidate response', {
+      logger.info('Silence threshold reached, processing candidate response', {
         step,
         conversationId,
         version,
         conversationVersion,
+        silenceThreshold: userSilenceTime,
         lastUserMessageAt,
-        lastBotMessageAt,
       });
 
       await updateLastBotMessageAt(conversationId);

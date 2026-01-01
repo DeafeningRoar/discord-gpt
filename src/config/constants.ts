@@ -46,10 +46,6 @@ const SOURCE_EVENTS: Record<string, Record<string, string>> = {
   [EVENT_SOURCE.DISCORD]: DISCORD_EVENTS,
 };
 
-const DECISION_EVENTS = {
-  DECISION_INPUT_PROCESSED: 'DecisionInputProcessed',
-};
-
 const SUMMARIZE_EVENTS = {
   SUMMARIZE_INPUT_PROCESSED: 'SummarizeInputProcessed',
 };
@@ -58,48 +54,22 @@ const THINK_EVENTS = {
   THINK_INPUT_PROCESSED: 'ThinkInputProcessed',
 };
 
-const SPEAK_EVENTS = {
-  SPEAK_INPUT_PROCESSED: 'SpeakInputProcessed',
-};
-
-const IGNORE_EVENTS = {
-  IGNORE_INPUT_PROCESSED: 'IgnoreInputProcessed',
-};
-
-const CONTEXT_COMPOSER_EVENTS = {
-  CONTEXT_COMPOSER_INPUT_PROCESSED: 'ContextComposerInputProcessed',
-};
-
-const MESSAGE_QUEUE_EVENTS = {
-  MESSAGE_QUEUE_INPUT_RECEIVED: 'MessageQueueInputReceived',
+const MESSAGE_INGRESS_EVENTS = {
+  MESSAGE_INGRESS_INPUT_RECEIVED: 'MessageIngressInputReceived',
 };
 
 const OUTPUT_PROCESSOR = {
   OUTPUT_PROCESSOR_RESPONSE_PROCESSED: 'OutputProcessorResponseProcessed',
 };
 
-const COMMIT_GATE = {
-  COMMIT_GATE_AGENT_THINKING_PROCESSED: 'CommitGateAgentTthinkingProcessed',
-};
-
-const CANDIDATE_RESPONSE = {
-  CANDIDATE_RESPONSE_AGENT_RESPONSE: 'CandidateResponseAgentResponse',
-};
-
 const PIPELINE_ENTRY_POINT = 'EventsPipelineEntryPoint';
 const PROCESS_AGENT_RESPONSE = 'EventsPipelineProcessAgentResponse';
 
 const PIPELINE_EVENTS = {
-  ...DECISION_EVENTS,
   ...SUMMARIZE_EVENTS,
   ...THINK_EVENTS,
-  ...SPEAK_EVENTS,
-  ...IGNORE_EVENTS,
-  ...CONTEXT_COMPOSER_EVENTS,
-  ...MESSAGE_QUEUE_EVENTS,
+  ...MESSAGE_INGRESS_EVENTS,
   ...OUTPUT_PROCESSOR,
-  ...COMMIT_GATE,
-  ...CANDIDATE_RESPONSE,
   PIPELINE_ENTRY_POINT,
   PROCESS_AGENT_RESPONSE,
 };

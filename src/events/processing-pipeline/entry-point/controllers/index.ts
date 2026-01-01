@@ -13,7 +13,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
       const { channelIds } = config;
 
       if (channelIds.includes(event.data.id)) {
-        Emitter.emit(PIPELINE_EVENTS.MESSAGE_QUEUE_INPUT_RECEIVED, event);
+        Emitter.emit(PIPELINE_EVENTS.MESSAGE_INGRESS_INPUT_RECEIVED, event);
       } else {
         logger.info('Channel not allowed', { channelId: event.data.id });
       }
@@ -21,7 +21,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
       return;
     }
 
-    Emitter.emit(PIPELINE_EVENTS.MESSAGE_QUEUE_INPUT_RECEIVED, event);
+    Emitter.emit(PIPELINE_EVENTS.MESSAGE_INGRESS_INPUT_RECEIVED, event);
   } catch (error: unknown) {
     const err = error as Error;
 

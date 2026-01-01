@@ -5,7 +5,7 @@ import { Emitter, eventLogger } from '../../../../services';
 import { conversation } from '../../../../database';
 import { PIPELINE_EVENTS } from '../../../../config/constants';
 
-const step = 'message-queue';
+const step = 'message-ingress';
 
 const handleProcessInputEvent = async (event: AIPipelineEvent) => {
   const logger = eventLogger(event);
