@@ -33,6 +33,7 @@ export interface Conversation {
   };
   metadata: {
     responseEvent: string;
+    tokens: number;
   };
   createdAt: Date;
   updatedAt?: Date;
@@ -88,6 +89,7 @@ export default new Schema({
   metadata: {
     type: {
       responseEvent: { type: String, required: true },
+      tokens: { type: Number, default: 0 },
     },
     default: {},
   },

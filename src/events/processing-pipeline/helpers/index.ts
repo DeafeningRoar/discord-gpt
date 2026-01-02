@@ -121,15 +121,29 @@ const getAllowedChannels = async <T = Record<string, unknown>>(): Promise<Config
   }
 };
 
-const promisifyAgentStream = (stream: ResponseStream) => {
+const promisifyAgentStream = (stream: ResponseStream): Promise<{ output: string; tokens: number }> => {
   return new Promise((resolve, reject) => {
+    let output: string | undefined;
+    let tokens: number | undefined;
+
     stream.on('response.completed', (event) => {
       if (event.response.status === 'failed' || event.response.status === 'cancelled') {
         reject(event.response.error);
       }
+      tokens = event.response.usage?.total_tokens || 0;
+
+      if (typeof tokens !== 'undefined' && typeof output !== 'undefined') {
+        resolve({ output, tokens });
+      }
     });
 
-    stream.on('response.output_text.done', event => resolve(event.text));
+    stream.on('response.output_text.done', (event) => {
+      output = event.text || '';
+
+      if (typeof tokens !== 'undefined' && typeof output !== 'undefined') {
+        resolve({ output, tokens });
+      }
+    });
 
     stream.on('error', reject);
   });

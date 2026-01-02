@@ -24,6 +24,7 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
     promisifyAgentStream(streamResponse)
       .then(async (response) => {
         const ts = Date.now();
+        const { output, tokens } = response;
         const document = await conversationModel.findOneAndUpdate<Conversation>(
           {
             _id: conversationId,
@@ -33,7 +34,7 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
           {
             $push: {
               liveBuffer: {
-                $each: [{ role: 'assistant', content: response || 'Error generating response', ts: responseMetadata.initiateTime }],
+                $each: [{ role: 'assistant', content: output || 'Error generating response', ts: responseMetadata.initiateTime }],
                 $sort: { ts: 1 },
               },
             },
@@ -41,6 +42,7 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
               'state.lastBotMessageAt': ts,
               updatedAt: ts,
               'locks.speakInFlight': false,
+              'metadata.tokens': tokens,
             },
           },
           { new: true },
