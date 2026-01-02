@@ -4,6 +4,7 @@ import type { Conversation } from '../../../../database/schemas';
 import { Emitter, eventLogger } from '../../../../services';
 import { conversation } from '../../../../database';
 import { PIPELINE_EVENTS } from '../../../../config/constants';
+import { getConversationConfig } from '../../helpers';
 
 const step = 'message-ingress';
 
@@ -16,6 +17,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
     } = event;
 
     const model = conversation.getModel();
+    const { ttl } = await getConversationConfig<{ ttl: number }>();
 
     const parsedFiles = {
       image: files?.image ? { url: files.image, expiresAt: files.imageExpiresAt } : undefined,
@@ -23,7 +25,12 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
     const ts = Date.now();
 
     const doc = await model.findOneAndUpdate<Conversation>(
-      { channelId: id, 'state.active': true, source: context?.source },
+      {
+        channelId: id,
+        'state.active': true,
+        source: context?.source,
+        'state.lastUserMessageAt': { $gt: Date.now() - ttl },
+      },
       {
         $setOnInsert: {
           channelId: id,
