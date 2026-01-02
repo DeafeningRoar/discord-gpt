@@ -9,6 +9,7 @@ import { FIVE_MINUTES_MS, EVENTS } from './config/constants';
 import { DISCORD_ENABLED, EXPRESS_ENABLED } from './config/env';
 import { sleep } from './utils';
 import setupEventListeners from './events';
+import internalScheduler from './integrations/internal/scheduler';
 
 async function start(): Promise<void> {
   try {
@@ -34,6 +35,8 @@ async function start(): Promise<void> {
     if (express) {
       express.init();
     }
+
+    internalScheduler();
   } catch (error) {
     logger.error('Process error', error);
 
