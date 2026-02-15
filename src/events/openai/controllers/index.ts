@@ -110,13 +110,13 @@ const handleOpenAIPipelineInput = async ({
     logger.log('Processing OpenAI Response', { conversationId, stream });
 
     if (!stream) {
-      const { output_text: output } = response as Response;
+      const { output_text: output, usage } = response as Response;
 
       return Emitter.emit(responseEvent, {
         ...event,
         data,
         context,
-        response: output,
+        response: { output, usage },
         responseMetadata: {
           ...responseMetadata,
           initiateTime: ts,

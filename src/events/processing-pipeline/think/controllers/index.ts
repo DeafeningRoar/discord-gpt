@@ -97,7 +97,7 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
         version: document.version,
       },
       processedInput: { input: buildContext(document, agentConfig.prompt), model: agentConfig.model },
-      responseMetadata: { responseEvent: event.responseEvent, stream: true },
+      responseMetadata: { responseEvent: event.responseEvent, stream: agentConfig.stream },
       responseEvent: PIPELINE_EVENTS.OUTPUT_PROCESSOR_RESPONSE_PROCESSED,
     };
 

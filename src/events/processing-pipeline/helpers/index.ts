@@ -13,6 +13,7 @@ interface AgentConfig {
   [x: string]: unknown;
   prompt: string;
   model: string;
+  stream: boolean;
 }
 
 const getAgentConfig = async (agent: AGENT_TYPES): Promise<AgentConfig> => {

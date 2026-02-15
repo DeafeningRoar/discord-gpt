@@ -143,11 +143,15 @@ const handleMessageProcessed = async ({ data, response }: AgentResponseEvent, di
     let sendFn;
     if (channel) {
       sendFn = (message: string) => (channel as TextChannel).send(message);
+      await (channel as TextChannel).sendTyping();
     } else {
       sendFn = (message: string) => discordClient?.users.send(data.id, { content: message });
+      const usr = await discordClient?.users.fetch(data.id);
+      const dmChannel = await usr.createDM();
+      await dmChannel.sendTyping();
     }
 
-    await handleSendMessage(sendFn, response);
+    await handleSendMessage(sendFn, response.output);
   } catch (error: unknown) {
     logger.error('Error creating message response', { channelId: data.id });
 
@@ -312,7 +316,7 @@ const handleInteractionValidated = async ({
         },
       },
       context: { source: EVENT_SOURCE.DISCORD },
-      responseEvent: isInteraction ? EVENTS.DISCORD_INTERACTION_PROCESSED : EVENTS.DISCORD_MESSAGE_PROCESSED_STREAM,
+      responseEvent: isInteraction ? EVENTS.DISCORD_INTERACTION_PROCESSED : EVENTS.DISCORD_MESSAGE_PROCESSED,
       errorEvent: EVENTS.DISCORD_PROCESSING_ERROR,
       responseMetadata: {
         query: interaction.content,

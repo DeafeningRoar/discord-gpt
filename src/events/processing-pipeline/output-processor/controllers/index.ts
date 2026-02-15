@@ -1,19 +1,21 @@
 import type { AISchedulerResponseEvent } from '../../../../../@types';
-import type { Conversation } from '../../../../database/schemas';
 import type { ResponseStream } from 'openai/lib/responses/ResponseStream';
+import type { Response } from 'openai/resources/responses/responses';
+import type { Model, Document } from 'mongoose';
 
 import { Emitter, eventLogger } from '../../../../services';
 import { conversation } from '../../../../database';
-import { promisifyAgentStream } from '../../helpers';
+
+import { handleNonStreamResponse, handleStreamResponse } from './helpers';
 
 const step = 'output-processor';
 
-const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<ResponseStream>) => {
+const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Response | ResponseStream>) => {
   const logger = eventLogger(event);
   try {
     const {
       data: { conversationId },
-      response: streamResponse,
+      response: agentResponse,
       context,
       responseMetadata,
     } = event;
@@ -21,52 +23,27 @@ const handleAgentResponseProcessed = async (event: AISchedulerResponseEvent<Resp
 
     const document = await conversationModel.findById(conversationId);
 
-    promisifyAgentStream(streamResponse)
-      .then(async (response) => {
-        const ts = Date.now();
-        const { output, tokens } = response;
-        const document = await conversationModel.findOneAndUpdate<Conversation>(
-          {
-            _id: conversationId,
-            source: context?.source,
-            'state.active': true,
-          },
-          {
-            $push: {
-              liveBuffer: {
-                $each: [{ role: 'assistant', content: output || 'Error generating response', ts: responseMetadata.initiateTime }],
-                $sort: { ts: 1 },
-              },
-            },
-            $set: {
-              'state.lastBotMessageAt': ts,
-              updatedAt: ts,
-              'locks.speakInFlight': false,
-              'metadata.tokens': tokens,
-            },
-          },
-          { new: true },
-        );
-
-        if (!document) {
-          logger.info('Could not find any document to update with assistant response', {
-            step,
-            _id: conversationId,
-            source: context?.source,
-          });
-          return;
-        }
-      })
-      .catch((error) => {
-        const err = error as Error;
-
-        logger.error('Error handling streamed agent output', {
-          step,
-          message: err.message,
-          cause: err.cause,
-          stack: err.stack,
-        });
+    if (responseMetadata.stream) {
+      handleStreamResponse({
+        streamResponse: agentResponse as ResponseStream,
+        conversationModel: conversationModel as unknown as Model<Document>,
+        conversationId,
+        context,
+        responseMetadata,
+        step,
+        logger,
       });
+    } else {
+      await handleNonStreamResponse({
+        response: agentResponse as Response,
+        conversationModel: conversationModel as unknown as Model<Document>,
+        conversationId,
+        context,
+        responseMetadata,
+        step,
+        logger,
+      });
+    }
 
     const responseEvent = responseMetadata.responseEvent as string;
 

@@ -121,6 +121,7 @@ export interface AISchedulerResponseEvent<T = string> {
   responseMetadata: {
     responseEvent: string;
     initiateTime: number;
+    stream?: boolean;
   };
 }
 
@@ -138,7 +139,7 @@ export type AgentResponseEvent = {
   data: {
     id: string;
   };
-  response: string;
+  response: { output: string };
   responseMetadata: Record<string, unknown>;
 };
 

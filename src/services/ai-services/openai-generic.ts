@@ -33,18 +33,30 @@ class OpenAIService {
 
     if (stream) {
       return await this.client.responses.stream({
-        tools: this.tools,
+        tools: [
+          { type: 'web_search' },
+          ...this.tools || [],
+        ],
         model: this.model,
         input: aiInput,
-        text: format ? { format } : undefined,
+        text: { verbosity: 'low', ...(format ? { format } : undefined) },
+        reasoning: {
+          effort: 'low',
+        },
       });
     }
 
     const response = await this.client.responses.create({
-      tools: this.tools,
+      tools: [
+        { type: 'web_search' },
+        ...this.tools || [],
+      ],
       model: this.model,
       input: aiInput,
-      text: format ? { format } : undefined,
+      text: { verbosity: 'low', ...(format ? { format } : undefined) },
+      reasoning: {
+        effort: 'low',
+      },
     });
 
     if (logMetrics) logger.log('Metadata from model response', this.logUsageMetrics(response, aiInput));
