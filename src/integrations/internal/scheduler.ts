@@ -2,10 +2,10 @@ import type { Conversation } from '../../database/schemas';
 
 import { CronJob } from 'cron';
 
-import { Emitter, eventLogger } from '../../services';
+import { eventLogger } from '../../services';
 import { conversation, mongoose } from '../../database';
 import { getConversationConfig } from '../../events/processing-pipeline/helpers';
-import { PIPELINE_EVENTS } from '../../config/constants';
+// import { PIPELINE_EVENTS } from '../../config/constants';
 
 const awaitingSpeakRecoveryWorker = new CronJob(
   '*/10 * * * * *',
@@ -55,12 +55,12 @@ const awaitingSpeakRecoveryWorker = new CronJob(
           if (!updated) return;
 
           logger.info('Recovered conversation from speak in flight deadlock', { _id: updated._id });
-          Emitter.emit(PIPELINE_EVENTS.THINK_INPUT_PROCESSED, {
-            id: updated._id,
-            data: { id: updated.channelId, conversationId: updated._id, version: updated.version },
-            context: { source: updated.source },
-            responseEvent: updated.metadata.responseEvent,
-          });
+          // Emitter.emit(PIPELINE_EVENTS.THINK_INPUT_PROCESSED, {
+          //   id: updated._id,
+          //   data: { id: updated.channelId, conversationId: updated._id, version: updated.version },
+          //   context: { source: updated.source },
+          //   responseEvent: updated.metadata.responseEvent,
+          // });
         }),
       );
     } catch (err: unknown) {
