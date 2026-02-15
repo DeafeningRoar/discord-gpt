@@ -65,6 +65,7 @@ const handleProcessInputEvent = async (event: AIPipelineEvent) => {
       data: { id: doc.channelId, conversationId: doc._id, version: doc.version },
       context: { source: doc.source },
       responseEvent: doc.metadata.responseEvent,
+      responseMetadata: event.responseMetadata,
     });
   } catch (err: unknown) {
     const error = err as Error;

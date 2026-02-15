@@ -128,6 +128,32 @@ const handleInteractionProcessed = async ({ response, responseMetadata, processM
   }
 };
 
+const handleTypingEvent = async ({ data }: AgentResponseEvent, discord: Discord) => {
+  try {
+    logger.info('Sending Discord typing event', { id: data.id });
+
+    const discordClient = discord.client;
+    const channel = discordClient?.channels.cache.get(data.id);
+
+    if (!discordClient) {
+      logger.error('Error creating Discord Message: Discord client not available.', { channelId: data.id });
+      return;
+    }
+
+    if (channel) {
+      await (channel as TextChannel).sendTyping();
+    } else {
+      const usr = await discordClient?.users.fetch(data.id);
+      const dmChannel = await usr.createDM();
+      await dmChannel.sendTyping();
+    }
+  } catch (error: unknown) {
+    logger.error('Error sending typing event', { channelId: data.id });
+
+    throw error;
+  }
+};
+
 const handleMessageProcessed = async ({ data, response }: AgentResponseEvent, discord: Discord) => {
   try {
     logger.info('Discord message processed', { id: data.id });
@@ -323,6 +349,7 @@ const handleInteractionValidated = async ({
         isEdit: true,
         interaction,
         user,
+        inProgressEvent: EVENTS.DISCORD_TYPING_EVENT,
       },
       processMetadata: { loadingInterval },
       cacheStrategy: {
@@ -385,4 +412,5 @@ export default {
   handleMessageProcessed,
   handleMessageProcessedStream,
   handleResponseInProgress,
+  handleTypingEvent,
 };

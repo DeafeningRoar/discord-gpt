@@ -22,7 +22,8 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
   const logger = eventLogger(event);
   try {
     const {
-      data: { conversationId, version },
+      data: { id, conversationId, version },
+      responseMetadata,
       context,
     } = event;
 
@@ -112,6 +113,10 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
       });
 
       await updateLastBotMessageAt(conversationId);
+
+      if (typeof responseMetadata?.inProgressEvent === 'string') {
+        Emitter.emit(responseMetadata?.inProgressEvent, { data: { id } });
+      }
       return Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, agentEventPayload);
     }
 
@@ -136,6 +141,9 @@ const handleProcessInputEvent = async (event: AIDecisionPipelineEvent) => {
       });
 
       await updateLastBotMessageAt(conversationId);
+      if (typeof responseMetadata?.inProgressEvent === 'string') {
+        Emitter.emit(responseMetadata?.inProgressEvent, { data: { id } });
+      }
       return Emitter.emit(PIPELINE_EVENTS.PROCESS_AGENT_RESPONSE, agentEventPayload);
     }
 

@@ -21,6 +21,7 @@ const DISCORD_EVENTS = {
   DISCORD_MESSAGE_PROCESSED_STREAM: 'DiscordMessageProcessedStream',
   DISCORD_CREATED_MESSAGE: 'DiscordCreatedMessage',
   DISCORD_ENRICHED_MESSAGE: 'DiscordEnrichedMessage',
+  DISCORD_TYPING_EVENT: 'DiscordTypingEvent',
   RESPONSE_IN_PROGRESS: 'DiscordResponseInProgress',
 };
 

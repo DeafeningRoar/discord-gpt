@@ -70,6 +70,11 @@ const startListeners = ({ discord }: { discord: Discord }) => {
     DISCORD_EVENTS.RESPONSE_IN_PROGRESS,
     (event: AIResponseInProgressEvent) => DiscordControllers.handleResponseInProgress(event, discord),
   );
+
+  Emitter.on(
+    DISCORD_EVENTS.DISCORD_TYPING_EVENT,
+    async (event: AgentResponseEvent) => await DiscordControllers.handleTypingEvent(event, discord),
+  );
 };
 
 export default startListeners;
